@@ -1,0 +1,15 @@
+name: Feature Request
+description: Suggest an idea for this home assistant integration
+labels: enhancement
+body:
+  - type: textarea
+    id: content
+    attributes:
+      label: Description
+      placeholder: "Let me know what do you miss..."
+  - type: textarea
+    id: logs
+    attributes:
+      label: API Keys
+      placeholder: "When you miss some data - please let me know the API-Key that provide the data - TIA"
+      render: shell

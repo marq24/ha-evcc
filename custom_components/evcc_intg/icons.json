@@ -1,0 +1,6 @@
+{
+  "services": {
+    "set_pv_data": "mdi:solar-power",
+    "stop_charging": "mdi:hand-front-left-outline"
+  }
+}

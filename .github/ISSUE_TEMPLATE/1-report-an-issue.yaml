@@ -1,0 +1,26 @@
+name: Problem Report
+description: please report any technical issue with this home assistant integration - please note this is not a official evcc repository or service
+labels: bug
+body:
+  - type: checkboxes
+    id: checklist
+    attributes:
+      label: Checklist
+      description: Please go though this short checklist - TIA
+      options:
+        - label: I have installed the **latest** release (or BETA) version of the integration and home assistant.
+          required: true
+        - label: I have prepared DEBUG log output (for technical issues) | In most of the cases of a technical error/issue I would have the need to ask for DEBUG log output of the integration. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md)
+          required: true
+        - label: I confirm it's really an issue | In the case that you want to understand the functionality of a certain feature/sensor Please be so kind and make use if the discussion feature of this repo (and do not create an issue) - TIA
+  - type: textarea
+    id: content
+    attributes:
+      label: Add a description
+      placeholder: "Please provide details about your issue - in the best case a short step by step instruction how to reproduce the issue - TIA."
+  - type: textarea
+    id: logs
+    attributes:
+      label: Add your DEBUG log output
+      placeholder: "Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks."
+      render: shell

@@ -1,0 +1,9 @@
+{
+  "name": "evcc Bridge (unofficial)",
+  "country": [
+    "ALL"
+  ],
+  "homeassistant": "2023.7.0",
+  "hacs": "1.18.0",
+  "render_readme": true
+}
