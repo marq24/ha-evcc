@@ -1,0 +1,53 @@
+set_pv_data:
+  # Service name as shown in UI
+  name: Send PV data to Wallbox (to allow Charge with PV Surplus)
+  # Description of the service
+  description: This is a simple proxy service so that we can configure the automation a bit easier
+  # If the service accepts entity IDs, target allows the user to specify entities by entity, device, or area. If `target` is specified, `entity_id` should not be defined in the `fields` map. By default it shows only targets matching entities from the same domain as the service, but if further customization is required, target supports the entity, device, and area selectors (https://www.home-assistant.io/docs/blueprint/selectors/). Entity selector parameters will automatically be applied to device and area, and device selector parameters will automatically be applied to area.
+  #target:
+  # Different fields that your service accepts
+  fields:
+    # Key of the field
+    pgrid:
+      # Field name as shown in UI
+      name: Power from/to Grid (in Watt)
+      # Description of the field
+      description: Negative values means export to the grid, positive value means importing from grid.
+      required: true
+      default: 0
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        number:
+          min: -50000
+          max: 50000
+          unit_of_measurement: "W"
+          mode: "box"
+    ppv:
+      name: Power from PV
+      # Description of the field
+      description: The current PV production (in Watt)
+      required: false
+      default: 0
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        number:
+          min: 0
+          max: 50000
+          unit_of_measurement: "W"
+          mode: "box"
+    pakku:
+      name: Power from/to Battery (in Watt)
+      description: Negative values means charging the battery, positive value means consuming power from the battery.
+      required: false
+      default: 0
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+      selector:
+        number:
+          min: -50000
+          max: 50000
+          unit_of_measurement: "W"
+          mode: "box"
+
+stop_charging:
+  name: Force changing OFF (for 5 minutes)
+  description: Will ensure that the go-eCharger will stop charging. After 5 minutes the charger will return to default mode
