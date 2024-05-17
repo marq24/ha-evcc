@@ -17,6 +17,11 @@ FILTER_UNKNOWN_COMON: Final = "aus,ccd,cle,clea,cll,cmmr,cmp,cms,cmse,csa,ct,ctr
 FILTER_UNKNOWN_FW56_2_BETA: Final = "bar,gmtr,gsa,mhe,mht,pco,rmaf,rmav,rmif,rmiv,rsa,rsre,rsrr"
 FILTER_UNKNOWN_FW56_1: Final = "avgfhz,simo"
 
+FILTER_LOADPOINTS: Final = "?jq=.loadpoints"
+FILTER_LOADPOINT: Final = "?jq=.loadpoints[{idx}]"
+# http://localhost:7070/api/state?jq=.loadpoints|length
+
+
 
 class CAR_VALUES(Enum):
     UNKNOWN = 0
