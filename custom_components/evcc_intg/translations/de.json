@@ -10,280 +10,219 @@
   "config": {
     "step": {
       "user": {
-        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-goecharger-api2.\n\nWichtiger Hinweis: Der APIv2 Zugriff muss zuvor in den Go-eCharger App Einstellungen aktiviert werden",
+        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.",
         "data": {
-          "host": "IP oder Hostname deiner go-eCharger Wallbox",
+          "host": "Deine lokale evcc URL (einschließlich des Ports)",
           "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]"
         }
       }
     },
     "error": {
-      "auth": "Unter dieser IP/Host konnte keine Wallbox erreicht werden"
+      "auth": "Unter dieser URL konnte keine evcc-Server erreicht werden"
     }
   },
   "options": {
     "step": {
       "user": {
-        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-goecharger-api2.\n\nWichtiger Hinweis: Der APIv2 Zugriff muss zuvor in den Go-eCharger App Einstellungen aktiviert werden",
+        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.",
         "data": {
-          "limit_to_11kw": "11-kW-Limit setzen (nur für 22-kW-Varianten) – alle relevanten Einstellungen werden auf maximal 16A beschränkt (statt der möglichen 32A)",
           "scan_interval": "Aktualisierungsintervall in Sekunden"
         }
       }
     }
   },
   "services": {
-    "set_pv_data": {
-      "name": "PV-Daten an Wallbox senden (um dem go-eCharger das Laden mit PV-Überschuss zu ermöglichen)",
-      "description": "Dies ist ein einfacher Proxy-Dienst, damit wir die Automatisierung etwas einfacher konfigurieren können",
+    "set_loadpoint_plan": {
+      "name": "Abfahrt Ladeplanung für einen Ladepunkt erstellen [Energie (kWh)]",
+      "description": "Ladeplanung ist nur im PV-Modus aktiv. Die eingestellte CO₂-Grenze von NaN g wird in diesem Zeitraum ignoriert.",
       "fields": {
-        "pgrid":  {"name": "Leistung vom/aus dem Netz (in Watt)", "description": "Negative Werte bedeuten Export in das Stromnetz, positive Werte bedeuten Verbrauch aus dem Netz."},
-        "ppv":    {"name": "Leistung der PV (in Watt)", "description": "Die aktuelle PV-Produktion."},
-        "pakku":  {"name": "Leistung von/aud der Batterie (in Watt)", "description": "Negative Werte bedeuten, dass die Batterie geladen wird, positive Werte bedeuten, dass Strom aus der Batterie verbraucht wird."}
+        "startdate":  {"name": "Abfahrt", "description": "Bitte gib das Datum und die Uhrzeit Deiner geplanten Abreise an (die Sekunden werden ignoriert)"},
+        "loadpoint":    {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"},
+        "energy":  {"name": "Ladeziel", "description": "Ziel Energiemenge"}
       }
     },
-    "stop_charging": {
-      "name": "Laden stoppen (für 5 Minuten)",
-      "description": "Stellt sicher, dass der go-eCharger den Ladevorgang stoppt. Nach 5 Minuten wird in den Standardmodus zurückgekehrt"
+    "set_vehicle_plan": {
+      "name": "Abfahrt Ladeplanung für einen am Ladepunkt verbundens Fahrzeug erstellen [SOC (%)]",
+      "description": "Ladeplanung ist nur im PV-Modus aktiv. Die eingestellte CO₂-Grenze von NaN g wird in diesem Zeitraum ignoriert.",
+      "fields": {
+        "startdate":  {"name": "Abfahrt", "description": "Bitte gib das Datum und die Uhrzeit Deiner geplanten Abreise an (die Sekunden werden ignoriert)"},
+        "loadpoint":    {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"},
+        "soc":  {"name": "Ladeziel", "description": "Ziel Ladezustand (SOC)"}
+      }
     }
   },
   "entity": {
     "binary_sensor": {
-      "car_0":{"name":  "Fahrzeug verbunden"},
-      "pha_0": {"name": "Phase L1 nach Schutz"},
-      "pha_1": {"name": "Phase L2 nach Schutz"},
-      "pha_2": {"name": "Phase L3 nach Schutz"},
-      "pha_3": {"name": "Phase L1 vor Schutz"},
-      "pha_4": {"name": "Phase L2 vor Schutz"},
-      "pha_5": {"name": "Phase L3 vor Schutz"},
-      "adi": {"name": "16A Adapter angeschlossen"},
-      "esk": {"name": "Gesetzte Lademenge kWh (Anzeige)"},
-      "fsp": {"name": "1-phasiges Laden erzwingen"},
-      "tlf": {"name": "Test-Ladung abgeschlossen"},
-      "tls": {"name": "Test-Ladung gestartet"}
+      "charging": {"name": "Lädt"},
+      "connected": {"name": "Verbunden"},
+      "enabled": {"name": "Aktiviert"},
+      "smartcostactive": {"name": "Smartes Netzladen"},
+      "vehicledetectionactive": {"name": "Fahrzeugerkennung"}
     },
     "button": {
-      "rst": {"name":  "go-eCharger Neustarten"},
-      "zfocore": {"name":  "Konfiguration erneut einlesen"}
+      "vehicleplansdelete": {"name":  "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
+      "plandelete": {"name":  "Ladeplanung: Abfahrt löschen (Ladepunkt/Energie)"},
+      "detectvehicle": {"name":  "Fahrzeugerkennung starten"}
     },
     "number": {
-      "ama": {"name": "Max. Stromlimit"},
-      "amp": {"name": "Angeforderter Strom"},
-      "ate": {"name": "Next-Trip Lademenge"},
-      "att": {"name": "Next-Trip Beenden um (Min. nach 0 Uhr)"},
-      "awp": {"name": "Schwellenwert für Günstigen-Strompreis (ohne Gebühren!)"},
-      "cco": {"name": "Next-Trip Verbrauch pro 100km"},
-      "dwo": {"name": "kWh-Limit Lademenge"},
-      "fmt": {"name": "Min. Ladezeit"},
-      "fst": {"name": "Start Leistung"},
-      "lbr": {"name": "LED Helligkeit"},
-      "lof": {"name": "Lastmanagement Maximalstrom im Fallbackmodus"},
-      "lop": {"name": "Lastmanagement Priorität"},
-      "lot_amp": {"name": "Lastmanagement Gesamtstrom"},
-      "lot_dyn": {"name": "Lastmanagement Strom 'dynamisch'"},
-      "lot_sta": {"name": "Lastmanagement Strom 'statisch'"},
-      "lot_ts": {"name": "Lastmanagement 'ts?'"},
-      "mca": {"name": "Min. Ladestrom"},
-      "mci": {"name": "Min. Ladeintervall"},
-      "mcpd": {"name": "Min. Länge der Ladepause"},
-      "mcpea": {"name": "Min. Ladepause endet nach"},
-      "mptwt": {"name": "Min. Phasenwechsel Wartezeit"},
-      "mpwst": {"name": "Min. Phasen-Wunsch Wechselzeit"},
-      "pgt": {"name": "Netz-Leistung Ziel"},
-      "po": {"name": "Priorität Offset"},
-      "psh": {"name": "Nachwirkung Phasenwechsel"},
-      "psmd": {"name": "Dauer 'Wechsel von/zu '1-phasigem Laden'"},
-      "sh": {"name": "Nachwirkung Stopp"},
-      "spl3": {"name": "Wechsel zu 3-phasigem Laden bei"},
-      "sumd": {"name": "Simuliertes-Ausstecken 'Dauer'"},
-      "zfo": {"name": "Zero Feed-in Offset"}
+      "limitsoc": {"name": "Standard Ladelimit (SOC"},
+      "limitenergy": {"name": "Standard Ladelimit (Energie)"},
+      "enablethreshold": {"name":  "Schwellwert Aktivierung"},
+      "disablethreshold": {"name":  "Schwellwert Deaktivierung"},
+      "residualpower": {"name":  "Restleistung"},
+      "smartcostlimit_co2": {"name":  "CO₂ Limit ≤"},
+      "smartcostlimit": {"name":  "@@@ Limit ≤"}
     },
     "select": {
-      "bac": {
-        "name": "Wallbox Schalter: Stromänderung zulassen",
+      "prioritysoc": {
+        "name": "Hausbatterie: Haus hat Priorität",
         "state": {
-          "0": "Immer gesperrt",
-          "1": "Gesperrt wenn Fahrzeug verbunden",
-          "2": "Gesperrt beim Laden",
-          "3": "Immer möglich"
+          "0": "---",
+          "5": "wenn unter 5 %",
+          "10": "wenn unter 10 %",
+          "15": "wenn unter 15 %",
+          "20": "wenn unter 20 %",
+          "25": "wenn unter 25 %",
+          "30": "wenn unter 30 %",
+          "35": "wenn unter 35 %",
+          "40": "wenn unter 40 %",
+          "45": "wenn unter 45 %",
+          "50": "wenn unter 50 %",
+          "55": "wenn unter 55 %",
+          "60": "wenn unter 60 %",
+          "65": "wenn unter 65 %",
+          "70": "wenn unter 70 %",
+          "75": "wenn unter 75 %",
+          "80": "wenn unter 80 %",
+          "85": "wenn unter 85 %",
+          "90": "wenn unter 90 %",
+          "95": "wenn unter 95 %",
+          "100": "wenn unter 100 %"
         }
       },
-      "sdp": {
-        "name": "Wallbox Schalter: Spannungsänderung zulassen",
+      "buffersoc": {
+        "name": "Hausbatterie: Fahrzeug zuerst",
         "state": {
-          "0": "Immer gesperrt",
-          "1": "Gesperrt wenn Fahrzeug verbunden",
-          "2": "Gesperrt beim Laden",
-          "3": "Immer möglich"
+          "5": "wenn über 5 %",
+          "10": "wenn über 10 %",
+          "15": "wenn über 15 %",
+          "20": "wenn über 20 %",
+          "25": "wenn über 25 %",
+          "30": "wenn über 30 %",
+          "35": "wenn über 35 %",
+          "40": "wenn über 40 %",
+          "45": "wenn über 45 %",
+          "50": "wenn über 50 %",
+          "55": "wenn über 55 %",
+          "60": "wenn über 60 %",
+          "65": "wenn über 65 %",
+          "70": "wenn über 70 %",
+          "75": "wenn über 75 %",
+          "80": "wenn über 80 %",
+          "85": "wenn über 85 %",
+          "90": "wenn über 90 %",
+          "95": "wenn über 95 %",
+          "100": "wenn auf 100 %"
         }
       },
-      "frc": {
-        "name": "Manueller Lademodus",
+      "bufferstartsoc": {
+        "name": "Hausbatterie: Fahrzeug Laden unterstützen",
         "state": {
-          "0": "aus/deaktiviert",
-          "1": "Laden nicht zulassen",
-          "2": "manuelles Laden"
+          "5": "wenn über 5 %",
+          "10": "wenn über 10 %",
+          "15": "wenn über 15 %",
+          "20": "wenn über 20 %",
+          "25": "wenn über 25 %",
+          "30": "wenn über 30 %",
+          "35": "wenn über 35 %",
+          "40": "wenn über 40 %",
+          "45": "wenn über 45 %",
+          "50": "wenn über 50 %",
+          "55": "wenn über 55 %",
+          "60": "wenn über 60 %",
+          "65": "wenn über 65 %",
+          "70": "wenn über 70 %",
+          "75": "wenn über 75 %",
+          "80": "wenn über 80 %",
+          "85": "wenn über 85 %",
+          "90": "wenn über 90 %",
+          "95": "wenn über 95 %",
+          "100": "wenn auf 100 %",
+          "0": "nur mit genug PV-Überschuss laden"
         }
       },
-      "lmo": {
-        "name": "Logik/Modus",
+      "vehiclename": {
+        "name": "Fahrzeug",
         "state": {
-          "3": "Default",
-          "4": "ECO-Modus",
-          "5": "Next-Trip Modus"
+          "null": "-keins-"
         }
       },
-      "loty": {
-        "name": "Lastmanagement Modus",
+      "limitsoc": {
+        "name": "Ladeplanung: Ankunft Standard Ladelimit"
+      },
+      "minsoc": {
+        "name": "Ladeplanung: Ankunft Min. Ladung %"
+      },
+      "mode": {
+        "name": "Modus",
         "state": {
-          "0": "statisch",
-          "1": "dynamisch"
+          "off": "Aus",
+          "pv": "PV",
+          "minpv": "Min+PV",
+          "now": "Schnell"
         }
       },
-      "psm": {
-        "name": "Phasen Wechselmodus",
+      "phasesconfigured": {
+        "name": "Ladestrom Phasen",
         "state": {
-          "0": "Auto",
-          "1": "Nur 1-phasiges Laden zulassen",
-          "2": "3-phasiges Laden erzwingen"
+          "0": "automatischer Wechsel",
+          "1": "1-phasig",
+          "3": "3-phasig"
         }
       },
-      "tds": {
-        "name": "Sommer/Winter-Zeit Zone",
+      "phasesconfigured_fixed": {
+        "name": "Ladestrom Phasen (Wie ist deine Wallbox angeschlossen?)",
         "state": {
-          "0": "Keine",
-          "1": "Europäische Sommerzeit",
-          "2": "US Daylight Zeit"
-        }
-      },
-      "trx": {
-        "name": "Laden freigeben",
-        "state": {
-          "null": "Autorisierung notwendig",
-          "0": "entsperrt",
-          "1": "entsperrt mit Karten-ID1",
-          "2": "entsperrt mit Karten-ID2",
-          "3": "entsperrt mit Karten-ID3",
-          "4": "entsperrt mit Karten-ID4",
-          "5": "entsperrt mit Karten-ID5",
-          "6": "entsperrt mit Karten-ID6",
-          "7": "entsperrt mit Karten-ID7",
-          "8": "entsperrt mit Karten-ID8",
-          "9": "entsperrt mit Karten-ID9",
-          "10": "entsperrt mit Karten-ID10"
-        }
-      } ,
-      "ust": {
-        "name": "Kable Entriegelung",
-        "state": {
-          "0": "Normal",
-          "1": "Auto Entriegelung",
-          "2": "Immer verriegelt",
-          "3": "Entriegelung erzwingen"
+          "1": "1-phasig",
+          "3": "3-phasig"
         }
       }
     },
     "sensor": {
-      "nrg_0": {"name": "Spannung L1"},
-      "nrg_1": {"name": "Spannung L2"},
-      "nrg_2": {"name": "Spannung L3"},
-      "nrg_3": {"name": "Spannung N"},
-      "nrg_4": {"name": "Strom L1"},
-      "nrg_5": {"name": "Strom L2"},
-      "nrg_6": {"name": "Strom L3"},
-      "nrg_7": {"name": "Leistung L1"},
-      "nrg_8": {"name": "Leistung L2"},
-      "nrg_9": {"name": "Leistung L3"},
-      "nrg_10": {"name": "Leistung N"},
-      "nrg_11": {"name": "Totale-Leistung"},
-      "nrg_12": {"name": "Leistungsfaktor L1"},
-      "nrg_13": {"name": "Leistungsfaktor L2"},
-      "nrg_14": {"name": "Leistungsfaktor L3"},
-      "nrg_15": {"name": "Leistungsfaktor N"},
-      "tma_0": {"name": "Temperatursensor I"},
-      "tma_1": {"name": "Temperatursensor II"},
-      "cdi_type": {"name": "Ladevorgangs-Zähler"},
-      "cdi_value": {"name": "Ladevorgangs-Dauer"},
-      "atp_x": {"name": "Next-Trip Plan Daten"},
-      "awcp_marketprice": {"name":  "Günstiger-Strompreis"},
-      "ccu_x": {"name":  "Update Fortschritt"},
-      "ccw_ssid": {"name":  "WiFi Verbindung"},
+      "chargecurrent": {"name": "Ladestrom"},
+      "chargecurrents_0": {"name": "Ladestrom P1"},
+      "chargecurrents_1": {"name": "Ladestrom P2"},
+      "chargecurrents_2": {"name": "Ladestrom P3"},
+      "chargeduration": {"name": "Ladedauer"},
+      "chargeremainingduration": {"name":  "Laderestzeit"},
+      "chargepower": {"name": "Ladeleistung"},
+      "chargetotalimport": {"name": "Netzbezug"},
+      "chargedenergy": {"name": "Ladeenergie"},
+      "chargeremainingenergy": {"name": "Ladeenergie verbleibend"},
 
-      "car": {"name": "Fahrzeug Status [CODE]"},
-      "car_value": {"name": "Fahrzeug Status"},
-      "cus": {"name": "Kabel Verriegelungsstatus [CODE]"},
-      "cus_value": {"name": "Kabel Verriegelungsstatus"},
-      "err": {"name": "Fehler [CODE]"},
-      "err_value": {"name": "Fehler"},
-      "Moduslstatus": {"name": "Status [CODE]"},
-      "Moduslstatus_value": {"name": "Status"},
-      "ffb": {"name": "Rückmeldung Verriegelung [CODE]"},
-      "ffb_value": {"name": "Rückmeldung Verriegelung"},
-      "frm": {"name": "Rundungs-Modus [CODE]"},
-      "frm_value": {"name": "Rundungs-Modus"},
-      "lck": {"name": "Ermittelter Verriegelungswert [CODE]"},
-      "lck_value": {"name": "Ermittelter Verriegelungswert"},
-      "pwm": {"name": "Gewünschte Phasen [CODE]"},
-      "pwm_value": {"name": "Gewünschte Phasen"},
-      "wsms": {"name": "WiFi Runtime Status [CODE]"},
-      "wsms_value": {"name": "WiFi Runtime Status"},
-      "wst": {"name": "WiFi Status [CODE]"},
-      "wst_value": {"name": "WiFi Status"},
+      "connectedduration": {"name": "Angeschlossen seit"},
 
-      "fsptws": {"name": "Wechsel von/zu '1-phasigem Laden angefordert seit"},
-      "inva": {"name": "Inverter-Daten 'Alter'"},
-      "lbp": {"name": "Letze Wallbox Schalter Betätigung"},
-      "lccfc": {"name": "Letzter Fahrzeug Statuswechsel von 'Laden'"},
-      "lccfi": {"name": "Letzter Fahrzeug Statuswechsel von 'Inaktiv/Frei'"},
-      "lcctc": {"name": "Letzter Fahrzeug Statuswechsel zu 'Laden'"},
-      "lfspt": {"name": "Letzter Wechsel von/zu '1-phasigem Laden'"},
-      "lmsc": {"name": "Letzter Statuswechsel"},
-      "lpsc": {"name": "Letzte PV-Überschuss Berechnung"},
-      "rbt": {"name": "Zeit seit Boot"},
+      "phaseaction": {"name": "Phasen aktivität"},
+      "phaseremaining": {"name": "Phasen verbleibend"},
+      "phasesactive": {"name": "Phasen in Verwendung"},
+      "phasesenabled": {"name": "Phasen aktiviert"},
 
-      "acu": {"name": "Maximal zulässiger Strom"},
-      "amt": {"name": "Aktuelles Temperaturlimit"},
-      "cbl": {"name": "Kabel Maximalstrom"},
-      "deltaa": {"name": "Delta Strom"},
-      "deltap": {"name": "Delta Leistung"},
-      "eto": {"name": "Lademenge Summe"},
-      "ferm": {"name": "Effektivier Rundungs-Modus"},
-      "fhz": {"name": "Netzfrequenz"},
-      "loa": {"name": "Lastmanagement Verfügbarer Strom"},
-      "map": {"name":  "Phasenzuordnung"},
-      "mmp": {"name": "Gemessene maximal Ladeleistung (debug)"},
-      "nif": {"name": "Default Route?"},
-      "pakku": {"name": "Leistung aus Batterie"},
-      "pgrid": {"name": "Leistung vom Netz"},
-      "pnp": {"name": "Phasenanzahl"},
-      "ppv": {"name": "Leistung PV"},
-      "pvopt_averagepakku": {"name": "⌀ Leistung von Batterie"},
-      "pvopt_averagepgrid": {"name": "⌀ Leistung aus Netz"},
-      "pvopt_averageppv": {"name": "⌀ Leistung PV"},
-      "rbc": {"name": "Reboot-Zähler"},
-      "rfb": {"name": "Rückmeldung Relay"},
-      "rssi": {"name": "WiFi RSSI Signalstärke"},
-      "tpa": {"name": "30 Sek. ⌀ Totale-Leistung"},
-      "wh": {"name": "Lademenge seit Fahrzeug angeschlossen"},
-      "wsc": {"name": "WiFi STA Fehler Anzahl"},
-      "wsm": {"name": "WiFi STA Fehler Meldung"}
+      "sessionco2perkwh": {"name": "Ladevorgang CO₂/kWh"},
+      "sessionenergy": {"name": "Ladevorgang Energie"},
+      "sessionprice": {"name": "Ladevorgang Preis"},
+      "sessionpriceperkwh": {"name": "Ladevorgang @@@/kWh"},
+      "sessionsolarpercentage": {"name": "Ladevorgang PV Verwendung"},
+
+      "vehiclerange": {"name": "Fahrzeug Reichweite"},
+      "vehiclesoc": {"name": "Fahrzeug Ladestand"},
+
+      "vehicleplanssoc": {"name": "Ladeplanung: Abfahrt Ladeziel (SOC)"},
+      "vehicleplanstime": {"name": "Ladeplanung: Abfahrt Zeitpunkt (SOC)"},
+      "planenergy": {"name": "Ladeplanung: Abfahrt Ladeziel (Energie)"},
+      "plantime": {"name": "Ladeplanung: Abfahrt Zeitpunkt (Energie)"}
     },
     "switch": {
-      "acp": {"name": "Ladepausen zulassen (Fahrzeug Kompatibilität)"},
-      "acs": {"name": "Autorisierung (Karte) notwendig"},
-      "ara": {"name": "Next-Trip: Weiter im Eco-Modus laden"},
-      "awe": {"name": "Mit günstigen Strompreisen laden"},
-      "cwe": {"name": "Cloud-Websocket aktiviert"},
-      "esk": {"name": "Lademenge (nur für App) setzen"},
-      "fup": {"name": "Mit PV-Überschuss laden"},
-      "fzf": {"name": "Zero Feed-in"},
-      "hsa": {"name": "HTTP STA Authentifizierung"},
-      "loe": {"name": "Lastmanagement aktiviert"},
-      "lse": {"name": "LED's' im Standby aus"},
-      "nmo": {"name": "Erdungsprüfung deaktiviert / Norwegen Modus"},
-      "su":  {"name": "Simuliertes-Ausstecken (kurz)"},
-      "sua": {"name": "Simuliertes-Ausstecken permanent"},
-      "upo": {"name": "Entriegelung bei Stromausfall"}
+      "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"}
     }
   }
 }

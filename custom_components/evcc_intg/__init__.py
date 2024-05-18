@@ -1,33 +1,38 @@
 import asyncio
 import json
 import logging
-from datetime import timedelta
-from typing import Any, Final
+from datetime import datetime, timedelta
+from typing import Any
 
-from homeassistant.components.number import NumberDeviceClass
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
-from homeassistant.const import CONF_HOST, CONF_TYPE, CONF_ID, CONF_SCAN_INTERVAL
-from homeassistant.core import Config, Event
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
+from homeassistant.core import Config, Event, SupportsResponse
 from homeassistant.core import HomeAssistant
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as config_val, entity_registry as entity_reg
+from homeassistant.helpers import config_validation as config_val  # , translation
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
+from homeassistant.util import slugify
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    JSONKEY_LOADPOINTS,
+    JSONKEY_VEHICLES,
+    JSONKEY_PLANS,
+    JSONKEY_PLANS_SOC,
+    JSONKEY_PLANS_TIME
+)
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE
 from .const import (
     NAME,
     DOMAIN,
     MANUFACTURER,
     PLATFORMS,
     STARTUP_MESSAGE,
-    SERVICE_SET_PV_DATA,
-    SERVICE_STOP_CHARGING,
-    CONF_11KWLIMIT
+    SERVICE_SET_LOADPOINT_PLAN, SERVICE_SET_VEHICLE_PLAN
 )
 from .service import EvccService
 
@@ -55,12 +60,19 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         _LOGGER.info(STARTUP_MESSAGE)
         hass.data.setdefault(DOMAIN, {"manifest_version": value})
 
+    #integration = await loader.async_get_integration(hass, DOMAIN)
+    #xxx = await translation.async_get_translations(hass, hass.config.language, "entity_component")
+    #_LOGGER.error(f"-> {inspect.getmembers(xxx)}")
+    # for platform in PLATFORMS:
+    #     platform = await integration.async_get_platform(platform)
+    #     _LOGGER.error(f"-> {inspect.getmembers(platform)}")
+
     coordinator = EvccDataUpdateCoordinator(hass, config_entry)
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
     else:
-        await coordinator.read_versions()
+        await coordinator.read_evcc_config_on_startup()
 
     hass.data[DOMAIN][config_entry.entry_id] = coordinator
 
@@ -70,13 +82,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if config_entry.state != ConfigEntryState.LOADED:
         config_entry.add_update_listener(async_reload_entry)
 
-    # initialize our service...
-    # service = EvccService(hass, config_entry, coordinator)
-    # hass.services.async_register(DOMAIN, SERVICE_SET_PV_DATA, service.set_pv_data,
-    #                              supports_response=SupportsResponse.OPTIONAL)
-    # hass.services.async_register(DOMAIN, SERVICE_STOP_CHARGING, service.stop_charging,
-    #                              supports_response=SupportsResponse.OPTIONAL)
-    #
+    #initialize our service...
+    service = EvccService(hass, config_entry, coordinator)
+    hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, service.set_loadpoint_plan,
+                                 supports_response=SupportsResponse.OPTIONAL)
+    hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, service.set_vehicle_plan,
+                                 supports_response=SupportsResponse.OPTIONAL)
+
+    # Do we need to patch something?!
     # if coordinator.check_for_max_of_16a:
     #     asyncio.create_task(coordinator.check_for_16a_limit(hass, config_entry.entry_id))
 
@@ -96,8 +109,9 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
             coordinator.clear_data()
             hass.data[DOMAIN].pop(config_entry.entry_id)
 
-        # hass.services.async_remove(DOMAIN, SERVICE_SET_PV_DATA)
-        # hass.services.async_remove(DOMAIN, SERVICE_STOP_CHARGING)
+        hass.services.async_remove(DOMAIN, SERVICE_SET_LOADPOINT_PLAN)
+        hass.services.async_remove(DOMAIN, SERVICE_SET_VEHICLE_PLAN)
+
 
     return unload_ok
 
@@ -107,62 +121,6 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     if await async_unload_entry(hass, config_entry):
         await asyncio.sleep(2)
         await async_setup_entry(hass, config_entry)
-
-
-@staticmethod
-async def check_and_write_to_16a(hass: HomeAssistant, config_entry_id: str, bridge: EvccApiBridge):
-    _LOGGER.info(f"checking entities")
-    tags = []
-    if hass is not None:
-        a_entity_reg = entity_reg.async_get(hass)
-        if a_entity_reg is not None:
-            MAX_A: Final = 16
-            # we query from the HA entity registry all entities that are created by this
-            # 'config_entry' -> we use here just default api calls [no more hacks!]
-            key_list = []
-            for entity in entity_reg.async_entries_for_config_entry(registry=a_entity_reg,
-                                                                    config_entry_id=config_entry_id):
-                if entity.original_device_class == NumberDeviceClass.CURRENT:
-                    if "max" in entity.capabilities:
-                        if entity.capabilities["max"] == MAX_A:
-                            key_list.append(entity.translation_key)
-
-            if len(key_list) > 0:
-                final_key_list = []
-                final_dics = {}
-                for a_key in key_list:
-                    if '_' in a_key:
-                        res = a_key.split('_')
-                        if res[0] not in final_dics:
-                            final_dics[res[0]] = []
-                        final_dics[res[0]].append(res[1])
-                        a_key = res[0]
-
-                    if a_key not in final_key_list:
-                        final_key_list.append(a_key)
-
-                try:
-                    res = await bridge._read_filtered_data(filters=",".join(final_key_list), log_info="16A checker")
-                    keys_to_patch = []
-                    for a_res_key in res.keys():
-                        res_obj = res[a_res_key]
-                        if isinstance(res_obj, int):
-                            if res_obj > MAX_A:
-                                keys_to_patch.append(a_res_key)
-                                res[a_res_key] = MAX_A
-                        elif isinstance(res_obj, dict):
-                            vals_to_check = final_dics.get(a_res_key)
-                            for val in vals_to_check:
-                                if res_obj[val] > MAX_A:
-                                    res[a_res_key][val] = MAX_A
-                                    if a_res_key not in keys_to_patch:
-                                        keys_to_patch.append(a_res_key)
-
-                    for a_key in keys_to_patch:
-                        _LOGGER.info(f"reduce {a_res_key} to 16A -> writing {res[a_key]}")
-                        await bridge.write_value_to_key(a_res_key, res[a_key])
-                except Exception as e:
-                    _LOGGER.error(f"Error while forcing 16A settings:", e)
 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
@@ -176,7 +134,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         global SCAN_INTERVAL
         SCAN_INTERVAL = timedelta(seconds=config_entry.options.get(CONF_SCAN_INTERVAL,
                                                                    config_entry.data.get(CONF_SCAN_INTERVAL, 5)))
-        self._system_id = config_entry.data.get(CONF_ID)
+
+        # we want a some sort of unique identifier that can be selected by the user
+        # during the initial configuration phase
+        self._system_id = slugify(config_entry.title)
 
         self.lang_map = None
         if lang in TRANSLATIONS:
@@ -198,6 +159,67 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self.bridge.clear_data()
         self.data.clear()
 
+    async def read_evcc_config_on_startup(self):
+        # we will fetch th config from evcc:
+        # b) vehicles
+        # a) how many loadpoints
+        # c) load point configuration (like 1/3 phase options)
+
+        initdata = await self.bridge.read_all_data()
+        if "version" in initdata:
+            self._version = initdata["version"]
+        elif "availableVersion" in initdata:
+            self._version = initdata["availableVersion"]
+
+        self._device_info_dict = {
+            "identifiers": {
+                ("DOMAIN", DOMAIN),
+                ("IP", self._config_entry.options.get(CONF_HOST, self._config_entry.data.get(CONF_HOST))),
+            },
+            "manufacturer": MANUFACTURER,
+            "suggested_area": "Basement",
+            "name": NAME,
+            "sw_version": self._version
+        }
+
+        self._vehicle = {}
+        for a_veh_name in initdata["vehicles"]:
+            a_veh = initdata["vehicles"][a_veh_name]
+            if "capacity" in a_veh:
+                self._vehicle[a_veh_name] = {
+                    "name": a_veh["title"],
+                    "capacity": a_veh["capacity"]
+                }
+            else:
+                self._vehicle[a_veh_name] = {
+                    "name": a_veh["title"],
+                    "capacity": None
+                }
+
+        self._loadpoint = {}
+        api_index = 1
+        for a_loadpoint in initdata["loadpoints"]:
+            self._loadpoint[f"{api_index}"] = {
+                "name": a_loadpoint["title"],
+                "id": slugify(a_loadpoint["title"]),
+                "has_phase_auto_option": a_loadpoint["chargerPhases1p3p"],
+                "vehicle_key" : a_loadpoint["vehicleName"],
+                "obj": a_loadpoint
+            }
+            api_index += 1
+
+        if "smartCostType" in initdata:
+            self._cost_type = initdata["smartCostType"]
+        else:
+            self._cost_type = "co2"
+
+        if "currency" in initdata:
+            self._currency = initdata["currency"]
+            if self._currency == "EUR":
+                self._currency = "€"
+        else:
+            self._currency = "€"
+
     async def _async_update_data(self) -> dict:
         """Update data via library."""
         try:
@@ -206,101 +228,168 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             # result = await self.bridge.read_all()
             # _LOGGER.debug(f"number of fields after query: {len(result)}")
             # return result
-
-            return await self.bridge.read_all()
+            result = await self.bridge.read_all()
+            _LOGGER.debug(f"number of fields after query: {len(result)}")
+            return result
 
         except UpdateFailed as exception:
             raise UpdateFailed() from exception
         except Exception as other:
-            _LOGGER.error(f"unexpected: {other}")
+            _LOGGER.warning(f"unexpected: {other}")
             raise UpdateFailed() from other
 
-    async def async_write_key(self, key: str, value, entity: Entity = None) -> dict:
-        """Update single data"""
-        result = await self.bridge.write_value_to_key(key, value)
-        _LOGGER.debug(f"write result: {result}")
+    def read_tag(self, tag: Tag, idx: int = None):
+        ret = None
+        if self.data is not None:
+            if tag.type == EP_TYPE.LOADPOINTS:
+                ret = self.read_tag_loadpoint(tag=tag, loadpoint_idx=idx)
+            elif tag.type == EP_TYPE.VEHICLES:
+                ret = self.read_tag_vehicle_int(tag=tag, loadpoint_idx=idx)
+            elif tag.type == EP_TYPE.SITE:
+                if tag.key in self.data:
+                    ret = self.data[tag.key]
 
-        if key in result:
-            self.data[key] = result[key]
+        #_LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
+        return ret
+
+    def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
+        if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
+            #if tag == Tag.CHARGECURRENTS:
+            #    _LOGGER.error(f"valA? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]}")
+            #    _LOGGER.error(f"valB? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]}")
+            if tag.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]
+                if tag == Tag.PLANTIME:
+                    value = self._convert_time(value)
+                return value
+
+    def read_tag_vehicle_int(self, tag: Tag, loadpoint_idx: int = None):
+        if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data:
+            try:
+                vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.VEHICLENAME.key]
+                if vehicle_id is not None:
+                    return self.read_tag_vehicle_str(tag=tag, vehicle_id=vehicle_id)
+
+            except Exception as err:
+                _LOGGER.info(f"could not find a connected vehicle at loadpoint: {loadpoint_idx}")
+
+        return None
+
+    def read_tag_vehicle_str(self, tag: Tag, vehicle_id: str):
+        is_veh_PLANSSOC = tag == Tag.VEHICLEPLANSSOC
+        is_veh_PLANSTIME = tag == Tag.VEHICLEPLANSTIME
+        if is_veh_PLANSSOC or is_veh_PLANSTIME:
+            # yes this is really a hack!
+            if JSONKEY_PLANS in self.data[JSONKEY_VEHICLES][vehicle_id] and len(
+                    self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0:
+                if is_veh_PLANSSOC:
+                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_SOC]
+                    return str(int(value)) #float(int(value))/100
+                elif is_veh_PLANSTIME:
+                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_TIME])
+            else:
+                return None
         else:
-            _LOGGER.error(f"could not write value: '{value}' to: {key} result was: {result}")
+            if tag.key in self.data[JSONKEY_VEHICLES][vehicle_id]:
+                return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key]
+            else:
+                return "0"
+
+    async def async_write_plan(self, write_to_vehicle:bool, loadpoint_idx:str, soc:str, rfcdate:str):
+        if write_to_vehicle:
+            return await self.bridge.write_vehicle_plan_for_loadpoint_index(loadpoint_idx, soc, rfcdate)
+        else:
+            return await self.bridge.write_loadpoint_plan(loadpoint_idx, soc, rfcdate)
+
+    async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
+        result = await self.bridge.press_tag(tag, value, idx)
+        _LOGGER.debug(f"press result: {result}")
 
         if entity is not None:
             entity.async_schedule_update_ha_state(force_refresh=True)
 
-        # since we do not force an update when setting PV surplus data, we 'patch' internally our values
-        if key == Tag.IDS.key:
-            self.data = self.bridge._versions | self.bridge._states | self.bridge._config
-            self.async_update_listeners()
+        return result
+
+    async def async_write_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
+        """Update single data"""
+        result = await self.bridge.write_tag(tag, value, idx)
+        _LOGGER.debug(f"write result: {result}")
+
+        if tag.key not in result or result[tag.key] is None:
+            _LOGGER.info(f"could not write value: '{value}' to: {tag} result was: {result}")
+        else:
+            # IMH0 it's quite tricky to patch the self.data object here... but we try!
+            if tag.type == EP_TYPE.SITE:
+                if tag.key in self.data:
+                    self.data[tag.key] = value
+
+            elif tag.type == EP_TYPE.LOADPOINTS:
+                if idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > idx - 1:
+                    if tag.key in self.data[JSONKEY_LOADPOINTS][idx - 1]:
+                        self.data[JSONKEY_LOADPOINTS][idx - 1][tag.key] = value
+
+            elif tag.type == EP_TYPE.VEHICLES:
+                # TODO ?!
+                pass
+
+        if entity is not None:
+            entity.async_schedule_update_ha_state(force_refresh=True)
 
         return result
 
-    async def read_versions(self):
-        await self.bridge.read_versions()
-        self._device_info_dict = {
-            "identifiers": {
-                ("DOMAIN", DOMAIN),
-                ("SERIAL", self._system_id),
-                ("IP", self._config_entry.options.get(CONF_HOST, self._config_entry.data.get(CONF_HOST))),
-            },
-            "manufacturer": MANUFACTURER,
-            "suggested_area": "Basement",
-            "name": NAME,
-            "model": self._config_entry.data.get(CONF_TYPE),
-            "sw_version": self.bridge._versions[Tag.FWV.key]
-            # hw_version
-        }
+    def _convert_time(self, value:str):
+        if "0001-01-01T00:00:00Z" == value:
+            return None
 
-        # fetching the available cards that are enabled
-        self.available_load_points = []
-        idx = 1
-        for a_card in self.bridge._versions[Tag.CARDS.key]:
-            if a_card["cardId"]:
-                self.available_load_points.append(str(idx))
-            idx = idx + 1
-
-        _LOGGER.info(f"active load points {self.available_load_points}")
-
-        # check for the 16A limiter...
-        self.check_for_max_of_16a = self._config_entry.options.get(CONF_11KWLIMIT, False)
-
-        self.limit_to16a = (self.check_for_max_of_16a
-                            or self.bridge._versions[Tag.VAR.key] == 11
-                            or self.data[Tag.ADI.key])
-
-        if (self.limit_to16a):
-            _LOGGER.info(f"LIMIT to 16A is active")
-
-    async def check_for_16a_limit(self, hass, entry_id):
-        _LOGGER.debug(f"check relevant entities for 16A limit... in 15sec")
-        await asyncio.sleep(15)
-
-        _LOGGER.debug(f"check relevant entities for 16A limit NOW!")
-        await check_and_write_to_16a(hass=hass, config_entry_id=entry_id, bridge=self.bridge)
-
+        # we need to convert UTC in loal time
+        value = value.replace("Z", "+00:00")
+        if ".000" in value:
+            dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
+        else:
+            dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S%z")
+        value = dt.astimezone().isoformat(sep=" ", timespec="minutes")
+        return value.split("+")[0]
 
 class EvccBaseEntity(Entity):
     _attr_should_poll = False
     _attr_has_entity_name = True
+    _attr_name_addon = None
 
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
-        # make sure that we keep the CASE of the key!
-        self.data_key = description.key
-
+        self.tag = description.tag
+        self.idx = None
         if hasattr(description, "idx") and description.idx is not None:
-            self._attr_translation_key = f"{self.data_key.lower()}_{description.idx}"
-        elif hasattr(description, "lookup") and description.lookup is not None:
-            self._attr_translation_key = f"{self.data_key.lower()}_value"
+            self.idx = description.idx
         else:
-            self._attr_translation_key = self.data_key.lower()
+            self.idx = None
+
+        if hasattr(description, "translation_key") and description.translation_key is not None:
+            self._attr_translation_key = description.translation_key.lower()
+        else:
+            self._attr_translation_key = description.key.lower()
+
+        if hasattr(description, "name_addon") and description.name_addon is not None:
+            self._attr_name_addon = description.name_addon
+
+        if hasattr(description, "native_unit_of_measurement") and description.native_unit_of_measurement is not None:
+            if "@@@" in description.native_unit_of_measurement:
+                description.native_unit_of_measurement = description.native_unit_of_measurement.replace("@@@",
+                                                                                                        coordinator._currency)
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.evcc_{self.coordinator._system_id}_{self._attr_translation_key}"
+        self.entity_id = f"{DOMAIN}.{self.coordinator._system_id}_{description.key}"
 
     def _name_internal(self, device_class_name: str | None,
                        platform_translations: dict[str, Any], ) -> str | UndefinedType | None:
-        return super()._name_internal(device_class_name, platform_translations)
+
+        tmp = super()._name_internal(device_class_name, platform_translations)
+        if "@@@" in tmp:
+            tmp = tmp.replace("@@@", self.coordinator._currency)
+        if self._attr_name_addon is not None:
+            return f"{self._attr_name_addon} {tmp}"
+        else:
+            return tmp
 
     @property
     def device_info(self) -> dict:
@@ -330,7 +419,6 @@ class EvccBaseEntity(Entity):
 
     def _friendly_name_internal(self) -> str | None:
         """Return the friendly name.
-
         If has_entity_name is False, this returns self.name
         If has_entity_name is True, this returns device.name + self.name
         """
@@ -350,4 +438,4 @@ class EvccBaseEntity(Entity):
         if device_entry.name_by_user is not None:
             return f"{device_entry.name_by_user} {name}" if device_name else name
         else:
-            return f"[go-e] {name}"
+            return f"[evcc] {name}"

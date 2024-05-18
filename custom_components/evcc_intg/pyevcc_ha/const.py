@@ -1,36 +1,22 @@
-from enum import Enum
 from typing import Final
 
-FILTER_SYSTEMS: Final = "oem,sse,typ,var"
-FILTER_VERSIONS: Final = "ccrv,fwc,fwv,cards,var"
-FILTER_MIN_STATES: Final = "car,modelStatus,err,nrg,tma,trx"
-FILTER_IDS_ADDON: Final = ",pakku,ppv,pgrid"
-FILTER_TIMES_ADDON: Final = ",fsptws,inva,lbp,lccfc,lccfi,lcctc,lfspt,lmsc,lpsc,rbt"
+JSONKEY_LOADPOINTS: Final = "loadpoints"
+JSONKEY_VEHICLES: Final = "vehicles"
+JSONKEY_PLANS: Final = "plans"
+JSONKEY_PLANS_SOC: Final = "soc"
+JSONKEY_PLANS_TIME: Final = "time"
 
-FILTER_ALL_STATES: Final = "acu,adi,amt,atp,awcp,car,cbl,ccu,ccw,cdi,cus,deltaa,deltap,err,eto,ffb,fhz,fsp,fsptws,inva,lbp,lccfc,lccfi,lcctc,lck,lfspt,lmsc,loa,lpsc,mcpea,mmp,modelStatus,nif,nrg,pakku,pgrid,pha,pnp,ppv,pvopt_averagePAkku,pvopt_averagePGrid,pvopt_averagePPv,pwm,rbc,rbt,rfb,rssi,rst,tlf,tls,tma,tpa,trx,wh,wsms,wst"
-FILTER_ALL_CONFIG: Final = "acp,acs,ama,amp,ara,ate,att,awc,awe,awp,bac,cch,cco,cfi,cid,clp,cwc,cwe,dwo,esk,fmt,fna,frc,frm,fst,fup,fzf,hsa,lbr,lmo,loe,lof,log,lop,lot,loty,lse,map,mca,mci,mcpd,mptwt,mpwst,nmo,pgt,po,psh,psm,psmd,sch_satur,sch_sund,sch_week,sdp,sh,spl3,su,sua,sumd,tds,tof,upo,ust,zfo"
+FILTER_LOADPOINTS: Final = f"?jq=.{JSONKEY_LOADPOINTS}"
+FILTER_LOADPOINTS_AND_VEHICLES = f"?jq={{{JSONKEY_LOADPOINTS}:.{JSONKEY_LOADPOINTS},{JSONKEY_VEHICLES}:.{JSONKEY_VEHICLES}}}"
 
-FILTER_NOT_USED: Final = "mcc,mcca,mce,mcr,mcs,mcu,men,mlr,mlra,mqcn,mqg,mqss,msb,msp,msr,mtp,ocppai,ocppi"
+MIN_CURRENT_LIST: Final = ["0.125", "0.25", "0.5", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13",
+                           "14", "15", "16"]
 
-# found api-keys that are not documented (yet) ?!
-FILTER_UNKNOWN_COMON: Final = "aus,ccd,cle,clea,cll,cmmr,cmp,cms,cmse,csa,ct,ctrls,data,di1,die,dii,dll,hai,hla,isgo,la1,la3,lbl,lcs,lopr,lrc,lri,lrr,lwf,ocppao,ocppcm,ocppcs,ocppf,ocppla,ocpplo,ocppti,pdi,pgr,rdbf,rdbfe,rdbs,rdbse,rde,rdef,rdefe,rdes,rdese,rdpl,rdple,rdre,rdree,smd,tcl,tsi,tzt,ufa,ufe,ufm,ufs,wbw,wda,wsl"
-FILTER_UNKNOWN_FW56_2_BETA: Final = "bar,gmtr,gsa,mhe,mht,pco,rmaf,rmav,rmif,rmiv,rsa,rsre,rsrr"
-FILTER_UNKNOWN_FW56_1: Final = "avgfhz,simo"
+MAX_CURRENT_LIST: Final = ["1", "2", "3", "4", "5", "6", "7", "8", "9", "10", "11", "12", "13", "14", "15", "16", "17",
+                           "18", "19", "20", "21", "22", "23", "24", "25", "26", "27", "28", "29", "30", "31", "32"]
 
-FILTER_LOADPOINTS: Final = "?jq=.loadpoints"
-FILTER_LOADPOINT: Final = "?jq=.loadpoints[{idx}]"
-# http://localhost:7070/api/state?jq=.loadpoints|length
-
-
-
-class CAR_VALUES(Enum):
-    UNKNOWN = 0
-    IDLE = 1
-    CHARGING = 2
-    WAIT_FOR_CAR = 3
-    COMPLETE = 4
-    ERROR = 5
-
+BATTERY_LIST: Final = ["0", "5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75",
+                       "80", "85", "90", "95", "100"]
 
 TRANSLATIONS: Final = {
     "de": {

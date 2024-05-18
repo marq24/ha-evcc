@@ -3,19 +3,25 @@ from typing import Final
 
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription
 from homeassistant.components.button import ButtonEntityDescription
-from homeassistant.components.number import NumberEntityDescription, NumberDeviceClass, NumberMode
+from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
 from homeassistant.components.select import SelectEntityDescription
 from homeassistant.components.sensor import SensorEntityDescription, SensorStateClass, SensorDeviceClass
 from homeassistant.components.switch import SwitchEntityDescription
 from homeassistant.const import (
-    EntityCategory, UnitOfElectricCurrent, UnitOfEnergy, UnitOfTime, CURRENCY_CENT, UnitOfPower, UnitOfTemperature,
-    UnitOfFrequency, UnitOfElectricPotential, PERCENTAGE, SIGNAL_STRENGTH_DECIBELS
+    EntityCategory,
+    UnitOfElectricCurrent,
+    UnitOfPower,
+    UnitOfEnergy,
+    UnitOfLength,
+    UnitOfTime,
+    PERCENTAGE
 )
+from homeassistant.util.frozen_dataclass_compat import FrozenOrThawed
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, IS_TRIGGER
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 
 # Base component constants
-MANUFACTURER: Final = "https://github.com/evcc-io - Integration by marq24"
+MANUFACTURER: Final = "marq24: evcc HACS Integration (unofficial)"
 NAME: Final = "evcc Bridge (unofficial)"
 DOMAIN: Final = "evcc_intg"
 ISSUE_URL: Final = "https://github.com/marq24/ha-evcc/issues"
@@ -29,636 +35,532 @@ If you have any issues with this you need to open an issue here:
 -------------------------------------------------------------------
 """
 
-SERVICE_SET_PV_DATA: Final = "set_pv_data"
-SERVICE_STOP_CHARGING: Final = "stop_charging"
-CONF_11KWLIMIT: Final = "limit_to_11kw"
+
+SERVICE_SET_LOADPOINT_PLAN: Final = "set_loadpoint_plan"
+SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
 
 @dataclass
-class ExtBinarySensorEntityDescription(BinarySensorEntityDescription):
-    idx: int | None = None
+class EntityDescriptionStub(metaclass=FrozenOrThawed, frozen_or_thawed=True):
+    tag: Tag = None,
+    icon: str | None = None
+    device_class: str | None = None
+    unit_of_measurement: str | None = None
+    entity_category: EntityCategory | None = None
+    entity_registry_enabled_default: bool = True
+
+@dataclass
+class ExtBinarySensorEntityDescriptionStub(EntityDescriptionStub):
     icon_off: str | None = None
 
 
 @dataclass
-class ExtButtonEntityDescription(ButtonEntityDescription):
+class ExtBinarySensorEntityDescription(BinarySensorEntityDescription):
+    tag: Tag = None
+    idx: int | None = None
+    name_addon: str | None = None
+
+    icon_off: str | None = None
+
+@dataclass
+class ExtButtonEntityDescriptionStub(EntityDescriptionStub):
     payload: str | None = None
 
 
 @dataclass
+class ExtButtonEntityDescription(ButtonEntityDescription):
+    tag: Tag = None
+    idx: int | None = None
+    name_addon: str | None = None
+
+    payload: str | None = None
+
+
+@dataclass
+class ExtNumberEntityDescriptionStub(EntityDescriptionStub):
+    max_value: None = None
+    min_value: None = None
+    mode: NumberMode | None = None
+    native_max_value: float | None = None
+    native_min_value: float | None = None
+    native_step: float | None = None
+    native_unit_of_measurement: str | None = None
+    step: None = None
+
+
+@dataclass
 class ExtNumberEntityDescription(NumberEntityDescription):
-    write_zero_as_null: bool | None = None
-    handle_as_float: bool | None = None
-    factor: int | None = None
-    idx: int | str | None = None
-    check_16a_limit: bool | None = None
+    tag: Tag = None
+    idx: int | None = None
+    name_addon: str | None = None
+
+
+@dataclass
+class ExtSelectEntityDescriptionStub(EntityDescriptionStub):
+    options: list[str] | None = None,
+
 
 @dataclass
 class ExtSelectEntityDescription(SelectEntityDescription):
-    pass
+    tag: Tag = None
+    idx: int | None = None
+    name_addon: str | None = None
+
+
+@dataclass
+class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
+    state_class: SensorStateClass | str | None = None
+    suggested_display_precision: int | None = None
+    native_unit_of_measurement: str | None = None
+    array_idx: int | None = None
+    factor: int | None = None
 
 
 @dataclass
 class ExtSensorEntityDescription(SensorEntityDescription):
-    idx: int | str | None = None
+    tag: Tag = None
+    idx: int | None = None
+    name_addon: str | None = None
+    array_idx: int | None = None
     factor: int | None = None
-    lookup: bool | None = None
+
+@dataclass
+class ExtSwitchEntityDescriptionStub(EntityDescriptionStub):
+    icon_off: str | None = None
 
 
 @dataclass
 class ExtSwitchEntityDescription(SwitchEntityDescription):
-    is_zero_or_one: bool | None = None
+    tag: Tag = None
+    idx: int | None = None
+    name_addon: str | None = None
     icon_off: str | None = None
 
 
 PLATFORMS: Final = ["binary_sensor", "button", "number", "select", "sensor", "switch"]
 
-# BINARY_SENSORS = [
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.CAR_CONNECTED.key,
-#         idx=0,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:car-connected",
-#         icon_off="mdi:car-off",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.ESK.key,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:application-export",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.PHA.key,
-#         idx=0,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.PHA.key,
-#         idx=1,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.PHA.key,
-#         idx=2,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.PHA.key,
-#         idx=3,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:lightning-bolt",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.PHA.key,
-#         idx=4,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:lightning-bolt",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.PHA.key,
-#         idx=5,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:lightning-bolt",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.ADI.key,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:ev-plug-type2",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.FSP.key,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:numeric-1",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.TLF.key,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:ab-testing",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtBinarySensorEntityDescription(
-#         key=Tag.TLS.key,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         device_class=None,
-#         icon="mdi:ab-testing",
-#         entity_registry_enabled_default=False
-#     )
-# ]
-# BUTTONS = [
-#     ExtButtonEntityDescription(
-#         key=Tag.RST.key,
-#         payload="true",
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:restart",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtButtonEntityDescription(
-#         key=Tag.INTERNAL_FORCE_CONFIG_READ.key,
-#         payload=IS_TRIGGER,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:reload",
-#         entity_registry_enabled_default=True
-#     ),
-# ]
-# NUMBER_SENSORS = [
-#     # ama
-#     ExtNumberEntityDescription(
-#         key=Tag.AMA.key,
-#         check_16a_limit=True,
-#         native_max_value=32,
-#         native_min_value=6,
-#         native_step=1,
-#         mode=NumberMode.SLIDER,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=NumberDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=True
-#     ),
-#     # amp
-#     ExtNumberEntityDescription(
-#         key=Tag.AMP.key,
-#         check_16a_limit=True,
-#         native_max_value=32,
-#         native_min_value=6,
-#         native_step=1,
-#         mode=NumberMode.SLIDER,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=NumberDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=True
-#     ),
-#     # ate
-#     ExtNumberEntityDescription(
-#         key=Tag.ATE.key,
-#         factor=1000,
-#         handle_as_float=True,
-#         native_max_value=100,
-#         native_min_value=1,
-#         native_step=0.01,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-#         device_class=NumberDeviceClass.ENERGY,
-#         icon="mdi:lightning-bolt",
-#         entity_registry_enabled_default=True
-#     ),
-#     # att
-#     ExtNumberEntityDescription(
-#         key=Tag.ATT.key,
-#         factor=60,
-#         native_max_value=1399,  # 24h = 1400 min
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.MINUTES,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     # awp -> this is in €-CENT! - so also an INT!
-#     ExtNumberEntityDescription(
-#         key=Tag.AWP.key,
-#         native_max_value=1000,
-#         native_min_value=-100,
-#         native_step=1,
-#         # mode=NumberMode.SLIDER,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=CURRENCY_CENT,
-#         device_class=None,
-#         icon="mdi:cash",
-#         entity_registry_enabled_default=True
-#     ),
-#     # cco -> only display value for the app..
-#     ExtNumberEntityDescription(
-#         key=Tag.CCO.key,
-#         handle_as_float=True,
-#         native_max_value=50,
-#         native_min_value=0.01,
-#         native_step=0.01,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-#         device_class=NumberDeviceClass.ENERGY,
-#         icon="mdi:gas-station-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # dwo
-#     ExtNumberEntityDescription(
-#         key=Tag.DWO.key,
-#         factor=1000,
-#         handle_as_float=True,
-#         write_zero_as_null=True,
-#         native_max_value=1000,
-#         native_min_value=0,
-#         native_step=0.01,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-#         device_class=NumberDeviceClass.ENERGY,
-#         icon="mdi:lightning-bolt",
-#         entity_registry_enabled_default=True
-#     ),
-#     # fmt
-#     ExtNumberEntityDescription(
-#         key=Tag.FMT.key,
-#         factor=60000,
-#         native_max_value=60,  # 1hr = 60min
-#         native_min_value=0,
-#         native_step=1,
-#         mode=NumberMode.BOX,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.MINUTES,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     # fst
-#     ExtNumberEntityDescription(
-#         key=Tag.FST.key,
-#         native_max_value=32000,
-#         native_min_value=0,
-#         native_step=10,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfPower.WATT,
-#         device_class=SensorDeviceClass.POWER,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # lbr
-#     ExtNumberEntityDescription(
-#         key=Tag.LBR.key,  # 0...255
-#         native_max_value=255,
-#         native_min_value=0,
-#         native_step=1,
-#         mode=NumberMode.SLIDER,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=None,
-#         device_class=None,
-#         icon="mdi:brightness-6",
-#         entity_registry_enabled_default=False
-#     ),
-#     # lof
-#     ExtNumberEntityDescription(
-#         key=Tag.LOF.key,
-#         check_16a_limit=True,
-#         native_max_value=32,
-#         native_min_value=6,
-#         native_step=1,
-#         mode=NumberMode.SLIDER,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=SensorDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=False
-#     ),
-#     # lop
-#     ExtNumberEntityDescription(
-#         key=Tag.LOP.key,
-#         native_max_value=99,
-#         native_min_value=0,
-#         native_step=1,
-#         mode=NumberMode.SLIDER,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=None,
-#         device_class=None,
-#         icon="mdi:priority-high",
-#         entity_registry_enabled_default=False
-#     ),
-#     # lot -> is an object ->   "lot": {
-#     #     "amp": 32,
-#     #     "dyn": 32,
-#     #     "sta": 32,
-#     #     "ts": 3
-#     #   }
-#     ExtNumberEntityDescription(
-#         key=Tag.LOT.key,
-#         idx="amp",
-#         check_16a_limit=True,
-#         native_max_value=32,
-#         native_min_value=6,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=SensorDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtNumberEntityDescription(
-#         key=Tag.LOT.key,
-#         idx="dyn",
-#         check_16a_limit=True,
-#         native_max_value=32,
-#         native_min_value=6,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=SensorDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtNumberEntityDescription(
-#         key=Tag.LOT.key,
-#         idx="sta",
-#         check_16a_limit=True,
-#         native_max_value=32,
-#         native_min_value=6,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=SensorDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtNumberEntityDescription(
-#         key=Tag.LOT.key,
-#         idx="ts",
-#         native_max_value=4000,
-#         native_min_value=0,
-#         native_step=1,
-#         mode=NumberMode.BOX,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=SensorDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=False
-#     ),
-#     # mca
-#     ExtNumberEntityDescription(
-#         key=Tag.MCA.key,
-#         check_16a_limit=True,
-#         native_max_value=32,
-#         native_min_value=6,
-#         native_step=1,
-#         mode=NumberMode.SLIDER,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         device_class=SensorDeviceClass.CURRENT,
-#         icon="mdi:current-ac",
-#         entity_registry_enabled_default=True
-#     ),
-#     # mci
-#     ExtNumberEntityDescription(
-#         key=Tag.MCI.key,
-#         factor=60000,
-#         native_max_value=1400,  # 24hr = 1400min
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.MINUTES,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # mcpd
-#     ExtNumberEntityDescription(
-#         key=Tag.MCPD.key,
-#         factor=60000,
-#         native_max_value=1400,  # 24hr = 1400min
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.MINUTES,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # mcpea
-#     ExtNumberEntityDescription(
-#         key=Tag.MCPEA.key,
-#         write_zero_as_null=True,
-#         factor=60000,
-#         native_max_value=1400,  # 24hr = 1400min
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.MINUTES,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # mptwt
-#     ExtNumberEntityDescription(
-#         key=Tag.MPTWT.key,
-#         factor=60000,
-#         native_max_value=1400,  # 24hr = 1400min
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.MINUTES,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # mpwst
-#     ExtNumberEntityDescription(
-#         key=Tag.MPWST.key,
-#         factor=60000,
-#         native_max_value=1400,  # 24hr = 1400min
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.MINUTES,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # pgt
-#     ExtNumberEntityDescription(
-#         key=Tag.PGT.key,
-#         native_max_value=5000,
-#         native_min_value=-5000,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfPower.WATT,
-#         device_class=SensorDeviceClass.POWER,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     # po
-#     ExtNumberEntityDescription(
-#         key=Tag.PO.key,
-#         native_max_value=100000,
-#         native_min_value=0,
-#         native_step=10,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfPower.WATT,
-#         device_class=SensorDeviceClass.POWER,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     # psh
-#     ExtNumberEntityDescription(
-#         key=Tag.PSH.key,
-#         native_max_value=100000,
-#         native_min_value=0,
-#         native_step=10,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfPower.WATT,
-#         device_class=SensorDeviceClass.POWER,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     # psmd
-#     ExtNumberEntityDescription(
-#         key=Tag.PSMD.key,
-#         factor=1000,
-#         native_max_value=84000,  # 24hr = 1400min = 84000 Sec
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.SECONDS,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:timer-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     # sh
-#     ExtNumberEntityDescription(
-#         key=Tag.SH.key,
-#         native_max_value=100000,
-#         native_min_value=0,
-#         native_step=10,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfPower.WATT,
-#         device_class=SensorDeviceClass.POWER,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     # spl3
-#     ExtNumberEntityDescription(
-#         key=Tag.SPL3.key,
-#         native_max_value=64000,
-#         native_min_value=500,
-#         native_step=10,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfPower.WATT,
-#         device_class=SensorDeviceClass.POWER,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     # sumd
-#     ExtNumberEntityDescription(
-#         key=Tag.SUMD.key,
-#         factor=1000,
-#         native_max_value=3600,  # 1hr = 60min = 3600sek
-#         native_min_value=0,
-#         native_step=1,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfTime.SECONDS,
-#         device_class=NumberDeviceClass.DURATION,
-#         icon="mdi:ab-testing",
-#         entity_registry_enabled_default=False
-#     ),
-#     # zfo
-#     ExtNumberEntityDescription(
-#         key=Tag.ZFO.key,
-#         native_max_value=100000,
-#         native_min_value=0,
-#         native_step=10,
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=UnitOfPower.WATT,
-#         device_class=SensorDeviceClass.POWER,
-#         icon="mdi:lightning-bolt-outline",
-#         entity_registry_enabled_default=True
-#     )
-# ]
-# SELECT_SENSORS = [
-#     ExtSelectEntityDescription(
-#         key=Tag.BAC.key,
-#         options=["0", "1", "2", "3"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:button-pointer",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.FRC.key,
-#         options=["0", "1", "2"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:hand-front-left-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.LMO.key,
-#         options=["3", "4", "5"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.LOTY.key,
-#         options=["0", "1"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:scale-balance",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.PSM.key,
-#         options=["0", "1", "2"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:speedometer",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.SDP.key,
-#         options=["0", "1", "2", "3"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:button-pointer",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.TRX.key,
-#         options=["null", "0", "1", "2", "3", "4", "5", "6", "7", "8", "9", "10"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:shield-lock-open-outline",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.TDS.key,
-#         options=["0", "1", "2"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:map-clock",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSelectEntityDescription(
-#         key=Tag.UST.key,
-#         # mode:3 not allowed (force unlock)
-#         # options=["0", "1", "2", "3"],
-#         options=["0", "1", "2"],
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:lock-open-outline",
-#         entity_registry_enabled_default=True
-#     ),
-# ]
+BINARY_SENSORS = []
+BINARY_SENSORS_PER_LOADPOINT = [
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.CHARGING,
+        icon=None,
+        icon_off=None
+    ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.CONNECTED,
+        icon=None,
+        icon_off=None
+    ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.ENABLED,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon=None,
+        icon_off=None
+    ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.SMARTCOSTACTIVE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon=None,
+        icon_off=None
+    ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.VEHICLEDETECTIONACTIVE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:car-search",
+        icon_off="mdi:car-search-outline"
+    )
+]
+
+BUTTONS = []
+BUTTONS_PER_LOADPOINT = [
+    ExtButtonEntityDescriptionStub(
+        tag=Tag.VEHICLEPLANSDELETE,
+        entity_category=EntityCategory.CONFIG,
+        device_class=None,
+        icon="mdi:restart"
+    ),
+    ExtButtonEntityDescriptionStub(
+        tag=Tag.PLANDELETE,
+        entity_category=EntityCategory.CONFIG,
+        device_class=None,
+        icon="mdi:restart",
+        entity_registry_enabled_default=False
+    ),
+    ExtButtonEntityDescriptionStub(
+        tag=Tag.DETECTVEHICLE,
+        device_class=None,
+        icon="mdi:car-search-outline"
+    ),
+]
+
+NUMBER_SENSORS = [
+    ExtNumberEntityDescription(
+        tag=Tag.RESIDUALPOWER,
+        key=Tag.RESIDUALPOWER.key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-lightning-bolt-outline",
+        mode = NumberMode.BOX,
+        native_max_value=10000,
+        native_min_value=-500,
+        native_step=50,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class= NumberDeviceClass.POWER,
+    ),
+]
+NUMBER_SENSORS_PER_LOADPOINT = [
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.LIMITSOC,
+        icon="mdi:battery-charging",
+        mode = NumberMode.SLIDER,
+        native_max_value=100,
+        native_min_value=20,
+        native_step=5,
+        device_class= NumberDeviceClass.BATTERY,
+    ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.ENABLETHRESHOLD,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:scale-balance",
+        mode = NumberMode.BOX,
+        native_max_value=10000,
+        native_min_value=-500,
+        native_step=50,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class= NumberDeviceClass.POWER,
+    ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.DISABLETHRESHOLD,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:scale-balance",
+        mode = NumberMode.BOX,
+        native_max_value=10000,
+        native_min_value=-500,
+        native_step=50,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class= NumberDeviceClass.POWER,
+    ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.LIMITENERGY,
+        icon="mdi:lightning-bolt-outline",
+        mode = NumberMode.BOX,
+        native_max_value=200,
+        native_min_value=0,
+        native_step=1,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_registry_enabled_default=False
+    ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.SMARTCOSTLIMIT,
+        entity_category=EntityCategory.CONFIG,
+        icon = "mdi:cash-multiple",
+        mode = NumberMode.BOX,
+        native_max_value=20.00,
+        native_min_value=0.00,
+        native_step=0.01,
+        native_unit_of_measurement="@@@/kWh",
+    )
+]
+
+SELECT_SENSORS = [
+    ExtSelectEntityDescription(
+        tag=Tag.PRIORITYSOC,
+        key=Tag.PRIORITYSOC.key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-battery-outline",
+        options=Tag.PRIORITYSOC.options
+        # we render the states via translations - so we can render '0 %' as '---'
+        #unit_of_measurement=PERCENTAGE,
+        #device_class= NumberDeviceClass.BATTERY,
+    ),
+    ExtSelectEntityDescription(
+        tag=Tag.BUFFERSOC,
+        key=Tag.BUFFERSOC.key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-battery-outline",
+        options=Tag.BUFFERSOC.options
+        # we render the states via translations - so we can render '0 %' as '---'
+        #unit_of_measurement=PERCENTAGE,
+        #device_class= NumberDeviceClass.BATTERY,
+    ),
+    ExtSelectEntityDescription(
+        tag=Tag.BUFFERSTARTSOC,
+        key=Tag.BUFFERSTARTSOC.key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:home-battery-outline",
+        options=Tag.BUFFERSTARTSOC.options
+        # we render the states via translations - so we can render '0 %' as '---'
+        #unit_of_measurement=PERCENTAGE,
+        #device_class= NumberDeviceClass.BATTERY,
+    )
+]
+SELECT_SENSORS_PER_LOADPOINT = [
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.MODE,
+        #entity_category=EntityCategory.CONFIG,
+        icon="mdi:state-machine"
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.PHASES,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:lightning-bolt-outline"
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.VEHICLENAME,
+        #entity_category=EntityCategory.CONFIG,
+        icon="mdi:car-outline"
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.MINCURRENT,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:current-ac",
+        unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=NumberDeviceClass.CURRENT,
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.MAXCURRENT,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:current-ac",
+        unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=NumberDeviceClass.CURRENT,
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.VEHICLELIMITSOC,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:battery-charging",
+        # we render the states via translations - so we can render '0 %' as '---'
+        #unit_of_measurement=PERCENTAGE,
+        #device_class= NumberDeviceClass.BATTERY,
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.VEHICLEMINSOC,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:battery-charging",
+        # we render the states via translations - so we can render '0 %' as '---'
+        #unit_of_measurement=PERCENTAGE,
+        #device_class= NumberDeviceClass.BATTERY,
+    )
+]
+
+SENSOR_SENSORS = []
+SENSOR_SENSORS_PER_LOADPOINT = [
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGECURRENT,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGECURRENTS,
+        array_idx=0,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGECURRENTS,
+        array_idx=1,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGECURRENTS,
+        array_idx=2,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEDURATION,
+        icon="mdi:clock-digital",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        factor = 60000000000,
+        #factor = 60000000,
+        device_class=SensorDeviceClass.DURATION,
+        suggested_display_precision=0
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEREMAININGDURATION,
+        icon="mdi:clock-digital",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        factor = 60000000000,
+        suggested_display_precision=0
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEPOWER,
+        icon="mdi:meter-electric-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        factor=1000,
+        suggested_display_precision=2
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGETOTALIMPORT,
+        icon="mdi:transmission-tower-export",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        device_class=None
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEDENERGY,
+        icon="mdi:lightning-bolt-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        factor=1000,
+        suggested_display_precision=2
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEREMAININGENERGY,
+        icon="mdi:lightning-bolt-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        factor=1000,
+        suggested_display_precision=2
+    ),
+
+    # ExtSensorEntityDescriptionStub(
+    #     tag=Tag.CONNECTEDDURATION,
+    #     icon="mdi:clock-digital",
+    #     state_class=SensorStateClass.MEASUREMENT,
+    #     native_unit_of_measurement=UnitOfTime.MICROSECONDS,
+    #     unit_of_measurement=UnitOfTime.MINUTES,
+    #     device_class=None
+    # ),
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PHASEACTION,
+        icon="mdi:numeric",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        device_class=None
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PHASEREMAINING,
+        icon="mdi:numeric",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        device_class=None
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PHASESACTIVE,
+        icon="mdi:numeric",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        device_class=None
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PHASESENABLED,
+        icon="mdi:numeric",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        device_class=None
+    ),
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.SESSIONCO2PERKWH,
+        icon="mdi:molecule-co2",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="CO₂/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.SESSIONENERGY,
+        icon="mdi:lightning-bolt-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        factor=1000,
+        suggested_display_precision=2
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.SESSIONPRICE,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.SESSIONPRICEPERKWH,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.SESSIONSOLARPERCENTAGE,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0
+    ),
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLERANGE,
+        icon="mdi:ev-station",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=None,
+        suggested_display_precision=0
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLESOC,
+        icon="mdi:car-electric-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0
+    ),
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLEPLANSSOC,
+        icon="mdi:battery-charging",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLEPLANSTIME,
+        icon="mdi:calendar-arrow-right",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.DATE
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PLANENERGY,
+        icon="mdi:battery-charging",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PLANTIME,
+        icon="mdi:calendar-arrow-right",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.DATE,
+        entity_registry_enabled_default=False
+    ),
+]
 # SENSOR_SENSORS = [
 #     # INDEXED Values...
 #     # nrg
@@ -1457,331 +1359,14 @@ PLATFORMS: Final = ["binary_sensor", "button", "number", "select", "sensor", "sw
 #     # wsm -> later (if at all)
 #
 # ]
-# SWITCH_SENSORS = [
-#     ExtSwitchEntityDescription(
-#         key=Tag.ACP.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         entity_registry_enabled_default=True
-#     ),
-#     # require special handing: 0 and 1 (for ON/OFF -> not true/false)
-#     ExtSwitchEntityDescription(
-#         key=Tag.ACS.key,
-#         is_zero_or_one=True,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.ARA.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.AWE.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:cash",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.CWE.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.FUP.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:solar-power",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.FZF.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         entity_registry_enabled_default=True
-#     ),
-#     # hsa key is not present in my DEVICE
-#     # ExtSwitchEntityDescription(
-#     #    key=Tag.HSA.key,
-#     #    entity_category=EntityCategory.CONFIG,
-#     #    device_class=None,
-#     #    entity_registry_enabled_default=False
-#     # ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.LOE.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:scale-balance",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.LSE.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:led-off",
-#         icon_off="mdi:led-on",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.NMO.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon_off="mdi:home-floor-g",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.SU.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:ab-testing",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.SUA.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:ab-testing",
-#         entity_registry_enabled_default=True
-#     ),
-#     ExtSwitchEntityDescription(
-#         key=Tag.UPO.key,
-#         entity_category=EntityCategory.CONFIG,
-#         device_class=None,
-#         icon="mdi:lock-open-outline",
-#         entity_registry_enabled_default=False
-#     )
-# ]
-#
-# # NOT-IMPLEMENTED...
-# STRING_INPUT = [
-#     ExtSensorEntityDescription(
-#         key=Tag.LOG.key,
-#         name="Load-Management Group ID",
-#         entity_category=EntityCategory.CONFIG,
-#         native_unit_of_measurement=None,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-# ]
-#
-# OTHER = [
-#     ExtSensorEntityDescription(
-#         key=Tag.CCH.key,
-#         name="Color charging",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=None,
-#         device_class=None,
-#         icon="mdi:format-color-fill",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.CFI.key,
-#         name="Color finished",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=None,
-#         device_class=None,
-#         icon="mdi:format-color-fill",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.CID.key,
-#         name="Color idle",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=None,
-#         device_class=None,
-#         icon="mdi:format-color-fill",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.CLP.key,
-#         name="Current limit presets",
-#         entity_category=None,
-#         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=SensorDeviceClass.CURRENT,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.CWC.key,
-#         name="Color wait for car",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=None,
-#         device_class=None,
-#         icon="mdi:format-color-fill",
-#         entity_registry_enabled_default=False
-#     ),
-#
-#     ExtSensorEntityDescription(
-#         key=Tag.SCH_SATUR.key,
-#         name="Scheduler saturday",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.SCH_SUND.key,
-#         name="Scheduler sunday",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.SCH_WEEK.key,
-#         name="Scheduler weekday",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.TDS.key,
-#         name="Timezone daylight saving mode",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.TOF.key,
-#         name="Timezone offset in minutes",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.TSSS.key,
-#         name="Time server sync status",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.WIFIS.key,
-#         name="WiFi configurations",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.DEL.key,
-#         name="Delete card",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.DELW.key,
-#         name="Delete STA config",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.LRN.key,
-#         name="Learn card",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.OCT.key,
-#         name="Firmware update trigger",
-#         entity_category=None,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.HOST.key,
-#         name="Hostname on STA interface",
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.LOC.key,
-#         name="Local time",
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.OCU.key,
-#         name="List of available firmware versions",
-#         # state=json_array_to_csv,
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         icon="mdi:numeric",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.SCAA.key,
-#         name="WiFi scan age",
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.SCAN.key,
-#         name="WiFi scan result",
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.TRX.key,
-#         name="Transaction",
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         icon="mdi:message-text-lock-outline",
-#         entity_registry_enabled_default=False
-#     ),
-#     ExtSensorEntityDescription(
-#         key=Tag.UTC.key,
-#         name="UTC time",
-#         entity_category=EntityCategory.DIAGNOSTIC,
-#         native_unit_of_measurement=None,
-#         state_class=SensorStateClass.MEASUREMENT,
-#         device_class=None,
-#         entity_registry_enabled_default=False
-#     )
-# ]
+
+SWITCH_SENSORS = [
+    ExtSwitchEntityDescription(
+        tag=Tag.BATTERYDISCHARGECONTROL,
+        key=Tag.BATTERYDISCHARGECONTROL.key,
+        icon="mdi:battery-off-outline",
+        entity_category=EntityCategory.CONFIG,
+        device_class=None
+    ),
+]
+SWITCH_SENSORS_PER_LOADPOINT = []

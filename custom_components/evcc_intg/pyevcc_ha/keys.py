@@ -1,7 +1,14 @@
 import logging
 from enum import Enum
 from typing import (
-    NamedTuple, Final, Callable
+    NamedTuple, Final
+)
+
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    MIN_CURRENT_LIST,
+    MAX_CURRENT_LIST,
+    JSONKEY_LOADPOINTS,
+    JSONKEY_VEHICLES, BATTERY_LIST
 )
 
 # from aenum import Enum, extend_enum
@@ -10,60 +17,18 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 IS_TRIGGER: Final = "TRIGGER"
 
-class CAT(Enum):
-    CONFIG = "CONF"
-    STATUS = "STAT"
-    OTHER = "OTHE"
-    CONSTANT = "CONS"
-
-class ENDPOINT_TYPE(Enum):
-    LOADPOINT = "loadpoint"
-    VEHICLE = "vehicle"
+class EP_TYPE(Enum):
+    LOADPOINTS = JSONKEY_LOADPOINTS
+    VEHICLES = JSONKEY_VEHICLES
     SITE = "site"
 
 class ApiKey(NamedTuple):
-
-    # def _decode_value_default(self, src_value):
-    #     _LOGGER.debug(f"reading TAG {self.key} from {src_value}")
-    #     pass
-    #
-    # def _encode_value_default(self):
-    #     pass
-    #
-    # def _decode_mode(self, src_value):
-    #     # possible mode strings: off/pv/minpv/now
-    #     if isinstance(src_value, str):
-    #         src_value = src_value.lower()
-    #         if "off" == src_value:
-    #             return 0
-    #         elif "pv" == src_value:
-    #             return 1
-    #         elif "minpv" == src_value:
-    #             return 2
-    #         elif "now" == src_value:
-    #             return 3
-    #         else:
-    #             return None
-    #
-    # def _encode_mode(self, src_value):
-    #     match int(src_value):
-    #         case 0:
-    #             return "off"
-    #         case 1:
-    #             return "pv"
-    #         case 2:
-    #             return "minpv"
-    #         case 3:
-    #             return "now"
-    #     return None
-
     key: str
-    write_key: str
     type: str
+    write_key: str = None
+    write_type: str = None
+    options: list[str] = None
     writeable: bool = False
-    writeonly: bool = False
-    #decode_f: Callable = _decode_value_default
-    #encode_f: Callable = _encode_value_default
 
 # see https://github.com/goecharger/go-eCharger-API-v2/blob/main/apikeys-en.md for details
 class Tag(ApiKey, Enum):
@@ -74,68 +39,214 @@ class Tag(ApiKey, Enum):
     def __str__(self):
         return self.key
 
-# "chargeCurrent": 0,
-# "chargeCurrents": [0, 0, 0],
-# "chargeDuration": 0,
-# "chargePower": 0,
-# "chargeTotalImport": 0.004,
-# "chargedEnergy": 0,
-# "chargerFeatureHeating": false,
-# "chargerFeatureIntegratedDevice": false,
-# "chargerIcon": null,
-# "chargerPhases1p3p": true,
-# "chargerPhysicalPhases": null,
-# "charging": false,
-# "connected": false,
-# "connectedDuration": 9.223372036854776e+18,
-# "effectiveLimitSoc": 100,
-# "effectiveMaxCurrent": 16,
-# "effectiveMinCurrent": 6,
-# "effectivePlanSoc": 0,
-# "effectivePlanTime": "0001-01-01T00:00:00Z",
-# "effectivePriority": 0,
-# "enabled": false,
-# "phaseAction": "inactive",
-# "phaseRemaining": 0,
-# "phasesActive": 3,
-# "phasesEnabled": 0,
-# "planEnergy": 0,
-# "planOverrun": 0,
-# "planProjectedStart": "0001-01-01T00:00:00Z",
-# "planTime": "0001-01-01T00:00:00Z",
-# "priority": 0,
-# "pvAction": "inactive",
-# "pvRemaining": 0,
-# "sessionCo2PerKWh": null,
-# "sessionEnergy": 0,
-# "sessionPrice": null,
-# "sessionPricePerKWh": null,
-# "sessionSolarPercentage": 0,
-# "smartCostActive": true,
-# "smartCostLimit": 0.22,
-# "title": "HH-7",
-# "vehicleClimaterActive": null,
-# "vehicleDetectionActive": false,
-# "vehicleLimitSoc": 0,
-# "vehicleName": "",
-# "vehicleOdometer": 0,
-# "vehicleRange": 0,
-# "vehicleSoc": 0
+    ###################################
+    # SITE STUFF
+    ###################################
+
+    # POST /api/batterydischargecontrol/<status>: enable/disable battery discharge control (true/false)
+    BATTERYDISCHARGECONTROL = ApiKey(
+        key="batteryDischargeControl", type=EP_TYPE.SITE, writeable=True, write_key="batterydischargecontrol"
+    )
+
+    # POST /api/residualpower/<power>: grid residual power in W
+    RESIDUALPOWER = ApiKey(key="residualPower", type=EP_TYPE.SITE, writeable=True, write_key="residualpower")
+
+    # POST /api/prioritysoc/<soc>: battery priority soc in %
+    PRIORITYSOC = ApiKey(
+        key="prioritySoc", type=EP_TYPE.SITE, writeable=True, write_key="prioritysoc", options=BATTERY_LIST
+    )
+
+    # POST /api/buffersoc/<soc>: battery buffer soc in %
+    BUFFERSOC = ApiKey(
+        key="bufferSoc", type=EP_TYPE.SITE, writeable=True, write_key="buffersoc", options=BATTERY_LIST[1:]
+    )
+
+    # POST /api/bufferstartsoc/<soc>: battery buffer start soc in %
+    BUFFERSTARTSOC = ApiKey(
+        key="bufferStartSoc", type=EP_TYPE.SITE, writeable=True, write_key="bufferstartsoc",
+        options=BATTERY_LIST[1:]+BATTERY_LIST[0:1]
+    )
+
+    # when 'POST /api/smartcostlimit/<cost>:' smart charging cost limit (previously known as "cheap" tariff)
+    # ALL smartCostLimit of all loadpoints will be set
+    # SMARTCOSTLIMIT = ApiKey(key="smartCostLimit", type=EP_TYPE.SITE, writeable=True, write_key="smartcostlimit")
+
+    VERSION = ApiKey(key="availableVersion", type=EP_TYPE.SITE)
+
+
+    ###################################
+    # LOADPOINT-DATA
+    ###################################
+
+    # "chargeCurrent": 0,
+    CHARGECURRENT = ApiKey(key="chargeCurrent", type=EP_TYPE.LOADPOINTS)
+
+    # "chargeCurrents": [0, 0, 0],
+    CHARGECURRENTS = ApiKey(key="chargeCurrents", type=EP_TYPE.LOADPOINTS)
+
+    # "chargeDuration": 0, -> (in millis) ?! 840000000000 = 14min -> / 1000000
+    CHARGEDURATION = ApiKey(key="chargeDuration", type=EP_TYPE.LOADPOINTS)
+    CHARGEREMAININGDURATION = ApiKey(key="chargeRemainingDuration", type=EP_TYPE.LOADPOINTS)
+
+
+    # "chargePower": 0,
+    CHARGEPOWER = ApiKey(key="chargePower", type=EP_TYPE.LOADPOINTS)
+
+    # "chargeTotalImport": 0.004,
+    CHARGETOTALIMPORT = ApiKey(key="chargeTotalImport", type=EP_TYPE.LOADPOINTS)
+
+    # "chargedEnergy": 0,
+    CHARGEDENERGY = ApiKey(key="chargedEnergy", type=EP_TYPE.LOADPOINTS)
+    CHARGEREMAININGENERGY = ApiKey(key="chargeRemainingEnergy", type=EP_TYPE.LOADPOINTS)
+
+    # "chargerFeatureHeating": false,
+    # "chargerFeatureIntegratedDevice": false,
+    # "chargerIcon": null,
+    # "chargerPhases1p3p": true,
+    # "chargerPhysicalPhases": null,
+
+    # "charging": false,
+    CHARGING = ApiKey(key="charging", type=EP_TYPE.LOADPOINTS)
+
+    # "connected": false,
+    CONNECTED = ApiKey(key="connected", type=EP_TYPE.LOADPOINTS)
+
+    # "connectedDuration": 9.223372036854776e+18,
+    CONNECTEDDURATION = ApiKey(key="connectedDuration", type=EP_TYPE.LOADPOINTS)
+
+    # "effectiveLimitSoc": 100,
+    EFFECTIVELIMITSOC = ApiKey(key="effectiveLimitSoc", type=EP_TYPE.LOADPOINTS)
+
+    # "effectiveMaxCurrent": 16,
+    # "effectiveMinCurrent": 6,
+    # "effectivePlanSoc": 0,
+    # "effectivePlanTime": "0001-01-01T00:00:00Z",
+    # "effectivePriority": 0,
+
+    # "enabled": false,
+    ENABLED = ApiKey(key="enabled", type=EP_TYPE.LOADPOINTS)
+
+    # "phaseAction": "inactive",
+    PHASEACTION = ApiKey(key="phaseAction", type=EP_TYPE.LOADPOINTS)
+
+    # "phaseRemaining": 0,
+    PHASEREMAINING = ApiKey(key="phaseRemaining", type=EP_TYPE.LOADPOINTS)
+
+    # "phasesActive": 3,
+    PHASESACTIVE = ApiKey(key="phasesActive", type=EP_TYPE.LOADPOINTS)
+
+    # "phasesEnabled": 0,
+    PHASESENABLED = ApiKey(key="phasesEnabled", type=EP_TYPE.LOADPOINTS)
+
+    # "planOverrun": 0,
+    # "planProjectedStart": "0001-01-01T00:00:00Z",
+    # "priority": 0,
+    # "pvAction": "inactive",
+    # "pvRemaining": 0,
+
+    # "sessionCo2PerKWh": null,
+    SESSIONCO2PERKWH = ApiKey(key="sessionCo2PerKWh", type=EP_TYPE.LOADPOINTS)
+    # "sessionEnergy": 0,
+    SESSIONENERGY = ApiKey(key="sessionEnergy", type=EP_TYPE.LOADPOINTS)
+    # "sessionPrice": null,
+    SESSIONPRICE = ApiKey(key="sessionPrice", type=EP_TYPE.LOADPOINTS)
+    # "sessionPricePerKWh": null,
+    SESSIONPRICEPERKWH = ApiKey(key="sessionPricePerKWh", type=EP_TYPE.LOADPOINTS)
+    # "sessionSolarPercentage": 0,
+    SESSIONSOLARPERCENTAGE = ApiKey(key="sessionSolarPercentage", type=EP_TYPE.LOADPOINTS)
+
+    # "smartCostActive": true,
+    SMARTCOSTACTIVE = ApiKey(key="smartCostActive", type=EP_TYPE.LOADPOINTS)
+
+    # "smartCostLimit": 0.22,
+    SMARTCOSTLIMIT = ApiKey(key="smartCostLimit", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="smartcostlimit")
+
+    # "title": "HH-7",
+    # -> USED during startup phase
+
+    # "vehicleClimaterActive": null,
+    # ???
+
+    # start Vehicle Detection Button
+    DETECTVEHICLE = ApiKey(key="detectvehicle", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="detectvehicle")
+
+    # "vehicleDetectionActive": false,
+    VEHICLEDETECTIONACTIVE = ApiKey(key="vehicleDetectionActive", type=EP_TYPE.LOADPOINTS)
+
+    # "vehicleName": "",
+    VEHICLENAME = ApiKey(key="vehicleName", type=EP_TYPE.LOADPOINTS, writeable=True, write_key = "vehicle")
+
+    # "vehicleOdometer": 0,
+    # ???
+
+    # "vehicleRange": 0,
+    VEHICLERANGE = ApiKey(key="vehicleRange", type=EP_TYPE.LOADPOINTS)
+
+    # "vehicleSoc": 0
+    VEHICLESOC = ApiKey(key="vehicleSoc", type=EP_TYPE.LOADPOINTS)
 
     # "mode": "off", -> (off/pv/minpv/now)
+    MODE = ApiKey(
+        key="mode", type=EP_TYPE.LOADPOINTS,
+        writeable=True, write_key="mode", options=["off", "pv", "minpv", "now"]
+    )
     # "limitSoc": 0, -> write 'limitsoc' in %
-    # "limitEnergy": 0, -> write 'limitenergy' limit energy in kWh
-    # "phasesConfigured": 0, -> write 'phases' -> allowed phases (0=auto/1=1p/3=3p)
-    # "minCurrent": 6, -> write 'mincurrent' current minCurrent value in A
-    # "maxCurrent": 16, -> write 'maxcurrent' current maxCurrent value in A
-    # "disableThreshold": 0, -> write 'disable/threshold' (in W)
-    # "enableThreshold": 0, -> write 'enable/threshold' (in W)
+    LIMITSOC = ApiKey(key="limitSoc", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="limitsoc")
 
-    MODE = ApiKey(key="mode", write_key="mode", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
-    LIMITSOC = ApiKey(key="limitSoc", write_key="limitsoc", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
-    LIMITENERGY = ApiKey(key="limitEnergy", write_key="limitenergy", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
-    PHASES = ApiKey(key="phasesConfigured", write_key="phases", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
-    MINCURRENT = ApiKey(key="minCurrent", write_key="mincurrent", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
-    MAXCURRENT = ApiKey(key="maxCurrent", write_key="maxcurrent", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
-    DISABLETHRESHOLD = ApiKey(key="disableThreshold", write_key="disable/threshold", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
-    ENABLETHRESHOLD = ApiKey(key="enableThreshold", write_key="enable/threshold", type=ENDPOINT_TYPE.LOADPOINT, writeable=True)
+    # "limitEnergy": 0, -> write 'limitenergy' limit energy in kWh
+    LIMITENERGY = ApiKey(key="limitEnergy", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="limitenergy")
+
+    # "phasesConfigured": 0, -> write 'phases' -> allowed phases (0=auto/1=1p/3=3p)
+    PHASES = ApiKey(
+        key="phasesConfigured", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="phases", options=["0", "1", "3"]
+    )
+
+    # "minCurrent": 6, -> write 'mincurrent' current minCurrent value in A
+    MINCURRENT = ApiKey(
+        key="minCurrent", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="mincurrent", options=MIN_CURRENT_LIST
+    )
+
+    # "maxCurrent": 16, -> write 'maxcurrent' current maxCurrent value in A
+    MAXCURRENT = ApiKey(
+        key="maxCurrent", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="maxcurrent", options=MAX_CURRENT_LIST
+    )
+
+    # "disableThreshold": 0, -> write 'disable/threshold' (in W)
+    DISABLETHRESHOLD = ApiKey(
+        key="disableThreshold", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="disable/threshold"
+    )
+
+    # "enableThreshold": 0, -> write 'enable/threshold' (in W)
+    ENABLETHRESHOLD = ApiKey(
+        key="enableThreshold", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="enable/threshold"
+    )
+
+    # values can be written via SERVICE
+    # "planEnergy": 0,
+    PLANENERGY = ApiKey(key="planEnergy", type=EP_TYPE.LOADPOINTS)
+
+    # "planTime": "0001-01-01T00:00:00Z",
+    PLANTIME = ApiKey(key="planTime", type=EP_TYPE.LOADPOINTS)
+
+    # delete plan button
+    PLANDELETE = ApiKey(key="planDelete", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="plan/energy")
+
+
+    ###################################
+    # VEHICLE
+    ###################################
+
+    # "vehicleLimitSoc": 0, -> write to vehicle EP!
+    # even if we write to 'limitsoc' at the vehicle endpoint, the loadpoint[n]:vehicleLimitSoc values does not change ?!
+    VEHICLELIMITSOC = ApiKey(
+        key="limitSoc", type=EP_TYPE.VEHICLES, writeable=True, write_key="limitsoc", options=BATTERY_LIST
+    )
+    VEHICLEMINSOC = ApiKey(
+        key="minSoc", type=EP_TYPE.VEHICLES, writeable=True, write_key="minsoc", options=BATTERY_LIST[:-1]
+    )
+
+    # values can be written via SERVICE
+    VEHICLEPLANSSOC = ApiKey(key="vehiclePlansSoc", type=EP_TYPE.VEHICLES)
+    VEHICLEPLANSTIME = ApiKey(key="vehiclePlansTime", type=EP_TYPE.VEHICLES)
+    # delete plan button
+    VEHICLEPLANSDELETE= ApiKey(key="vehiclePlansDelete", type=EP_TYPE.VEHICLES, writeable=True, write_key="plan/soc")

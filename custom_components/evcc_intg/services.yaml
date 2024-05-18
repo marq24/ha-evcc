@@ -1,53 +1,69 @@
-set_pv_data:
-  # Service name as shown in UI
-  name: Send PV data to Wallbox (to allow Charge with PV Surplus)
-  # Description of the service
-  description: This is a simple proxy service so that we can configure the automation a bit easier
-  # If the service accepts entity IDs, target allows the user to specify entities by entity, device, or area. If `target` is specified, `entity_id` should not be defined in the `fields` map. By default it shows only targets matching entities from the same domain as the service, but if further customization is required, target supports the entity, device, and area selectors (https://www.home-assistant.io/docs/blueprint/selectors/). Entity selector parameters will automatically be applied to device and area, and device selector parameters will automatically be applied to area.
-  #target:
-  # Different fields that your service accepts
+set_vehicle_plan:
+  name: Set a departure plan for a vehicle connected to a loadpoint [SOC (%)]
+  description: Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.
   fields:
     # Key of the field
-    pgrid:
-      # Field name as shown in UI
-      name: Power from/to Grid (in Watt)
-      # Description of the field
-      description: Negative values means export to the grid, positive value means importing from grid.
+    startdate:
+      name: Departure
+      description: Please select a date in the future (seconds will be ignored)
       required: true
-      default: 0
+      selector:
+        datetime:
       # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+    loadpoint:
+      name: Loadpoint ID
+      description: A number starting from 1...n (where 1'st your first configured loadpoint)
+      required: true
+      default: 1
       selector:
         number:
-          min: -50000
-          max: 50000
-          unit_of_measurement: "W"
-          mode: "box"
-    ppv:
-      name: Power from PV
-      # Description of the field
-      description: The current PV production (in Watt)
-      required: false
-      default: 0
-      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+          min: 1
+          max: 10
+          mode: box
+    soc:
+      name: Charging goal
+      description: Target state of charge
+      required: true
+      default: 100
       selector:
         number:
-          min: 0
-          max: 50000
-          unit_of_measurement: "W"
-          mode: "box"
-    pakku:
-      name: Power from/to Battery (in Watt)
-      description: Negative values means charging the battery, positive value means consuming power from the battery.
-      required: false
-      default: 0
-      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
-      selector:
-        number:
-          min: -50000
-          max: 50000
-          unit_of_measurement: "W"
-          mode: "box"
+          min: 5
+          max: 100
+          step: 5
+          unit_of_measurement: "%"
+          mode: slider
 
-stop_charging:
-  name: Force changing OFF (for 5 minutes)
-  description: Will ensure that the go-eCharger will stop charging. After 5 minutes the charger will return to default mode
+set_loadpoint_plan:
+  name: Set a departure plan for a loadpoint [Energy (kWh)]
+  description: Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.
+  fields:
+    # Key of the field
+    startdate:
+      name: Departure
+      description: Please select a date in the future (seconds will be ignored)
+      required: true
+      selector:
+        datetime:
+      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
+    loadpoint:
+      name: Loadpoint ID
+      description: A number starting from 1...n (where 1'st your first configured loadpoint)
+      required: true
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 10
+          mode: box
+    energy:
+      name: Charging goal
+      description: Target energy
+      required: true
+      default: 25
+      selector:
+        number:
+          min: 1
+          max: 200
+          step: 1
+          unit_of_measurement: "kWh"
+          mode: box

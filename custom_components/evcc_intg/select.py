@@ -1,3 +1,4 @@
+import asyncio
 import logging
 
 from homeassistant.components.select import SelectEntity
@@ -5,43 +6,200 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SELECT_SENSORS, ExtSelectEntityDescription
+from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, ExtSelectEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
+entities_min_max_dict = {}
+SOCS_TAG_LIST = [Tag.PRIORITYSOC, Tag.BUFFERSOC, Tag.BUFFERSTARTSOC]
+
+async def check_min_max():
+    await asyncio.sleep(15)
+    size = len(entities_min_max_dict)
+    count = 1
+    for a_entity in entities_min_max_dict.values():
+        a_entity.check_tag(size == count)
+        count += 1
+
+    _LOGGER.debug("SELECT init is COMPLETED")
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_entity_cb: AddEntitiesCallback):
     _LOGGER.debug("SELECT async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
+
+    global entities_min_max_dict
+    entities_min_max_dict = {}
+
     entities = []
     for description in SELECT_SENSORS:
         entity = EvccSelect(coordinator, description)
         entities.append(entity)
+        if description.tag in SOCS_TAG_LIST:
+            entities_min_max_dict[entity.entity_id.split('.')[1].lower()] = entity
+
+    # generating the dynamic SELECT_SENSORS
+    for a_lp_key in coordinator._loadpoint:
+        load_point_config = coordinator._loadpoint[a_lp_key]
+        lp_api_index = int(a_lp_key)
+        lp_id_addon = load_point_config["id"]
+        lp_name_addon = load_point_config["name"]
+        lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
+
+        for a_stub in SELECT_SENSORS_PER_LOADPOINT:
+            description = ExtSelectEntityDescription(
+                tag=a_stub.tag,
+                idx=lp_api_index,
+                key=f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
+                translation_key=a_stub.tag.key,
+                name_addon=lp_name_addon,
+                icon=a_stub.icon,
+                device_class=a_stub.device_class,
+                unit_of_measurement=a_stub.unit_of_measurement,
+                entity_category=a_stub.entity_category,
+                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+
+                # the entity type specific values...
+                options=a_stub.tag.options,
+            )
+
+            # we might need to patch the 'auto-mode' from the phases selector
+            if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:
+                description.options = description.options[1:]
+                description.translation_key = f"{description.translation_key}_fixed"
+            elif a_stub.tag == Tag.VEHICLENAME:
+                description.options = ["null"] + list(coordinator._vehicle.keys())
+
+            entity = EvccSelect(coordinator, description)
+
+            if entity.tag == Tag.MINCURRENT or entity.tag == Tag.MAXCURRENT:
+                entities_min_max_dict[entity.entity_id.split('.')[1].lower()] = entity
+
+            entities.append(entity)
+
     add_entity_cb(entities)
+    asyncio.create_task(check_min_max())
 
 
 class EvccSelect(EvccBaseEntity, SelectEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSelectEntityDescription):
-        if description.key == Tag.TRX.key:
-            options = ["null", "0"]
-            description.options = options + coordinator.available_cards_idx
         super().__init__(coordinator=coordinator, description=description)
+
+    async def add_to_platform_finish(self) -> None:
+        if self.tag == Tag.VEHICLENAME:
+            # ok we're going to patch the display strings for the vehicle names... this is quite a HACK!
+            for a_key in self.coordinator._vehicle.keys():
+                self.platform.platform_translations[
+                    f"component.{DOMAIN}.entity.select.{Tag.VEHICLENAME.key.lower()}.state.{a_key.lower()}"] = self.coordinator._vehicle[a_key]["name"]
+            #_LOGGER.error(f"-> {self.platform.platform_translations}")
+        elif self.tag == Tag.VEHICLEMINSOC:
+            #_LOGGER.error(f"{self.platform.platform_translations}")
+            pass
+
+        await super().add_to_platform_finish()
+
+    def check_tag(self, is_last: bool = False):
+        if self.tag == Tag.MAXCURRENT:
+            self._check_min_options(self.current_option)
+        elif self.tag == Tag.MINCURRENT:
+            self._check_max_options(self.current_option)
+        elif self.tag in SOCS_TAG_LIST:
+            self._check_socs(self.current_option)
+            pass
+
+        if is_last:
+            self.async_schedule_update_ha_state(force_refresh=True)
+
+    def _check_min_options(self, option: str):
+        min_key = self.entity_id.split('.')[1].replace(Tag.MAXCURRENT.key.lower(), Tag.MINCURRENT.key.lower())
+        #_LOGGER.warning(f"{min_key} {entities_min_max_dict}")
+        if min_key in entities_min_max_dict:
+            if option in MIN_CURRENT_LIST:
+                entities_min_max_dict[min_key].options = MIN_CURRENT_LIST[:MIN_CURRENT_LIST.index(option) + 1]
+            else:
+                entities_min_max_dict[min_key].options = MIN_CURRENT_LIST
+
+    def _check_max_options(self, option: str):
+        max_key = self.entity_id.split('.')[1].replace(Tag.MINCURRENT.key.lower(), Tag.MAXCURRENT.key.lower())
+        #_LOGGER.warning(f"{max_key} {entities_min_max_dict}")
+        if max_key in entities_min_max_dict:
+            if option in MAX_CURRENT_LIST:
+                entities_min_max_dict[max_key].options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(option):]
+            else:
+                entities_min_max_dict[max_key].options = MAX_CURRENT_LIST
+
+    def _check_socs(self, option: str):
+        changed_option = self.entity_id.split('.')[1].split('_')
+        system_id = changed_option[0]
+        changed_option_key = changed_option[1]
+
+        # is 'Vehicle first' (BUFFERSOC)
+        if changed_option_key == Tag.BUFFERSOC.key.lower():
+            # we need to adjust the 'Support vehicle charging' (BUFFERSTARTSOC) options
+            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSTARTSOC.key.lower()}"]
+            if option in Tag.BUFFERSTARTSOC.options:
+                select.options = Tag.BUFFERSTARTSOC.options[Tag.BUFFERSTARTSOC.options.index(option):]
+            else:
+                select.options = Tag.BUFFERSTARTSOC.options
+
+            # we need to adjust the 'Home has priority' (PRIORITYSOC) options
+            select = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.key.lower()}"]
+            if option in Tag.PRIORITYSOC.options:
+                select.options = Tag.PRIORITYSOC.options[:Tag.PRIORITYSOC.options.index(option)+1]
+            else:
+                select.options = Tag.PRIORITYSOC.options
+
+        # is 'Home has priority' (PRIORITYSOC)
+        elif changed_option_key == Tag.PRIORITYSOC.key.lower():
+            # we need to adjust the 'Vehicle first' (BUFFERSOC) options
+            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.key.lower()}"]
+            if option in Tag.BUFFERSOC.options:
+                select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(option):]
+            else:
+                select.options = Tag.BUFFERSOC.options
+
+        # is 'Support vehicle charging' (BUFFERSTARTSOC)
+        elif changed_option_key == Tag.BUFFERSTARTSOC.key.lower():
+            # we need to adjust the 'Vehicle first' (BUFFERSOC) options
+            low_option = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.key.lower()}"].current_option
+            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.key.lower()}"]
+            if int(option) > 0 and option in Tag.BUFFERSOC.options and low_option in Tag.BUFFERSOC.options:
+                select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):Tag.BUFFERSOC.options.index(option)+1]
+            elif int(option) > 0 and option in Tag.BUFFERSOC.options:
+                select.options = Tag.BUFFERSOC.options[:Tag.BUFFERSOC.options.index(option)+1]
+            else:
+                if low_option in Tag.BUFFERSOC.options:
+                    select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):]
+                else:
+                    select.options = Tag.BUFFERSOC.options
+
+
+    # def _on_vehicle_change(self, sel_vehicle_id: str):
+    #     if JSONKEY_VEHICLES in self.coordinator.data and sel_vehicle_id in self.coordinator.data[JSONKEY_VEHICLES]:
+    #         veh_dict = self.coordinator.data[JSONKEY_VEHICLES][sel_vehicle_id]
+    #         if Tag.VEHICLEMINSOC.key in veh_dict:
+    #             val_minsoc = veh_dict[Tag.VEHICLEMINSOC.key]
+    #         else:
+    #             val_minsoc = "0"
+    #         if Tag.VEHICLELIMITSOC.key in veh_dict:
+    #             val_limitsoc = veh_dict[Tag.VEHICLELIMITSOC.key]
+    #         else:
+    #             val_limitsoc = "0"
 
     @property
     def current_option(self) -> str | None:
         try:
-            value = self.coordinator.data[self.data_key]
+            value = self.coordinator.read_tag(self.tag, self.idx)
+
+            # _LOGGER.error(f"{self.tag.key} {self.idx} {value}")
+
             if value is None or value == "":
-                # special handling for tra 'transaction' API key...
-                # where None means, that Auth is required
-                if self.data_key == Tag.TRX.key:
-                    value = "null"
-                else:
-                    value = 'unknown'
-            if isinstance(value, int):
+                value = 'unknown'
+            if isinstance(value, (int, float)):
                 value = str(value)
+
         except KeyError:
             value = "unknown"
         except TypeError:
@@ -51,8 +209,16 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         try:
             if str(option) == "null":
-                await self.coordinator.async_write_key(self.data_key, None, self)
+                await self.coordinator.async_write_tag(self.tag, None, self.idx, self)
             else:
-                await self.coordinator.async_write_key(self.data_key, int(option), self)
+                await self.coordinator.async_write_tag(self.tag, option, self.idx, self)
+
+            if self.tag == Tag.MAXCURRENT:
+                self._check_min_options(option)
+            elif self.tag == Tag.MINCURRENT:
+                self._check_max_options(option)
+            elif self.tag in SOCS_TAG_LIST:
+                self._check_socs(option)
+
         except ValueError:
             return "unavailable"

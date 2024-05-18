@@ -5,8 +5,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, NUMBER_SENSORS, ExtNumberEntityDescription
+from .const import DOMAIN, NUMBER_SENSORS, ExtNumberEntityDescription, NUMBER_SENSORS_PER_LOADPOINT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -17,32 +18,72 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     for description in NUMBER_SENSORS:
         entity = EvccNumber(coordinator, description)
         entities.append(entity)
+
+    # generating the dynamic NUMBER_SENSORS
+    for a_lp_key in coordinator._loadpoint:
+        load_point_config = coordinator._loadpoint[a_lp_key]
+        lp_api_index = int(a_lp_key)
+        lp_id_addon = load_point_config["id"]
+        lp_name_addon = load_point_config["name"]
+
+        for a_stub in NUMBER_SENSORS_PER_LOADPOINT:
+            description = ExtNumberEntityDescription(
+                tag = a_stub.tag,
+                idx = lp_api_index,
+                key = f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
+                translation_key = a_stub.tag.key,
+                name_addon = lp_name_addon,
+                icon = a_stub.icon,
+                device_class = a_stub.device_class,
+                unit_of_measurement = a_stub.unit_of_measurement,
+                entity_category = a_stub.entity_category,
+                entity_registry_enabled_default = a_stub.entity_registry_enabled_default,
+
+                # the entity type specific values...
+                max_value = a_stub.max_value,
+                min_value = a_stub.min_value,
+                mode = a_stub.mode,
+                native_max_value = a_stub.native_max_value,
+                native_min_value = a_stub.native_min_value,
+                native_step = a_stub.native_step,
+                native_unit_of_measurement = a_stub.native_unit_of_measurement,
+                step = a_stub.step,
+            )
+
+            if a_stub.tag == Tag.SMARTCOSTLIMIT and coordinator._cost_type == "co2":
+                description.translation_key = f"{a_stub.tag.key}_co2"
+                description.icon = "mdi:molecule-co2"
+                description.native_max_value=500
+                description.native_min_value=0
+                description.native_step=5
+                description.native_unit_of_measurement="g/kWh"
+
+            entity = EvccNumber(coordinator, description)
+            entities.append(entity)
+
     add_entity_cb(entities)
 
 
 class EvccNumber(EvccBaseEntity, NumberEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtNumberEntityDescription):
-        if description.check_16a_limit and coordinator.limit_to16a:
-            description.native_max_value = 16
         super().__init__(coordinator=coordinator, description=description)
 
     @property
     def native_value(self):
         try:
-            if self.entity_description.idx is not None:
-                value = self.coordinator.data[self.data_key][self.entity_description.idx]
-            else:
-                value = self.coordinator.data[self.data_key]
-
+            value = self.coordinator.read_tag(self.tag, self.idx)
             if value is None or value == "":
                 return "unknown"
-            elif self.entity_description.handle_as_float is not None and self.entity_description.handle_as_float:
-                if self.entity_description.factor is not None and self.entity_description.factor > 0:
-                    value = float(int(value) / self.entity_description.factor)
+            else:
+                if self.tag == Tag.SMARTCOSTLIMIT:
+                    value = round(float(value), 2)
                 else:
-                    value = float(value)
-            elif self.entity_description.factor is not None and self.entity_description.factor > 0:
-                value = int(int(value) / self.entity_description.factor)
+                    value = int(value)
+
+            # thanks for nothing evcc - SOC-Limit can be 0, even if the effectiveLimit is 100 - I assume you want
+            # to tell that the limit is not set...
+            if self.tag == Tag.LIMITSOC and value == 0:
+                value = 100
 
         except KeyError:
             return "unknown"
@@ -53,38 +94,11 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
         return value
 
     async def async_set_native_value(self, value) -> None:
-        # _LOGGER.info(f"set_native {self.data_key} {value} idx? {self.entity_description.idx}) factor: {self.entity_description.factor} float? {self.entity_description.handle_as_float}")
         try:
-            if self.entity_description.idx is not None:
-                # we have to write all values of the object... [not only the set one]
-                obj = self.coordinator.data[self.data_key]
-
-                if int(value) == 0 and self.entity_description.write_zero_as_null is not None and self.entity_description.write_zero_as_null:
-                    obj[self.entity_description.idx] = None
-                elif self.entity_description.factor is not None and self.entity_description.factor > 0:
-                    # no special handling for 'handle_as_float' here - since the float's just exist in the GUI... if the
-                    # backend these values are (keep my fingers crossed) always int's
-                    obj[self.entity_description.idx] = int(value * self.entity_description.factor)
-                elif self.entity_description.handle_as_float is not None and self.entity_description.handle_as_float:
-                    obj[self.entity_description.idx] = float(value)
-                else:
-                    # we will write all numbers as integer's [no decimal's/fractions!!!]
-                    obj[self.entity_description.idx] = int(value)
-
-                await self.coordinator.async_write_key(self.data_key, obj, self)
-
+            if self.tag == Tag.SMARTCOSTLIMIT:
+                await self.coordinator.async_write_tag(self.tag, round(float(value), 2), self.idx, self)
             else:
-                if int(value) == 0 and self.entity_description.write_zero_as_null is not None and self.entity_description.write_zero_as_null:
-                    await self.coordinator.async_write_key(self.data_key, None, self)
-                elif self.entity_description.factor is not None and self.entity_description.factor > 0:
-                    # no special handling for 'handle_as_float' here - since the float's just exist in the GUI... if the
-                    # backend these values are (keep my fingers crossed) always int's
-                    await self.coordinator.async_write_key(self.data_key, int(value * self.entity_description.factor), self)
-                elif self.entity_description.handle_as_float is not None and self.entity_description.handle_as_float:
-                    await self.coordinator.async_write_key(self.data_key, float(value), self)
-                else:
-                    # we will write all numbers as integer's [no decimal's/fractions!!!]
-                    await self.coordinator.async_write_key(self.data_key, int(value), self)
+                await self.coordinator.async_write_tag(self.tag, int(value), self.idx, self)
 
         except ValueError:
             return "unavailable"

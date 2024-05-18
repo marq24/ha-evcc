@@ -1,5 +1,4 @@
 import logging
-from datetime import datetime, time
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
@@ -8,7 +7,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SENSOR_SENSORS, ExtSensorEntityDescription
+from .const import DOMAIN, SENSOR_SENSORS, SENSOR_SENSORS_PER_LOADPOINT, ExtSensorEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -20,56 +19,84 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     for description in SENSOR_SENSORS:
         entity = EvccSensor(coordinator, description)
         entities.append(entity)
+
+    for a_lp_key in coordinator._loadpoint:
+        load_point_config = coordinator._loadpoint[a_lp_key]
+        lp_api_index = int(a_lp_key)
+        lp_id_addon = load_point_config["id"]
+        lp_name_addon = load_point_config["name"]
+        lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
+
+        for a_stub in SENSOR_SENSORS_PER_LOADPOINT:
+            description = ExtSensorEntityDescription(
+                tag=a_stub.tag,
+                idx=lp_api_index,
+                key=f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
+                translation_key=a_stub.tag.key,
+                name_addon=lp_name_addon,
+                icon=a_stub.icon,
+                device_class=a_stub.device_class,
+                unit_of_measurement=a_stub.unit_of_measurement,
+                entity_category=a_stub.entity_category,
+                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+
+                # the entity type specific values...
+                state_class=a_stub.state_class,
+                native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                suggested_display_precision=a_stub.suggested_display_precision,
+                array_idx = a_stub.array_idx,
+                factor = a_stub.factor
+            )
+
+            # for sure there is a smarter way to code this
+            if description.array_idx is not None:
+                description.key = f"{a_stub.tag.key}_{lp_api_index}_{a_stub.array_idx}_{lp_id_addon}"
+                description.translation_key = f"{a_stub.tag.key}_{a_stub.array_idx}"
+
+            entity = EvccSensor(coordinator, description)
+            entities.append(entity)
+
     add_entity_cb(entities)
 
 
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
+    attr_array_idx: int | None = None
+    attr_factor: int | None = None
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
         super().__init__(coordinator=coordinator, description=description)
+        self.attr_array_idx = description.array_idx
+        self.attr_factor = description.factor
 
     @property
     def state(self):
         """Return the state of the sensor."""
         try:
-            if self.entity_description.idx is not None:
-                value = self.coordinator.data[self.data_key][self.entity_description.idx]
-            else:
-                value = self.coordinator.data[self.data_key]
+            value = self.coordinator.read_tag(self.tag, self.idx)
+            #if self.tag == Tag.CHARGECURRENTS:
+            #    _LOGGER.error(f"-> {value} isList:{isinstance(value, list)} array_idx:{self.attr_array_idx}")
+            if isinstance(value, list) and self.attr_array_idx is not None:
+                if len(value) > self.attr_array_idx:
+                    value = value[self.attr_array_idx]
 
-            if value is None or value == "":
+            if value is None or len(str(value)) == 0:
                 value = "unknown"
-            else:
-                if self.entity_description.lookup is not None:
-                    if self.data_key.lower() in self.coordinator.lang_map:
-                        value = self.coordinator.lang_map[self.data_key.lower()][value]
-                    else:
-                        _LOGGER.warning(f"{self.data_key} not found in translations")
-
-                if self.entity_description.factor is not None and self.entity_description.factor > 0:
-                    if isinstance(value, int):
-                        value = int(value/self.entity_description.factor)
-                    else:
-                        value = value/self.entity_description.factor
-
-                if isinstance(value, datetime):
-                    return value.isoformat(sep=' ', timespec="minutes")
-                elif isinstance(value, time):
-                    return value.isoformat(timespec="minutes")
-                elif self.entity_description.suggested_display_precision is not None:
-                    value = round(float(value), self.entity_description.suggested_display_precision)
+            elif self.attr_factor is not None:
+                if self.entity_description.suggested_display_precision is None:
+                    value = round(float(value)/self.attr_factor, 2)
+                else:
+                    value = round(float(value)/self.attr_factor, self.entity_description.suggested_display_precision)
 
         except IndexError:
-            if self.entity_description.lookup is not None:
-                _LOGGER.debug(f"lc-key: {self.data_key.lower()} value: {value} -> {self.coordinator.lang_map[self.data_key.lower()]}")
-            else:
-                _LOGGER.debug(f"lc-key: {self.data_key.lower()} caused IndexError")
             value = "unknown"
         except KeyError:
             value = "unknown"
-        except TypeError:
-            return "unknown"
+        except TypeError as ex:
+            value = "unknown"
+
         if value is True:
             value = "on"
         elif value is False:
             value = "off"
+
+        # sensor state must be string?!
         return value

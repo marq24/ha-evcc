@@ -10,280 +10,291 @@
   "config": {
     "step": {
       "user": {
-        "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-goecharger-api2.\n\nImportant note: APIv2 access must first be activated in the Go-eCharger app settings",
+        "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
-          "host": "Host or IP of your go-eCharger Wallbox",
+          "host": "Your local evcc URL (including the port)",
           "scan_interval": "Polling Interval in seconds [min: 5sec]"
         }
       }
     },
     "error": {
-      "auth": "Host/IP is wrong - could not reach system"
+      "auth": "URL is wrong - could not reach evcc-system"
     }
   },
   "options": {
     "step": {
       "user": {
-        "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-goecharger-api2.",
+        "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
-          "limit_to_11kw": "Apply 11kW limit (for 22kW variants only) - will restrict all relevant settings to a max of 16A (instead of 32A)",
           "scan_interval": "Polling Interval in seconds"
         }
       }
     }
   },
   "services": {
-    "set_pv_data": {
-      "name": "Send PV data to Wallbox (to allow charging with PV surplus)",
-      "description": "This is a simple proxy service so that we can configure the automation a bit easier",
+    "set_loadpoint_plan": {
+      "name": "Set a departure plan for a loadpoint [Energy (kWh)]",
+      "description": "Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.",
       "fields": {
-        "pgrid":  {"name": "Power from/to grid (in Watt)", "description": "Negative values means export to the grid, positive value means importing from grid."},
-        "ppv":    {"name": "Power from PV (in Watt)", "description": "The current PV production"},
-        "pakku":  {"name": "Power from/to battery (in Watt)", "description": "Negative values means charging the battery, positive value means consuming power from the battery."}
+        "startdate":  {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
+        "loadpoint":    {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
+        "energy":  {"name": "Charging goal", "description": "Target energy"}
       }
     },
-    "stop_charging": {
-      "name": "Force changing-OFF (for 5 minutes)",
-      "description": "Will ensure that the go-eCharger will stop charging. After 5 minutes the charger will return to default mode"
+    "set_vehicle_plan": {
+      "name": "Set a departure plan for a vehicle connected to a loadpoint [SOC (%)]",
+      "description": "Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.",
+      "fields": {
+        "startdate":  {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
+        "loadpoint":    {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
+        "soc":  {"name": "Charging goal", "description": "Target state of charge"}
+      }
     }
   },
   "entity": {
     "binary_sensor": {
-      "car_0":{"name":  "Car connected"},
-      "pha_0": {"name": "Phase L1 after contactor"},
-      "pha_1": {"name": "Phase L2 after contactor"},
-      "pha_2": {"name": "Phase L3 after contactor"},
-      "pha_3": {"name": "Phase L1 before contactor"},
-      "pha_4": {"name": "Phase L2 before contactor"},
-      "pha_5": {"name": "Phase L3 before contactor"},
-      "adi": {"name": "16A adapter used"},
-      "esk": {"name": "energy set kwh (only stored for app)"},
-      "fsp": {"name": "Force single phase"},
-      "tlf": {"name": "Test charging finished"},
-      "tls": {"name": "Test charging started"}
+      "charging": {"name": "Charging"},
+      "connected": {"name": "Connected"},
+      "enabled": {"name": "Enabled"},
+      "smartcostactive": {"name": "Smart Grid Charging"},
+      "vehicledetectionactive": {"name": "Vehicle detection"}
     },
     "button": {
-      "rst": {"name":  "Restart Charger device"},
-      "zfocore": {"name":  "Read Configuration"}
+      "vehicleplansdelete": {"name":  "Charging plan: Delete Departure (Vehicle/SOC)"},
+      "plandelete": {"name":  "Charging plan: Delete Departure (Loadpoint/Energy)"},
+      "detectvehicle": {"name":  "Start vehicle detection"}
     },
     "number": {
-      "ama": {"name": "Maximum current limit"},
-      "amp": {"name": "Requested current"},
-      "ate": {"name": "Automatic stop energy"},
-      "att": {"name": "Automatic stop time"},
-      "awp": {"name": "Awattar maximum price threshold"},
-      "cco": {"name": "Consumption per 100 km"},
-      "dwo": {"name": "Charging energy limit"},
-      "fmt": {"name": "Min charge time"},
-      "fst": {"name": "Starting power"},
-      "lbr": {"name": "LED brightness"},
-      "lof": {"name": "Load-Management fallback current"},
-      "lop": {"name": "Load-Management priority"},
-      "lot_amp": {"name": "Load-Management total ampere"},
-      "lot_dyn": {"name": "Load-Management dynamic ampere"},
-      "lot_sta": {"name": "Load-Management static ampere"},
-      "lot_ts": {"name": "Load-Management 'ts?'"},
-      "mca": {"name": "Minimum charging current"},
-      "mci": {"name": "Minimum charging interval"},
-      "mcpd": {"name": "Minimum charge pause duration"},
-      "mcpea": {"name": "Minimum charge pause ends at"},
-      "mptwt": {"name": "Minimum phase toggle wait time"},
-      "mpwst": {"name": "Minimum phase wish switch time"},
-      "pgt": {"name": "GridTarget Power"},
-      "po": {"name": "Priority Offset"},
-      "psh": {"name": "Phase switch hysteresis"},
-      "psmd": {"name": "Force single phase duration"},
-      "sh": {"name": "Stop hysteresis"},
-      "spl3": {"name": "Three phase switch level"},
-      "sumd": {"name": "Simulate unplugging duration"},
-      "zfo": {"name": "Zero Feed-in offset"}
+      "limitsoc": {"name": "Default Charging limit (SOC)"},
+      "limitenergy": {"name": "Default Charging limit (Energy)"},
+      "enablethreshold": {"name":  "Enable threshold"},
+      "disablethreshold": {"name":  "Disable threshold"},
+      "residualpower": {"name":  "Residual power"},
+      "smartcostlimit_co2": {"name":  "CO₂ limit ≤"},
+      "smartcostlimit": {"name":  "@@@ limit ≤"}
     },
     "select": {
-      "bac": {
-        "name": "Button: Allow Current change",
+      "prioritysoc": {
+        "name": "Home-Battery: Home has priority",
         "state": {
-          "0": "Always locked",
-          "1": "Locked when car is connected",
-          "2": "Locked when car is charging",
-          "3": "Never locked"
+          "0": "---",
+          "5": "if below 5 %",
+          "10": "if below 10 %",
+          "15": "if below 15 %",
+          "20": "if below 20 %",
+          "25": "if below 25 %",
+          "30": "if below 30 %",
+          "35": "if below 35 %",
+          "40": "if below 40 %",
+          "45": "if below 45 %",
+          "50": "if below 50 %",
+          "55": "if below 55 %",
+          "60": "if below 60 %",
+          "65": "if below 65 %",
+          "70": "if below 70 %",
+          "75": "if below 75 %",
+          "80": "if below 80 %",
+          "85": "if below 85 %",
+          "90": "if below 90 %",
+          "95": "if below 95 %",
+          "100": "if below 100 %"
         }
       },
-      "sdp": {
-        "name": "Button: Allow Force change",
+      "buffersoc": {
+        "name": "Home-Battery: Vehicle first",
         "state": {
-          "0": "Always locked",
-          "1": "Locked when car is connected",
-          "2": "Locked when car is charging",
-          "3": "Never locked"
+          "5": "when above 5 %",
+          "10": "when above 10 %",
+          "15": "when above 15 %",
+          "20": "when above 20 %",
+          "25": "when above 25 %",
+          "30": "when above 30 %",
+          "35": "when above 35 %",
+          "40": "when above 40 %",
+          "45": "when above 45 %",
+          "50": "when above 50 %",
+          "55": "when above 55 %",
+          "60": "when above 60 %",
+          "65": "when above 65 %",
+          "70": "when above 70 %",
+          "75": "when above 75 %",
+          "80": "when above 80 %",
+          "85": "when above 85 %",
+          "90": "when above 90 %",
+          "95": "when above 95 %",
+          "100": "when at 100 %"
         }
       },
-      "frc": {
-        "name": "Force state",
+      "bufferstartsoc": {
+        "name": "Home-Battery: Support vehicle charging",
         "state": {
-          "0": "Neutral",
-          "1": "Don't charge",
-          "2": "Charge"
+          "5": "when above 5 %",
+          "10": "when above 10 %",
+          "15": "when above 15 %",
+          "20": "when above 20 %",
+          "25": "when above 25 %",
+          "30": "when above 30 %",
+          "35": "when above 35 %",
+          "40": "when above 40 %",
+          "45": "when above 45 %",
+          "50": "when above 50 %",
+          "55": "when above 55 %",
+          "60": "when above 60 %",
+          "65": "when above 65 %",
+          "70": "when above 70 %",
+          "75": "when above 75 %",
+          "80": "when above 80 %",
+          "85": "when above 85 %",
+          "90": "when above 90 %",
+          "95": "when above 95 %",
+          "100": "when at 100 %",
+          "0": "charge only with enough surplus"
         }
       },
-      "lmo": {
-        "name": "logic mode",
+      "vehiclename": {
+        "name": "Vehicle",
         "state": {
-          "3": "Default",
-          "4": "Awattar [Eco]",
-          "5": "Automatic Stop"
+          "null": "-None-",
+          "vehicle_1": "Vehicle 1",
+          "vehicle_2": "Vehicle 2",
+          "vehicle_3": "Vehicle 3",
+          "vehicle_4": "Vehicle 4",
+          "vehicle_5": "Vehicle 5",
+          "vehicle_6": "Vehicle 6",
+          "vehicle_7": "Vehicle 7",
+          "vehicle_8": "Vehicle 8",
+          "vehicle_9": "Vehicle 9",
+          "vehicle_10": "Vehicle 10",
+          "vehicle_11": "Vehicle 11",
+          "vehicle_12": "Vehicle 12",
+          "vehicle_13": "Vehicle 13",
+          "vehicle_14": "Vehicle 14",
+          "vehicle_15": "Vehicle 15",
+          "vehicle_16": "Vehicle 16",
+          "vehicle_17": "Vehicle 17",
+          "vehicle_18": "Vehicle 18",
+          "vehicle_19": "Vehicle 19",
+          "vehicle_20": "Vehicle 20"
         }
       },
-      "loty": {
-        "name": "Load-Management Mode",
+      "limitsoc": {
+        "name": "Charging plan: Arrival default limit",
         "state": {
-          "0": "Static",
-          "1": "Dynamic"
+          "0": "---",
+          "5": "5 %",
+          "10": "10 %",
+          "15": "15 %",
+          "20": "20 %",
+          "25": "25 %",
+          "30": "30 %",
+          "35": "35 %",
+          "40": "40 %",
+          "45": "45 %",
+          "50": "50 %",
+          "55": "55 %",
+          "60": "60 %",
+          "65": "65 %",
+          "70": "70 %",
+          "75": "75 %",
+          "80": "80 %",
+          "85": "85 %",
+          "90": "90 %",
+          "95": "95 %",
+          "100": "100 %"
         }
       },
-      "psm": {
-        "name": "Phase Switch-Mode",
+      "minsoc": {
+        "name": "Charging plan: Arrival Min. charge %",
         "state": {
-          "0": "Auto",
-          "1": "Force one phase only",
-          "2": "Force three phases"
+          "0": "---",
+          "5": "5 %",
+          "10": "10 %",
+          "15": "15 %",
+          "20": "20 %",
+          "25": "25 %",
+          "30": "30 %",
+          "35": "35 %",
+          "40": "40 %",
+          "45": "45 %",
+          "50": "50 %",
+          "55": "55 %",
+          "60": "60 %",
+          "65": "65 %",
+          "70": "70 %",
+          "75": "75 %",
+          "80": "80 %",
+          "85": "85 %",
+          "90": "90 %",
+          "95": "95 %",
+          "100": "100 %"
         }
       },
-      "tds": {
-        "name": "Timezone daylight-saving Mode",
+      "mode": {
+        "name": "Modus",
         "state": {
-          "0": "None",
-          "1": "European Summer Time",
-          "2": "US Daylight Time"
+          "off": "Off",
+          "pv": "Solar",
+          "minpv": "Min+Solar",
+          "now": "Fast"
         }
       },
-      "trx": {
-        "name": "Authorize Loading",
+      "phasesconfigured": {
+        "name": "Charging Current Phases",
         "state": {
-          "null": "Authorization required",
-          "0": "Unlocked",
-          "1": "Unlocked with Card ID1",
-          "2": "Unlocked with Card ID2",
-          "3": "Unlocked with Card ID3",
-          "4": "Unlocked with Card ID4",
-          "5": "Unlocked with Card ID5",
-          "6": "Unlocked with Card ID6",
-          "7": "Unlocked with Card ID7",
-          "8": "Unlocked with Card ID8",
-          "9": "Unlocked with Card ID9",
-          "10": "Unlocked with Card ID10"
+          "0": "auto-switching",
+          "1": "1 phase",
+          "3": "3 phase"
         }
-      } ,
-      "ust": {
-        "name": "Cable unlock Mode",
+      },
+      "phasesconfigured_fixed": {
+        "name": "Charging Current Phases (How is your charger connected?)",
         "state": {
-          "0": "Normal",
-          "1": "Auto unlock",
-          "2": "Always locked",
-          "3": "Force unlock"
+          "1": "1 phase",
+          "3": "3 phase"
         }
+      },
+      "mincurrent": {
+        "name": "Charging Current Min."
+      },
+      "maxcurrent": {
+        "name": "Charging Current Max."
       }
     },
     "sensor": {
-      "nrg_0": {"name": "Voltage L1"},
-      "nrg_1": {"name": "Voltage L2"},
-      "nrg_2": {"name": "Voltage L3"},
-      "nrg_3": {"name": "Voltage N"},
-      "nrg_4": {"name": "Current L1"},
-      "nrg_5": {"name": "Current L2"},
-      "nrg_6": {"name": "Current L3"},
-      "nrg_7": {"name": "Power L1"},
-      "nrg_8": {"name": "Power L2"},
-      "nrg_9": {"name": "Power L3"},
-      "nrg_10": {"name": "Power N"},
-      "nrg_11": {"name": "Power total now"},
-      "nrg_12": {"name": "Power Factor L1"},
-      "nrg_13": {"name": "Power Factor L2"},
-      "nrg_14": {"name": "Power Factor L3"},
-      "nrg_15": {"name": "Power Factor N"},
-      "tma_0": {"name": "Temperature Sensor I"},
-      "tma_1": {"name": "Temperature Sensor II"},
-      "cdi_type": {"name": "Charging duration counter"},
-      "cdi_value": {"name": "Charging duration"},
-      "atp_x": {"name": "Next trip plan data"},
-      "awcp_marketprice": {"name":  "Awattar current price"},
-      "ccu_x": {"name":  "Charge controller update progress"},
-      "ccw_ssid": {"name":  "Connected WiFi"},
+      "chargecurrent": {"name": "Charge current"},
+      "chargecurrents_0": {"name": "Charge current P1"},
+      "chargecurrents_1": {"name": "Charge current P2"},
+      "chargecurrents_2": {"name": "Charge current P3"},
+      "chargeduration": {"name": "Charge duration"},
+      "chargeremainingduration": {"name":  "Charge remaining time"},
+      "chargepower": {"name": "Charge power"},
+      "chargetotalimport": {"name": "Grid imported"},
+      "chargedenergy": {"name": "Charge energy"},
+      "chargeremainingenergy": {"name": "Charge energy remaining"},
 
-      "car": {"name": "Car state [CODE]"},
-      "car_value": {"name": "Car state"},
-      "cus": {"name": "Cable unlock status [CODE]"},
-      "cus_value": {"name": "Cable unlock status"},
-      "err": {"name": "Error [CODE]"},
-      "err_value": {"name": "Error"},
-      "modelstatus": {"name": "Status [CODE]"},
-      "modelstatus_value": {"name": "Status"},
-      "ffb": {"name": "lock feedback [CODE]"},
-      "ffb_value": {"name": "lock feedback"},
-      "frm": {"name": "Rounding mode [CODE]"},
-      "frm_value": {"name": "Rounding mode"},
-      "lck": {"name": "Effective lock setting, as sent to charge control [CODE]"},
-      "lck_value": {"name": "Effective lock setting, as sent to charge control"},
-      "pwm": {"name": "Phase wish-mode [CODE]"},
-      "pwm_value": {"name": "Phase wish-mode"},
-      "wsms": {"name": "WiFi Machine State [CODE]"},
-      "wsms_value": {"name": "WiFi Machine State"},
-      "wst": {"name": "WiFi Status [CODE]"},
-      "wst_value": {"name": "WiFi Status"},
+      "connectedduration": {"name": "Connected duration"},
 
-      "fsptws": {"name": "force single phase toggle wished since"},
-      "inva": {"name": "age of inverter data"},
-      "lbp": {"name": "lastButtonPress"},
-      "lccfc": {"name": "last CarState changed from charging"},
-      "lccfi": {"name": "last CarState changed from idle"},
-      "lcctc": {"name": "last CarState changed to charging"},
-      "lfspt": {"name": "last force single phase toggle"},
-      "lmsc": {"name": "last Status change"},
-      "lpsc": {"name": "last pv surplus calculation"},
-      "rbt": {"name": "time since boot"},
+      "phaseaction": {"name": "Phases activity"},
+      "phaseremaining": {"name": "Phases remaining"},
+      "phasesactive": {"name": "Phases in use"},
+      "phasesenabled": {"name": "Phases activated"},
 
-      "acu": {"name": "Maximum allowed current"},
-      "amt": {"name": "Current temperature limit"},
-      "cbl": {"name": "Cable maximum current"},
-      "deltaa": {"name": "Delta current"},
-      "deltap": {"name": "Delta power"},
-      "eto": {"name": "Energy total"},
-      "ferm": {"name": "Effective rounding mode"},
-      "fhz": {"name": "Net frequency (~50Hz) or 0 if unknown"},
-      "loa": {"name": "Load-Management available current"},
-      "map": {"name":  "Load mapping"},
-      "mmp": {"name": "Maximum measured charging power (debug)"},
-      "nif": {"name": "Default route"},
-      "pakku": {"name": "Power from battery"},
-      "pgrid": {"name": "Power from grid"},
-      "pnp": {"name": "Number of phases"},
-      "ppv": {"name": "Power PV"},
-      "pvopt_averagepakku": {"name": "average Power from battery"},
-      "pvopt_averagepgrid": {"name": "average Power from grid"},
-      "pvopt_averageppv": {"name": "average Power PV"},
-      "rbc": {"name": "Reboot Counter"},
-      "rfb": {"name": "Relay Feedback"},
-      "rssi": {"name": "WiFi RSSI signal strength"},
-      "tpa": {"name": "30 seconds total power average"},
-      "wh": {"name": "Energy since car connected"},
-      "wsc": {"name": "WiFi STA error count"},
-      "wsm": {"name": "WiFi STA error message"}
+      "sessionco2perkwh": {"name": "Session CO₂/kWh"},
+      "sessionenergy": {"name": "Session energy"},
+      "sessionprice": {"name": "Session price"},
+      "sessionpriceperkwh": {"name": "Session @@@/kWh"},
+      "sessionsolarpercentage": {"name": "Session Solar usage"},
+
+      "vehiclerange": {"name": "Vehicle range"},
+      "vehiclesoc": {"name": "Vehicle charge"},
+
+      "vehicleplanssoc": {"name": "Charging plan: Departure charging goal (SOC)"},
+      "vehicleplanstime": {"name": "Charging plan: Departure time (SOC)"},
+      "planenergy": {"name": "Charging plan: Departure charging goal (Energy)"},
+      "plantime": {"name": "Charging plan: Departure time (Energy)"}
     },
     "switch": {
-      "acp": {"name": "Allow Charge Pause (car compatibility)"},
-      "acs": {"name": "Card Authorization required"},
-      "ara": {"name": "Automatic Stop remain in Awattar"},
-      "awe": {"name": "Use Awattar (Charge when price is low)"},
-      "cwe": {"name": "Cloud Websocket enabled"},
-      "esk": {"name": "Energy set kWh (only stored for app)"},
-      "fup": {"name": "Use PV surplus"},
-      "fzf": {"name": "Zero Feed-in"},
-      "hsa": {"name": "HTTP STA authentication"},
-      "loe": {"name": "Load-Management enabled"},
-      "lse": {"name": "LED off in standby"},
-      "nmo": {"name": "Ground-Check disabled / Norway Mode"},
-      "su":  {"name": "Simulate unplugging (short)"},
-      "sua": {"name": "Simulate unplugging permanently"},
-      "upo": {"name": "Unlock on power outage"}
+      "batterydischargecontrol": {"name": "Home-Battery: discharge lock"}
     }
   }
 }

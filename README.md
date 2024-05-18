@@ -4,7 +4,7 @@
 
 I was surprised that looks like that there does not exist a simple Home Assistant integration for evcc - even if I do not believe that I have the need for evcc at all, I want to contribute a very simple & basic integration which allow you to control evcc objects simply via the default HA gui. 
 
-[![hacs_badge][hacsbadge]][hacs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![PayPal][paypalbadge]][paypal]
+[![hacs_badge][hacsbadge]][hacs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![PayPal][paypalbadge]][paypal] [![hainstall][hainstallbadge]][hainstall]
 
 ## Disclaimer
 
@@ -12,12 +12,26 @@ Please be aware, that we are developing this integration to best of our knowledg
 
 ## Requirements
 
-- a running & configured evcc instance in your network
+- A running & configured evcc instance in your network
 
 ## Main features
-- a
-- b
-- c
+
+- Supporting all evcc API-POST & DELETE requests (except `POST /api/settings/telemetry/<status>`) to adjust the evcc settings, loadpoints and the corresponding vehicles
+  - Loadpoint mode [Off, Solar, Min+Solar, Fast]
+  - Phases to use [Auto, 1p, 3p]
+  - Assign vehicles to loadpoints
+  - Configure min & max charging currents
+  - Configure cost limits (€ or CO₂)
+  - Adjust home-battery settings
+  - Adjust/create Vehicle & Loadpoint charging plan via HA-Services [http://[YOUR-HA-INSTANCE]:8123/developer-tools/service](http://[YOUR-HA-INSTANCE]:8123/developer-tools/service)
+  
+- Supporting most of the other loadpoint and vehicle data that is available via the API - please let me know, if you miss some data - probably it just slipped through my attention during testing.
+
+### Example Dashboard
+
+Just take a look at this sample Dashboard (showing Sensors from one load point):
+
+![sampledashboard](https://github.com/marq24/ha-evcc/raw/main/sample-dashboard.png)
 
 ## Installation
 
@@ -53,13 +67,21 @@ Just click the following Button to start the configuration automatically:
 Use the following steps for a manual configuration by adding the custom integration using the web interface and follow instruction on screen:
 
 - Go to `Configuration -> Integrations` and add "evcc Bridge (unofficial)" integration
-- Provide the IP address (or hostname) of your go-eCharger web server
+- Provide a unique name for the integration installation (will be used in each sensor entity_id) created by the integration
+- Provide the URL of your evcc web server (including the port) - e.g. `http://your-evcc-ip-here:7070`
 - Provide area where the wallbox is located
 
 After the integration was added you can use the 'config' button to adjust your settings, you can additionally modify the update interval
 
 Please note, that some of the available sensors are __not__ enabled by default.
 
+## Use evcc with your Home Assistant sensor data
+
+Please see the separate document where you can find examples [how to provide your evcc instance with HA sensor data](https://github.com/marq24/ha-evcc/blob/main/HA_AS_EVCC_SOURCE.md).
+
+## Are you are go-eCharger V3 or higher User?
+
+Do you know, that as owners of a go-eCharger (V3+) there is no need to use evcc for solar surplus charging? Even without any additional hardware! Home Assistant and the __go-eCharger APIv2 Connect__ Integration is all you need. Get all details from [https://github.com/marq24/ha-goecharger-api2](https://github.com/marq24/ha-goecharger-api2).
 
 ## Want to report an issue?
 
@@ -89,9 +111,9 @@ Please consider [using my personal Tibber invitation link to join Tibber today](
 
 ### References
 
-- https://github.com/goecharger/go-eCharger-API-v2/blob/main/apikeys-en.md
+- https://github.com/evcc-io/evcc
+- https://docs.evcc.io/docs/reference/api
 
-[^1]: `focore` stands for: FOrce COnfiguration REquest
 
 
 [hacs]: https://hacs.xyz
@@ -102,3 +124,6 @@ Please consider [using my personal Tibber invitation link to join Tibber today](
 
 [paypal]: https://paypal.me/marq24
 [paypalbadge]: https://img.shields.io/badge/paypal-me-blue.svg?style=for-the-badge&logo=paypal&logoColor=ccc
+
+[hainstall]: https://my.home-assistant.io/redirect/config_flow_start/?domain=evcc_intg
+[hainstallbadge]: https://img.shields.io/badge/dynamic/json?style=for-the-badge&logo=home-assistant&logoColor=ccc&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.evcc_intg.total
