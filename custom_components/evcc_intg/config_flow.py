@@ -65,7 +65,13 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             ret = await client.read_all_data()
             if ret is not None and len(ret) > 0:
-                self._version = ret[Tag.VERSION.key]
+                if Tag.VERSION.key in ret:
+                    self._version = ret[Tag.VERSION.key]
+                elif Tag.AVAILABLEVERSION.key in ret:
+                    self._version = ret[Tag.AVAILABLEVERSION.key]
+                else:
+                    _LOGGER.warning("No Version could be detected - ignore for now")
+
                 _LOGGER.info(f"successfully validated host -> result: {ret}")
                 return True
 

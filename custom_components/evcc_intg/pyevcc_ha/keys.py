@@ -71,7 +71,8 @@ class Tag(ApiKey, Enum):
     # ALL smartCostLimit of all loadpoints will be set
     # SMARTCOSTLIMIT = ApiKey(key="smartCostLimit", type=EP_TYPE.SITE, writeable=True, write_key="smartcostlimit")
 
-    VERSION = ApiKey(key="availableVersion", type=EP_TYPE.SITE)
+    VERSION = ApiKey(key="version", type=EP_TYPE.SITE)
+    AVAILABLEVERSION = ApiKey(key="availableVersion", type=EP_TYPE.SITE)
 
 
     ###################################
