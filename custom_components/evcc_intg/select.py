@@ -40,7 +40,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         if description.tag in SOCS_TAG_LIST:
             entities_min_max_dict[entity.entity_id.split('.')[1].lower()] = entity
 
-    # generating the dynamic SELECT_SENSORS
+    multi_loadpoint_config = len(coordinator._loadpoint) > 1
     for a_lp_key in coordinator._loadpoint:
         load_point_config = coordinator._loadpoint[a_lp_key]
         lp_api_index = int(a_lp_key)
@@ -54,7 +54,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 idx=lp_api_index,
                 key=f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
                 translation_key=a_stub.tag.key,
-                name_addon=lp_name_addon,
+                name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
                 unit_of_measurement=a_stub.unit_of_measurement,
@@ -62,15 +62,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
                 # the entity type specific values...
-                options=a_stub.tag.options,
+                options=["null"] + list(
+                    coordinator._vehicle.keys()) if a_stub.tag == Tag.VEHICLENAME else a_stub.tag.options,
             )
 
-            # we might need to patch the 'auto-mode' from the phases selector
+            # we might need to patch(remove) the 'auto-mode' from the phases selector
             if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:
                 description.options = description.options[1:]
                 description.translation_key = f"{description.translation_key}_fixed"
-            elif a_stub.tag == Tag.VEHICLENAME:
-                description.options = ["null"] + list(coordinator._vehicle.keys())
 
             entity = EvccSelect(coordinator, description)
 

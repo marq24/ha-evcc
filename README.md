@@ -79,7 +79,7 @@ Please note, that some of the available sensors are __not__ enabled by default.
 
 Please see the separate document where you can find examples [how to provide your evcc instance with HA sensor data](https://github.com/marq24/ha-evcc/blob/main/HA_AS_EVCC_SOURCE.md).
 
-## Are you are go-eCharger V3 or higher User?
+## Are you are go-eCharger V3 (or higher) User?
 
 Do you know, that as owners of a go-eCharger (V3+) there is no need to use evcc for solar surplus charging? Even without any additional hardware! Home Assistant and the __go-eCharger APIv2 Connect__ Integration is all you need. Get all details from [https://github.com/marq24/ha-goecharger-api2](https://github.com/marq24/ha-goecharger-api2).
 

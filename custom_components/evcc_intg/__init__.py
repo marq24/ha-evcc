@@ -166,10 +166,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # c) load point configuration (like 1/3 phase options)
 
         initdata = await self.bridge.read_all_data()
-        if "version" in initdata:
-            self._version = initdata["version"]
-        elif "availableVersion" in initdata:
-            self._version = initdata["availableVersion"]
+        if Tag.VERSION.key in initdata:
+            self._version = initdata[Tag.VERSION.key]
+        elif Tag.AVAILABLEVERSION.key in initdata:
+            self._version = initdata[Tag.AVAILABLEVERSION.key]
 
         self._device_info_dict = {
             "identifiers": {

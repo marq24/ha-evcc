@@ -20,6 +20,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         entity = EvccSensor(coordinator, description)
         entities.append(entity)
 
+    multi_loadpoint_config = len(coordinator._loadpoint) > 1
     for a_lp_key in coordinator._loadpoint:
         load_point_config = coordinator._loadpoint[a_lp_key]
         lp_api_index = int(a_lp_key)
@@ -31,9 +32,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
                 idx=lp_api_index,
-                key=f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
-                translation_key=a_stub.tag.key,
-                name_addon=lp_name_addon,
+                key=f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}" if a_stub.array_idx is None else f"{a_stub.tag.key}_{lp_api_index}_{a_stub.array_idx}_{lp_id_addon}",
+                translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
+                name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
                 unit_of_measurement=a_stub.unit_of_measurement,
@@ -44,14 +45,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 state_class=a_stub.state_class,
                 native_unit_of_measurement=a_stub.native_unit_of_measurement,
                 suggested_display_precision=a_stub.suggested_display_precision,
-                array_idx = a_stub.array_idx,
-                factor = a_stub.factor
+                array_idx=a_stub.array_idx,
+                factor=a_stub.factor
             )
-
-            # for sure there is a smarter way to code this
-            if description.array_idx is not None:
-                description.key = f"{a_stub.tag.key}_{lp_api_index}_{a_stub.array_idx}_{lp_id_addon}"
-                description.translation_key = f"{a_stub.tag.key}_{a_stub.array_idx}"
 
             entity = EvccSensor(coordinator, description)
             entities.append(entity)

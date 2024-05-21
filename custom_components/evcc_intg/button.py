@@ -19,6 +19,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         entity = EvccButton(coordinator, description)
         entities.append(entity)
 
+    multi_loadpoint_config = len(coordinator._loadpoint) > 1
     for a_lp_key in coordinator._loadpoint:
         load_point_config = coordinator._loadpoint[a_lp_key]
         lp_api_index = int(a_lp_key)
@@ -32,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 idx=lp_api_index,
                 key=f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
                 translation_key=a_stub.tag.key,
-                name_addon=lp_name_addon,
+                name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
                 unit_of_measurement=a_stub.unit_of_measurement,
