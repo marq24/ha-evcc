@@ -30,7 +30,7 @@ class ApiKey(NamedTuple):
     options: list[str] = None
     writeable: bool = False
 
-# see https://github.com/goecharger/go-eCharger-API-v2/blob/main/apikeys-en.md for details
+# see https://docs.evcc.io/docs/reference/api for details
 class Tag(ApiKey, Enum):
 
     def __hash__(self) -> int:
@@ -43,6 +43,31 @@ class Tag(ApiKey, Enum):
     # SITE STUFF
     ###################################
 
+    # "auxPower": 1116.8,
+    AUXPOWER = ApiKey(key="auxPower", type=EP_TYPE.SITE)
+
+    # "batteryMode": unknown|normal|hold|charge
+    BATTERYMODE = ApiKey(key="batteryMode", type=EP_TYPE.SITE)
+
+    # "batteryPower": 3.21,
+    BATTERYPOWER = ApiKey(key="batteryPower", type=EP_TYPE.SITE)
+
+    # "batterySoc": 70,
+    BATTERYSOC = ApiKey(key="batterySoc", type=EP_TYPE.SITE)
+
+    # "gridCurrents": [17.95, 7.71, 1.99],
+    GRIDCURRENTS = ApiKey(key="gridCurrents", type=EP_TYPE.SITE)
+
+    # "gridPower": -6280.24,
+    GRIDPOWER = ApiKey(key="gridPower", type=EP_TYPE.SITE)
+
+    # "homePower": 2594.19,
+    HOMEPOWER = ApiKey(key="homePower", type=EP_TYPE.SITE)
+
+    # "pvPower": 8871.22,
+    PVPOWER = ApiKey(key="pvPower", type=EP_TYPE.SITE)
+
+    # -> NONE FREQUENT
     # POST /api/batterydischargecontrol/<status>: enable/disable battery discharge control (true/false)
     BATTERYDISCHARGECONTROL = ApiKey(
         key="batteryDischargeControl", type=EP_TYPE.SITE, writeable=True, write_key="batterydischargecontrol"
@@ -71,9 +96,18 @@ class Tag(ApiKey, Enum):
     # ALL smartCostLimit of all loadpoints will be set
     # SMARTCOSTLIMIT = ApiKey(key="smartCostLimit", type=EP_TYPE.SITE, writeable=True, write_key="smartcostlimit")
 
-    VERSION = ApiKey(key="version", type=EP_TYPE.SITE)
     AVAILABLEVERSION = ApiKey(key="availableVersion", type=EP_TYPE.SITE)
 
+    VERSION = ApiKey(key="version", type=EP_TYPE.SITE)
+
+    # "batteryCapacity": 7.5,
+    BATTERYCAPACITY = ApiKey(key="batteryCapacity", type=EP_TYPE.SITE)
+
+    # "tariffGrid": 0.233835,
+    TARIFFGRID = ApiKey(key="tariffGrid", type=EP_TYPE.SITE)
+
+    # "tariffPriceHome": 0,
+    TARIFFPRICEHOME = ApiKey(key="tariffPriceHome", type=EP_TYPE.SITE)
 
     ###################################
     # LOADPOINT-DATA

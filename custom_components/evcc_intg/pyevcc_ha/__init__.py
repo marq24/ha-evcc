@@ -8,7 +8,7 @@ from aiohttp import ClientResponseError
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
     FILTER_LOADPOINTS,
-    JSONKEY_LOADPOINTS, FILTER_LOADPOINTS_AND_VEHICLES, JSONKEY_VEHICLES,
+    JSONKEY_LOADPOINTS, STATE_QUERY, JSONKEY_VEHICLES, STATES,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
 
@@ -42,10 +42,13 @@ class EvccApiBridge:
         if self._LAST_FULL_STATE_UPDATE_TS + 300 < time():
             await self.read_all_data();
         else:
-            new_data = await self.read_loadpoints_and_vehicles()
+            new_data = await self.read_frequent_data()
             if new_data is not None:
-                self._data[JSONKEY_LOADPOINTS] = new_data[JSONKEY_LOADPOINTS]
-                self._data[JSONKEY_VEHICLES] = new_data[JSONKEY_VEHICLES]
+                for key in STATES:
+                    if key in new_data:
+                        self._data[key] = new_data[key]
+                    else:
+                        _LOGGER.info(f"missing {key} in response {new_data}")
 
         return self._data
 
@@ -63,10 +66,10 @@ class EvccApiBridge:
         self._data = json_resp
         return json_resp
 
-    async def read_loadpoints_and_vehicles(self) -> dict:
+    async def read_frequent_data(self) -> dict:
         # make sure that idx is really an int...
-        _LOGGER.info(f"going to read all vehicles and loadpoints from evcc@{self.host}")
-        req = f"http://{self.host}/api/state{FILTER_LOADPOINTS_AND_VEHICLES}"
+        _LOGGER.info(f"going to read all frequent_data from evcc@{self.host}")
+        req = f"http://{self.host}/api/state{STATE_QUERY}"
         _LOGGER.debug(f"GET request: {req}")
         return await self.do_request(method = self.web_session.get(req))
 

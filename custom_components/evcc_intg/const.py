@@ -116,7 +116,7 @@ class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
 
     array_idx: int | None = None
     factor: int | None = None
-
+    lookup: bool | None = None
 
 @dataclass
 class ExtSensorEntityDescription(SensorEntityDescription):
@@ -126,6 +126,7 @@ class ExtSensorEntityDescription(SensorEntityDescription):
 
     array_idx: int | None = None
     factor: int | None = None
+    lookup: bool | None = None
 
 @dataclass
 class ExtSwitchEntityDescriptionStub(EntityDescriptionStub):
@@ -346,7 +347,129 @@ SELECT_SENSORS_PER_LOADPOINT = [
     )
 ]
 
-SENSOR_SENSORS = []
+SENSOR_SENSORS = [
+    ExtSensorEntityDescription(
+        tag=Tag.AUXPOWER,
+        key=Tag.AUXPOWER.key,
+        icon="mdi:home-circle-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYMODE,
+        key=f"{Tag.BATTERYMODE.key}_value",
+        icon="mdi:state-machine",
+        lookup=True
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYMODE,
+        key=f"{Tag.BATTERYMODE.key}",
+        icon="mdi:state-machine",
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYPOWER,
+        key=Tag.BATTERYPOWER.key,
+        icon="mdi:home-lightning-bolt-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYSOC,
+        key=Tag.BATTERYSOC.key,
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDCURRENTS,
+        key=f"{Tag.GRIDCURRENTS.key}_0",
+        array_idx=0,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDCURRENTS,
+        key=f"{Tag.GRIDCURRENTS.key}_1",
+        array_idx=1,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDCURRENTS,
+        key=f"{Tag.GRIDCURRENTS.key}_2",
+        array_idx=2,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDPOWER,
+        key=Tag.GRIDPOWER.key,
+        icon="mdi:transmission-tower",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.HOMEPOWER,
+        key=Tag.HOMEPOWER.key,
+        icon="mdi:home-lightning-bolt",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.PVPOWER,
+        key=Tag.PVPOWER.key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER
+    ),
+
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYCAPACITY,
+        key=Tag.BATTERYCAPACITY.key,
+        icon="mdi:home-battery",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.KILO_WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=1
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFGRID,
+        key=Tag.TARIFFGRID.key,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFPRICEHOME,
+        key=Tag.TARIFFPRICEHOME.key,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+
+]
 SENSOR_SENSORS_PER_LOADPOINT = [
 
     ExtSensorEntityDescriptionStub(
@@ -448,6 +571,15 @@ SENSOR_SENSORS_PER_LOADPOINT = [
 
     ExtSensorEntityDescriptionStub(
         tag=Tag.PHASEACTION,
+        icon="mdi:numeric",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=None,
+        device_class=None,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PHASEACTION,
+        lookup=True,
         icon="mdi:numeric",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=None,

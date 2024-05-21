@@ -46,8 +46,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 native_unit_of_measurement=a_stub.native_unit_of_measurement,
                 suggested_display_precision=a_stub.suggested_display_precision,
                 array_idx=a_stub.array_idx,
-                factor=a_stub.factor
+                factor=a_stub.factor,
+                lookup=a_stub.lookup
             )
+
+            # if it's a lookup value, we just patch the translation key...
+            if a_stub.lookup is not None:
+                description.key = f"{description.key}_value"
+                description.translation_key = f"{description.translation_key}_value"
+
 
             entity = EvccSensor(coordinator, description)
             entities.append(entity)
@@ -56,31 +63,32 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
-    attr_array_idx: int | None = None
-    attr_factor: int | None = None
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
         super().__init__(coordinator=coordinator, description=description)
-        self.attr_array_idx = description.array_idx
-        self.attr_factor = description.factor
 
     @property
     def state(self):
         """Return the state of the sensor."""
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
-            #if self.tag == Tag.CHARGECURRENTS:
-            #    _LOGGER.error(f"-> {value} isList:{isinstance(value, list)} array_idx:{self.attr_array_idx}")
-            if isinstance(value, list) and self.attr_array_idx is not None:
-                if len(value) > self.attr_array_idx:
-                    value = value[self.attr_array_idx]
+            if isinstance(value, list) and self.entity_description.array_idx is not None:
+                if len(value) > self.entity_description.array_idx:
+                    value = value[self.entity_description.array_idx]
 
             if value is None or len(str(value)) == 0:
                 value = "unknown"
-            elif self.attr_factor is not None:
-                if self.entity_description.suggested_display_precision is None:
-                    value = round(float(value)/self.attr_factor, 2)
-                else:
-                    value = round(float(value)/self.attr_factor, self.entity_description.suggested_display_precision)
+            else:
+                if self.entity_description.lookup is not None:
+                    if self.tag.key.lower() in self.coordinator.lang_map:
+                        value = self.coordinator.lang_map[self.tag.key.lower()][value]
+                    else:
+                        _LOGGER.warning(f"{self.tag.key} not found in translations")
+
+                if self.entity_description.factor is not None:
+                    if self.entity_description.suggested_display_precision is None:
+                        value = round(float(value)/self.entity_description.factor, 2)
+                    else:
+                        value = round(float(value)/self.entity_description.factor, self.entity_description.suggested_display_precision)
 
         except IndexError:
             value = "unknown"

@@ -274,7 +274,8 @@
 
       "connectedduration": {"name": "Connected duration"},
 
-      "phaseaction": {"name": "Phases activity"},
+      "phaseaction": {"name": "Phases activity [CODE]"},
+      "phaseaction_value": {"name": "Phases activity"},
       "phaseremaining": {"name": "Phases remaining"},
       "phasesactive": {"name": "Phases in use"},
       "phasesenabled": {"name": "Phases activated"},
@@ -291,7 +292,23 @@
       "vehicleplanssoc": {"name": "Charging plan: Departure charging goal (SOC)"},
       "vehicleplanstime": {"name": "Charging plan: Departure time (SOC)"},
       "planenergy": {"name": "Charging plan: Departure charging goal (Energy)"},
-      "plantime": {"name": "Charging plan: Departure time (Energy)"}
+      "plantime": {"name": "Charging plan: Departure time (Energy)"},
+
+      "auxpower": {"name": "Power AUX"},
+      "batterycapacity": {"name": "Battery capacity"},
+      "batterymode": {"name": "Battery mode [CODE]"},
+      "batterymode_value": {"name": "Battery mode"},
+      "batterypower": {"name": "Power battery"},
+      "batterysoc": {"name": "Battery SOC"},
+      "gridcurrents_0": {"name": "Grid Phase 1"},
+      "gridcurrents_1": {"name": "Grid Phase 2"},
+      "gridcurrents_2": {"name": "Grid Phase 3"},
+      "gridpower": {"name": "Power Grid"},
+      "homepower": {"name": "Power Home"},
+      "pvpower": {"name": "Power Solar"},
+
+      "tariffgrid": {"name": "Costs Grid"},
+      "tariffpricehome": {"name": "Costs Usage"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"}

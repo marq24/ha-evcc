@@ -202,7 +202,8 @@
 
       "connectedduration": {"name": "Angeschlossen seit"},
 
-      "phaseaction": {"name": "Phasen aktivität"},
+      "phaseaction": {"name": "Phasen Aktivität [CODE]"},
+      "phaseaction_value": {"name": "Phasen Aktivität"},
       "phaseremaining": {"name": "Phasen verbleibend"},
       "phasesactive": {"name": "Phasen in Verwendung"},
       "phasesenabled": {"name": "Phasen aktiviert"},
@@ -219,7 +220,23 @@
       "vehicleplanssoc": {"name": "Ladeplanung: Abfahrt Ladeziel (SOC)"},
       "vehicleplanstime": {"name": "Ladeplanung: Abfahrt Zeitpunkt (SOC)"},
       "planenergy": {"name": "Ladeplanung: Abfahrt Ladeziel (Energie)"},
-      "plantime": {"name": "Ladeplanung: Abfahrt Zeitpunkt (Energie)"}
+      "plantime": {"name": "Ladeplanung: Abfahrt Zeitpunkt (Energie)"},
+
+      "auxpower": {"name": "Leistung AUX"},
+      "batterycapacity": {"name": "Batterie Kapazität"},
+      "batterymode": {"name": "Batterie Modus [CODE]"},
+      "batterymode_value": {"name": "Batterie Modus"},
+      "batterypower": {"name": "Leistung Batterie"},
+      "batterysoc": {"name": "Batterie Ladezustand"},
+      "gridcurrents_0": {"name": "Netz Phase 1"},
+      "gridcurrents_1": {"name": "Netz Phase 2"},
+      "gridcurrents_2": {"name": "Netz Phase 3"},
+      "gridpower": {"name": "Leistung Netz"},
+      "homepower": {"name": "Leistung Heim"},
+      "pvpower": {"name": "Leistung PV"},
+
+      "tariffgrid": {"name": "Kosten Netz"},
+      "tariffpricehome": {"name": "Kosten Verbrauch"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"}
