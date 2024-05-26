@@ -1,8 +1,9 @@
+import re
 import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any
+from typing import Any, Final
 
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
@@ -32,7 +33,9 @@ from .const import (
     MANUFACTURER,
     PLATFORMS,
     STARTUP_MESSAGE,
-    SERVICE_SET_LOADPOINT_PLAN, SERVICE_SET_VEHICLE_PLAN
+    SERVICE_SET_LOADPOINT_PLAN,
+    SERVICE_SET_VEHICLE_PLAN,
+    CONF_INCLUDE_EVCC
 )
 from .service import EvccService
 
@@ -60,9 +63,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         _LOGGER.info(STARTUP_MESSAGE)
         hass.data.setdefault(DOMAIN, {"manifest_version": value})
 
-    #integration = await loader.async_get_integration(hass, DOMAIN)
-    #xxx = await translation.async_get_translations(hass, hass.config.language, "entity_component")
-    #_LOGGER.error(f"-> {inspect.getmembers(xxx)}")
+    # integration = await loader.async_get_integration(hass, DOMAIN)
+    # xxx = await translation.async_get_translations(hass, hass.config.language, "entity_component")
+    # _LOGGER.error(f"-> {inspect.getmembers(xxx)}")
     # for platform in PLATFORMS:
     #     platform = await integration.async_get_platform(platform)
     #     _LOGGER.error(f"-> {inspect.getmembers(platform)}")
@@ -82,7 +85,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if config_entry.state != ConfigEntryState.LOADED:
         config_entry.add_update_listener(async_reload_entry)
 
-    #initialize our service...
+    # initialize our service...
     service = EvccService(hass, config_entry, coordinator)
     hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, service.set_loadpoint_plan,
                                  supports_response=SupportsResponse.OPTIONAL)
@@ -112,7 +115,6 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         hass.services.async_remove(DOMAIN, SERVICE_SET_LOADPOINT_PLAN)
         hass.services.async_remove(DOMAIN, SERVICE_SET_VEHICLE_PLAN)
 
-
     return unload_ok
 
 
@@ -134,6 +136,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         global SCAN_INTERVAL
         SCAN_INTERVAL = timedelta(seconds=config_entry.options.get(CONF_SCAN_INTERVAL,
                                                                    config_entry.data.get(CONF_SCAN_INTERVAL, 5)))
+
+        self.include_evcc_prefix = config_entry.options.get(CONF_INCLUDE_EVCC,
+                                                            config_entry.data.get(CONF_INCLUDE_EVCC, False))
 
         # we want a some sort of unique identifier that can be selected by the user
         # during the initial configuration phase
@@ -203,7 +208,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 "name": a_loadpoint["title"],
                 "id": slugify(a_loadpoint["title"]),
                 "has_phase_auto_option": a_loadpoint["chargerPhases1p3p"],
-                "vehicle_key" : a_loadpoint["vehicleName"],
+                "vehicle_key": a_loadpoint["vehicleName"],
                 "obj": a_loadpoint
             }
             api_index += 1
@@ -249,12 +254,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if tag.key in self.data:
                     ret = self.data[tag.key]
 
-        #_LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
+        # _LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
         return ret
 
     def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
         if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
-            #if tag == Tag.CHARGECURRENTS:
+            # if tag == Tag.CHARGECURRENTS:
             #    _LOGGER.error(f"valA? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]}")
             #    _LOGGER.error(f"valB? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]}")
             if tag.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
@@ -284,9 +289,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0:
                 if is_veh_PLANSSOC:
                     value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_SOC]
-                    return str(int(value)) #float(int(value))/100
+                    return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_TIME])
+                    return self._convert_time(
+                        self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_TIME])
             else:
                 return None
         else:
@@ -295,7 +301,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             else:
                 return "0"
 
-    async def async_write_plan(self, write_to_vehicle:bool, loadpoint_idx:str, soc:str, rfcdate:str):
+    async def async_write_plan(self, write_to_vehicle: bool, loadpoint_idx: str, soc: str, rfcdate: str):
         if write_to_vehicle:
             return await self.bridge.write_vehicle_plan_for_loadpoint_index(loadpoint_idx, soc, rfcdate)
         else:
@@ -337,7 +343,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         return result
 
-    def _convert_time(self, value:str):
+    def _convert_time(self, value: str):
         if "0001-01-01T00:00:00Z" == value:
             return None
 
@@ -349,6 +355,18 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S%z")
         value = dt.astimezone().isoformat(sep=" ", timespec="minutes")
         return value.split("+")[0]
+
+
+CC_P1: Final = re.compile(r"(.)([A-Z][a-z]+)")
+CC_P2: Final = re.compile(r"([a-z0-9])([A-Z])")
+
+@staticmethod
+def camel_to_snake(name: str):
+    if name.lower().endswith("kwh"):
+        name = name[:-3] + "_kwh"
+    name = re.sub(CC_P1, r'\1_\2', name)
+    return re.sub(CC_P2, r'\1_\2', name).lower()
+
 
 class EvccBaseEntity(Entity):
     _attr_should_poll = False
@@ -378,7 +396,7 @@ class EvccBaseEntity(Entity):
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.{self.coordinator._system_id}_{description.key}"
+        self.entity_id = f"{DOMAIN}.{self.coordinator._system_id}_{camel_to_snake(description.key)}"
 
     def _name_internal(self, device_class_name: str | None,
                        platform_translations: dict[str, Any], ) -> str | UndefinedType | None:
@@ -437,5 +455,7 @@ class EvccBaseEntity(Entity):
         # return f"{device_name} {name}" if device_name else name
         if device_entry.name_by_user is not None:
             return f"{device_entry.name_by_user} {name}" if device_name else name
-        else:
+        elif self.coordinator.include_evcc_prefix:
             return f"[evcc] {name}"
+        else:
+            return name

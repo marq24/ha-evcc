@@ -13,7 +13,8 @@
         "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.",
         "data": {
           "host": "Deine lokale evcc URL (einschließlich des Ports)",
-          "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]"
+          "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
+          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
         }
       }
     },
@@ -26,7 +27,8 @@
       "user": {
         "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.",
         "data": {
-          "scan_interval": "Aktualisierungsintervall in Sekunden"
+          "scan_interval": "Aktualisierungsintervall in Sekunden",
+          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
         }
       }
     }

@@ -1,8 +1,10 @@
-# Home Assistant Integration __evcc 🚘☀️ Bridge (unofficial)__
+# Home Assistant Integration: __evcc🚘☀️ - Solar Charging__ (unofficial)
 
 ![logo](https://github.com/marq24/ha-evcc/raw/main/logo.png)
 
-I was surprised that looks like that there does not exist a simple Home Assistant integration for evcc - even if I do not believe that I have the need for evcc at all, I want to contribute a very simple & basic integration which allow you to control evcc objects simply via the default HA gui. 
+I was surprised that looks like that there does not exist a simple Home Assistant integration for evcc - even if I do not believe that I have the need for evcc at all, I want to contribute a very simple & basic integration which allow you to control evcc objects simply via the default HA gui.
+
+__Please note__, _that this integration is not official and not supported by the evcc developers. I am not affiliated with evcc in any way. This integration is based on the evcc API and the evcc API documentation._
 
 [![hacs_badge][hacsbadge]][hacs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![PayPal][paypalbadge]][paypal] [![hainstall][hainstallbadge]][hainstall]
 
@@ -38,9 +40,9 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 ### via HACS
 
 1. Add a custom integration repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)
-1. Install the custom integration
-1. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc Bridge (unofficial)"
-1. Setup the go-eCharger custom integration as described below
+2. Install the custom integration
+3. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc🚘☀️ - Solar Charging"
+4. Setup the go-eCharger custom integration as described below
 
   <!--1. In HACS Store, search for [***marq24/ha-evcc***]-->
 
@@ -52,7 +54,7 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 4. Download _all_ the files from the `custom_components/evcc_intg/` directory (folder) in this repository.
 5. Place the files you downloaded in the new directory (folder) you created.
 6. Restart Home Assistant
-7. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc Bridge (unofficial)"
+7. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc🚘☀️ - Solar Charging"
 
 ## Adding or enabling the integration
 
@@ -66,7 +68,7 @@ Just click the following Button to start the configuration automatically:
 
 Use the following steps for a manual configuration by adding the custom integration using the web interface and follow instruction on screen:
 
-- Go to `Configuration -> Integrations` and add "evcc Bridge (unofficial)" integration
+- Go to `Configuration -> Integrations` and add "evcc🚘☀️ - Solar Charging" integration
 - Provide a unique name for the integration installation (will be used in each sensor entity_id) created by the integration
 - Provide the URL of your evcc web server (including the port) - e.g. `http://your-evcc-ip-here:7070`
 - Provide area where the wallbox is located

@@ -21,8 +21,8 @@ from homeassistant.util.frozen_dataclass_compat import FrozenOrThawed
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 
 # Base component constants
-MANUFACTURER: Final = "marq24: evcc HACS Integration (unofficial)"
-NAME: Final = "evcc Bridge (unofficial)"
+MANUFACTURER: Final = "marq24 [not connected with the evcc.io team]"
+NAME: Final = "evcc🚘☀️ - Solar Charging"
 DOMAIN: Final = "evcc_intg"
 ISSUE_URL: Final = "https://github.com/marq24/ha-evcc/issues"
 
@@ -35,9 +35,10 @@ If you have any issues with this you need to open an issue here:
 -------------------------------------------------------------------
 """
 
+CONF_INCLUDE_EVCC: Final = "include_evcc"
+
 SERVICE_SET_LOADPOINT_PLAN: Final = "set_loadpoint_plan"
 SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
-
 
 @dataclass
 class EntityDescriptionStub(metaclass=FrozenOrThawed, frozen_or_thawed=True):
@@ -372,7 +373,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERYPOWER,
         key=Tag.BATTERYPOWER.key,
-        icon="mdi:home-lightning-bolt-outline",
+        icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=SensorDeviceClass.POWER
@@ -444,7 +445,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERYCAPACITY,
         key=Tag.BATTERYCAPACITY.key,
-        icon="mdi:home-battery",
+        icon="mdi:battery",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.KILO_WATT,
         device_class=SensorDeviceClass.POWER,

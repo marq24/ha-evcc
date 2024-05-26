@@ -43,7 +43,7 @@ TRANSLATIONS: Final = {
         "phaseaction":{
             "scale1p": "Reduziere auf einphasig",
             "scale3p": "Erhöhe auf dreiphasig",
-            "inactive": "-kein-"
+            "inactive": "-keine-"
         }
     },
     "en": {

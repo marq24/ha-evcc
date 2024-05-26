@@ -28,26 +28,26 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in NUMBER_SENSORS_PER_LOADPOINT:
             description = ExtNumberEntityDescription(
-                tag = a_stub.tag,
-                idx = lp_api_index,
-                key = f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
-                translation_key = a_stub.tag.key,
-                name_addon = lp_name_addon if multi_loadpoint_config else None,
-                icon = a_stub.icon,
-                device_class = a_stub.device_class,
-                unit_of_measurement = a_stub.unit_of_measurement,
-                entity_category = a_stub.entity_category,
-                entity_registry_enabled_default = a_stub.entity_registry_enabled_default,
+                tag=a_stub.tag,
+                idx=lp_api_index,
+                key=f"{lp_id_addon}_{a_stub.tag.key}",
+                translation_key=a_stub.tag.key,
+                name_addon=lp_name_addon if multi_loadpoint_config else None,
+                icon=a_stub.icon,
+                device_class=a_stub.device_class,
+                unit_of_measurement=a_stub.unit_of_measurement,
+                entity_category=a_stub.entity_category,
+                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
                 # the entity type specific values...
-                max_value = a_stub.max_value,
-                min_value = a_stub.min_value,
-                mode = a_stub.mode,
-                native_max_value = a_stub.native_max_value,
-                native_min_value = a_stub.native_min_value,
-                native_step = a_stub.native_step,
-                native_unit_of_measurement = a_stub.native_unit_of_measurement,
-                step = a_stub.step,
+                max_value=a_stub.max_value,
+                min_value=a_stub.min_value,
+                mode=a_stub.mode,
+                native_max_value=a_stub.native_max_value,
+                native_min_value=a_stub.native_min_value,
+                native_step=a_stub.native_step,
+                native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                step=a_stub.step,
             )
 
             if a_stub.tag == Tag.SMARTCOSTLIMIT and coordinator._cost_type == "co2":

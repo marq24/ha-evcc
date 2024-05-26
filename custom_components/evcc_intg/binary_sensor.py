@@ -32,7 +32,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             description = ExtBinarySensorEntityDescription(
                 tag=a_stub.tag,
                 idx=lp_api_index,
-                key=f"{a_stub.tag.key}_{lp_api_index}_{lp_id_addon}",
+                key=f"{lp_id_addon}_{a_stub.tag.key}",
                 translation_key=a_stub.tag.key,
                 name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,

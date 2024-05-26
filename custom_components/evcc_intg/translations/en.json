@@ -13,7 +13,8 @@
         "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
           "host": "Your local evcc URL (including the port)",
-          "scan_interval": "Polling Interval in seconds [min: 5sec]"
+          "scan_interval": "Polling Interval in seconds [min: 5sec]",
+          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
         }
       }
     },
@@ -26,7 +27,8 @@
       "user": {
         "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
-          "scan_interval": "Polling Interval in seconds"
+          "scan_interval": "Polling Interval in seconds",
+          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
         }
       }
     }

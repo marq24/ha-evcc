@@ -10,6 +10,7 @@ from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from .const import (
     DOMAIN,
+    CONF_INCLUDE_EVCC
 )
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -43,9 +44,10 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 self._errors["base"] = "auth"
         else:
             user_input = {}
-            user_input[CONF_NAME] = "evcc Bridge"
+            user_input[CONF_NAME] = "evcc"
             user_input[CONF_HOST] = "http://your-evcc-ip:7070"
-            user_input[CONF_SCAN_INTERVAL] = 5
+            user_input[CONF_SCAN_INTERVAL] = 15
+            user_input[CONF_INCLUDE_EVCC] = False
 
         return self.async_show_form(
             step_id="user",
@@ -53,6 +55,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_NAME, default=user_input.get(CONF_NAME)): str,
                 vol.Required(CONF_HOST, default=user_input.get(CONF_HOST)): str,
                 vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
+                vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
             }),
             last_step=True,
             errors=self._errors
@@ -107,7 +110,8 @@ class EvccOptionsFlowHandler(config_entries.OptionsFlow):
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
-                vol.Required(CONF_SCAN_INTERVAL, default=self.options.get(CONF_SCAN_INTERVAL, 5)): int
+                vol.Required(CONF_SCAN_INTERVAL, default=self.options.get(CONF_SCAN_INTERVAL, 15)): int,
+                vol.Required(CONF_INCLUDE_EVCC, default=self.options.get(CONF_INCLUDE_EVCC)): bool,
             })
         )
 
