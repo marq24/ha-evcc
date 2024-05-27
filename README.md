@@ -1,4 +1,4 @@
-# Home Assistant Integration: __evcc🚘☀️ - Solar Charging__ (unofficial)
+# Home Assistant Integration: __evcc☀️🚘- Solar Charging__ (unofficial)
 
 ![logo](https://github.com/marq24/ha-evcc/raw/main/logo.png)
 
@@ -6,7 +6,7 @@ I was surprised that looks like that there does not exist a simple Home Assistan
 
 __Please note__, _that this integration is not official and not supported by the evcc developers. I am not affiliated with evcc in any way. This integration is based on the evcc API and the evcc API documentation._
 
-[![hacs_badge][hacsbadge]][hacs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![PayPal][paypalbadge]][paypal] [![hainstall][hainstallbadge]][hainstall]
+[![hacs_badge][hacsbadge]][hacs] [![github][ghsbadge]][ghs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![PayPal][paypalbadge]][paypal] [![hainstall][hainstallbadge]][hainstall]
 
 ## Disclaimer
 
@@ -41,7 +41,7 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 
 1. Add a custom integration repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)
 2. Install the custom integration
-3. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc🚘☀️ - Solar Charging"
+3. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc☀️🚘- Solar Charging"
 4. Setup the go-eCharger custom integration as described below
 
   <!--1. In HACS Store, search for [***marq24/ha-evcc***]-->
@@ -54,7 +54,7 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 4. Download _all_ the files from the `custom_components/evcc_intg/` directory (folder) in this repository.
 5. Place the files you downloaded in the new directory (folder) you created.
 6. Restart Home Assistant
-7. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc🚘☀️ - Solar Charging"
+7. In the HA UI go to "Configuration" -> "Integrations" click "+" and search for "evcc☀️🚘- Solar Charging"
 
 ## Adding or enabling the integration
 
@@ -68,7 +68,7 @@ Just click the following Button to start the configuration automatically:
 
 Use the following steps for a manual configuration by adding the custom integration using the web interface and follow instruction on screen:
 
-- Go to `Configuration -> Integrations` and add "evcc🚘☀️ - Solar Charging" integration
+- Go to `Configuration -> Integrations` and add "evcc☀️🚘- Solar Charging" integration
 - Provide a unique name for the integration installation (will be used in each sensor entity_id) created by the integration
 - Provide the URL of your evcc web server (including the port) - e.g. `http://your-evcc-ip-here:7070`
 - Provide area where the wallbox is located
@@ -117,9 +117,11 @@ Please consider [using my personal Tibber invitation link to join Tibber today](
 - https://docs.evcc.io/docs/reference/api
 
 
-
 [hacs]: https://hacs.xyz
 [hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=ccc
+
+[ghs]: https://github.com/sponsors/marq24
+[ghsbadge]: https://img.shields.io/github/sponsors/marq24?style=for-the-badge&logo=github&logoColor=ccc&link=https%3A%2F%2Fgithub.com%2Fsponsors%2Fmarq24&label=Sponsors
 
 [buymecoffee]: https://www.buymeacoffee.com/marquardt24
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a-coffee-blue.svg?style=for-the-badge&logo=buymeacoffee&logoColor=ccc

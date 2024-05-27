@@ -18,7 +18,7 @@ Before we can use the HA-API to read sensor data via http, we need some sort of 
 
 You can open this via `http://[YOUR-HA-INSTANCE]:8123/profile/security`
 
-![screenshot_tokens](../images/evcc_token01.png)
+![screenshot_tokens](https://github.com/marq24/ha-senec-v3/blob/master/images/evcc_token01.png)
 
 Create a new token via the _Create Token_ button, specify a name (e.g. 'evcc-access') and then copy the generated token to your clipboard (and paste it to a secure place). A token will look like this:
 
