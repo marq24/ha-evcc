@@ -1,4 +1,5 @@
 import logging
+import re
 from enum import Enum
 from typing import (
     NamedTuple, Final
@@ -17,6 +18,16 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 IS_TRIGGER: Final = "TRIGGER"
 
+CC_P1: Final = re.compile(r"(.)([A-Z][a-z]+)")
+CC_P2: Final = re.compile(r"([a-z0-9])([A-Z])")
+
+@staticmethod
+def _camel_to_snake(a_key: str):
+    if a_key.lower().endswith("kwh"):
+        a_key = a_key[:-3] + "_kwh"
+    a_key = re.sub(CC_P1, r'\1_\2', a_key)
+    return re.sub(CC_P2, r'\1_\2', a_key).lower()
+
 class EP_TYPE(Enum):
     LOADPOINTS = JSONKEY_LOADPOINTS
     VEHICLES = JSONKEY_VEHICLES
@@ -29,6 +40,10 @@ class ApiKey(NamedTuple):
     write_type: str = None
     options: list[str] = None
     writeable: bool = False
+
+    @property
+    def snake_case(self) -> str:
+        return _camel_to_snake(self.key)
 
 # see https://docs.evcc.io/docs/reference/api for details
 class Tag(ApiKey, Enum):

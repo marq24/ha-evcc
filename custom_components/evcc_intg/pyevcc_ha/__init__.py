@@ -7,7 +7,6 @@ from aiohttp import ClientResponseError
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
-    FILTER_LOADPOINTS,
     JSONKEY_LOADPOINTS, STATE_QUERY, JSONKEY_VEHICLES, STATES,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
@@ -48,7 +47,7 @@ class EvccApiBridge:
                     if key in new_data:
                         self._data[key] = new_data[key]
                     else:
-                        _LOGGER.info(f"missing {key} in response {new_data}")
+                        _LOGGER.info(f"missing '{key}' in response {new_data}")
 
         return self._data
 

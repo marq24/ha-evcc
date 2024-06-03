@@ -188,7 +188,9 @@
           "1": "1-phasig",
           "3": "3-phasig"
         }
-      }
+      },
+      "mincurrent": {"name": "Min. Ladestrom"},
+      "maxcurrent": {"name": "Max. Ladestrom"}
     },
     "sensor": {
       "chargecurrent": {"name": "Ladestrom"},

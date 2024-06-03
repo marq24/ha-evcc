@@ -22,7 +22,7 @@ from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 
 # Base component constants
 MANUFACTURER: Final = "marq24 [not connected with the evcc.io team]"
-NAME: Final = "evcc🚘☀️ - Solar Charging"
+NAME: Final = "evcc☀️🚘- Solar Charging"
 DOMAIN: Final = "evcc_intg"
 ISSUE_URL: Final = "https://github.com/marq24/ha-evcc/issues"
 

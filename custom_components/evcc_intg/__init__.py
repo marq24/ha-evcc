@@ -1,9 +1,8 @@
-import re
 import asyncio
 import json
 import logging
 from datetime import datetime, timedelta
-from typing import Any, Final
+from typing import Any
 
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
@@ -26,7 +25,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_PLANS_SOC,
     JSONKEY_PLANS_TIME
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, _camel_to_snake
 from .const import (
     NAME,
     DOMAIN,
@@ -357,17 +356,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return value.split("+")[0]
 
 
-CC_P1: Final = re.compile(r"(.)([A-Z][a-z]+)")
-CC_P2: Final = re.compile(r"([a-z0-9])([A-Z])")
-
-@staticmethod
-def camel_to_snake(name: str):
-    if name.lower().endswith("kwh"):
-        name = name[:-3] + "_kwh"
-    name = re.sub(CC_P1, r'\1_\2', name)
-    return re.sub(CC_P2, r'\1_\2', name).lower()
-
-
 class EvccBaseEntity(Entity):
     _attr_should_poll = False
     _attr_has_entity_name = True
@@ -396,7 +384,7 @@ class EvccBaseEntity(Entity):
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.{self.coordinator._system_id}_{camel_to_snake(description.key)}"
+        self.entity_id = f"{DOMAIN}.{self.coordinator._system_id}_{_camel_to_snake(description.key)}"
 
     def _name_internal(self, device_class_name: str | None,
                        platform_translations: dict[str, Any], ) -> str | UndefinedType | None:

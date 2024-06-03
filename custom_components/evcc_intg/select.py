@@ -111,59 +111,61 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
         if is_last:
             self.async_schedule_update_ha_state(force_refresh=True)
 
-    def _check_min_options(self, option: str):
-        min_key = self.entity_id.split('.')[1].replace(Tag.MAXCURRENT.key.lower(), Tag.MINCURRENT.key.lower())
-        #_LOGGER.warning(f"{min_key} {entities_min_max_dict}")
+    def _check_min_options(self, new_max_option: str):
+        min_key = self.entity_id.split('.')[1].replace(Tag.MAXCURRENT.snake_case, Tag.MINCURRENT.snake_case)
+        _LOGGER.warning(f"CHECK_MIN {min_key} {entities_min_max_dict} {MIN_CURRENT_LIST} {entities_min_max_dict[min_key]}")
         if min_key in entities_min_max_dict:
-            if option in MIN_CURRENT_LIST:
-                entities_min_max_dict[min_key].options = MIN_CURRENT_LIST[:MIN_CURRENT_LIST.index(option) + 1]
+            if new_max_option in MIN_CURRENT_LIST:
+                entities_min_max_dict[min_key].options = MIN_CURRENT_LIST[:MIN_CURRENT_LIST.index(new_max_option) + 1]
             else:
                 entities_min_max_dict[min_key].options = MIN_CURRENT_LIST
 
-    def _check_max_options(self, option: str):
-        max_key = self.entity_id.split('.')[1].replace(Tag.MINCURRENT.key.lower(), Tag.MAXCURRENT.key.lower())
-        #_LOGGER.warning(f"{max_key} {entities_min_max_dict}")
+    def _check_max_options(self, new_min_option: str):
+        max_key = self.entity_id.split('.')[1].replace(Tag.MINCURRENT.snake_case, Tag.MAXCURRENT.snake_case)
+        _LOGGER.warning(f"CHECK_MAX {max_key} {entities_min_max_dict} {MAX_CURRENT_LIST} {entities_min_max_dict[max_key]}")
         if max_key in entities_min_max_dict:
-            if option in MAX_CURRENT_LIST:
-                entities_min_max_dict[max_key].options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(option):]
+            if new_min_option in MAX_CURRENT_LIST:
+                entities_min_max_dict[max_key].options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(new_min_option):]
             else:
                 entities_min_max_dict[max_key].options = MAX_CURRENT_LIST
 
     def _check_socs(self, option: str):
         changed_option = self.entity_id.split('.')[1].split('_')
         system_id = changed_option[0]
-        changed_option_key = changed_option[1]
+        changed_option_key = '_'.join(changed_option[1:])
+
+        #_LOGGER.warning(f"SOC CHECK: {system_id} {changed_option_key} {entities_min_max_dict}")
 
         # is 'Vehicle first' (BUFFERSOC)
-        if changed_option_key == Tag.BUFFERSOC.key.lower():
+        if changed_option_key == Tag.BUFFERSOC.snake_case:
             # we need to adjust the 'Support vehicle charging' (BUFFERSTARTSOC) options
-            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSTARTSOC.key.lower()}"]
+            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSTARTSOC.snake_case}"]
             if option in Tag.BUFFERSTARTSOC.options:
                 select.options = Tag.BUFFERSTARTSOC.options[Tag.BUFFERSTARTSOC.options.index(option):]
             else:
                 select.options = Tag.BUFFERSTARTSOC.options
 
             # we need to adjust the 'Home has priority' (PRIORITYSOC) options
-            select = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.key.lower()}"]
+            select = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.snake_case}"]
             if option in Tag.PRIORITYSOC.options:
                 select.options = Tag.PRIORITYSOC.options[:Tag.PRIORITYSOC.options.index(option)+1]
             else:
                 select.options = Tag.PRIORITYSOC.options
 
         # is 'Home has priority' (PRIORITYSOC)
-        elif changed_option_key == Tag.PRIORITYSOC.key.lower():
+        elif changed_option_key == Tag.PRIORITYSOC.snake_case:
             # we need to adjust the 'Vehicle first' (BUFFERSOC) options
-            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.key.lower()}"]
+            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.snake_case}"]
             if option in Tag.BUFFERSOC.options:
                 select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(option):]
             else:
                 select.options = Tag.BUFFERSOC.options
 
         # is 'Support vehicle charging' (BUFFERSTARTSOC)
-        elif changed_option_key == Tag.BUFFERSTARTSOC.key.lower():
+        elif changed_option_key == Tag.BUFFERSTARTSOC.snake_case:
             # we need to adjust the 'Vehicle first' (BUFFERSOC) options
-            low_option = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.key.lower()}"].current_option
-            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.key.lower()}"]
+            low_option = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.snake_case}"].current_option
+            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.snake_case}"]
             if int(option) > 0 and option in Tag.BUFFERSOC.options and low_option in Tag.BUFFERSOC.options:
                 select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):Tag.BUFFERSOC.options.index(option)+1]
             elif int(option) > 0 and option in Tag.BUFFERSOC.options:
