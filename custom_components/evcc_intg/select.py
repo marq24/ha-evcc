@@ -113,7 +113,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     def _check_min_options(self, new_max_option: str):
         min_key = self.entity_id.split('.')[1].replace(Tag.MAXCURRENT.snake_case, Tag.MINCURRENT.snake_case)
-        _LOGGER.warning(f"CHECK_MIN {min_key} {entities_min_max_dict} {MIN_CURRENT_LIST} {entities_min_max_dict[min_key]}")
+        #_LOGGER.warning(f"CHECK_MIN {min_key} {entities_min_max_dict} {MIN_CURRENT_LIST} {entities_min_max_dict[min_key]}")
         if min_key in entities_min_max_dict:
             if new_max_option in MIN_CURRENT_LIST:
                 entities_min_max_dict[min_key].options = MIN_CURRENT_LIST[:MIN_CURRENT_LIST.index(new_max_option) + 1]
@@ -122,7 +122,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     def _check_max_options(self, new_min_option: str):
         max_key = self.entity_id.split('.')[1].replace(Tag.MINCURRENT.snake_case, Tag.MAXCURRENT.snake_case)
-        _LOGGER.warning(f"CHECK_MAX {max_key} {entities_min_max_dict} {MAX_CURRENT_LIST} {entities_min_max_dict[max_key]}")
+        #_LOGGER.warning(f"CHECK_MAX {max_key} {entities_min_max_dict} {MAX_CURRENT_LIST} {entities_min_max_dict[max_key]}")
         if max_key in entities_min_max_dict:
             if new_min_option in MAX_CURRENT_LIST:
                 entities_min_max_dict[max_key].options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(new_min_option):]

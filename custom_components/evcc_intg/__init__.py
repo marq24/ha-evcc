@@ -1,5 +1,4 @@
 import asyncio
-import json
 import logging
 from datetime import datetime, timedelta
 from typing import Any
@@ -52,22 +51,8 @@ async def async_setup(hass: HomeAssistant, config: Config):  # pylint: disable=u
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if DOMAIN not in hass.data:
         value = "UNKOWN"
-        try:
-            basepath = __file__[:-11]
-            with open(f"{basepath}manifest.json") as f:
-                manifest = json.load(f)
-                value = manifest["version"]
-        except:
-            pass
         _LOGGER.info(STARTUP_MESSAGE)
         hass.data.setdefault(DOMAIN, {"manifest_version": value})
-
-    # integration = await loader.async_get_integration(hass, DOMAIN)
-    # xxx = await translation.async_get_translations(hass, hass.config.language, "entity_component")
-    # _LOGGER.error(f"-> {inspect.getmembers(xxx)}")
-    # for platform in PLATFORMS:
-    #     platform = await integration.async_get_platform(platform)
-    #     _LOGGER.error(f"-> {inspect.getmembers(platform)}")
 
     coordinator = EvccDataUpdateCoordinator(hass, config_entry)
     await coordinator.async_refresh()

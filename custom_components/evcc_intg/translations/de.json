@@ -67,7 +67,7 @@
       "detectvehicle": {"name":  "Fahrzeugerkennung starten"}
     },
     "number": {
-      "limitsoc": {"name": "Standard Ladelimit (SOC"},
+      "limitsoc": {"name": "Standard Ladelimit (SOC)"},
       "limitenergy": {"name": "Standard Ladelimit (Energie)"},
       "enablethreshold": {"name":  "Schwellwert Aktivierung"},
       "disablethreshold": {"name":  "Schwellwert Deaktivierung"},
