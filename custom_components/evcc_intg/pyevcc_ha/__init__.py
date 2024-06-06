@@ -39,7 +39,7 @@ class EvccApiBridge:
         # 1 hour = 60min * 60sec = 3600 sec
         # 5 min = 300 sec
         if self._LAST_FULL_STATE_UPDATE_TS + 300 < time():
-            await self.read_all_data();
+            await self.read_all_data()
         else:
             new_data = await self.read_frequent_data()
             if new_data is not None:
