@@ -538,9 +538,10 @@ SENSOR_SENSORS_PER_LOADPOINT = [
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGETOTALIMPORT,
         icon="mdi:transmission-tower-export",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=None,
-        device_class=None
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGEDENERGY,

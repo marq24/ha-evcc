@@ -89,6 +89,9 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         value = round(float(value)/self.entity_description.factor, 2)
                     else:
                         value = round(float(value)/self.entity_description.factor, self.entity_description.suggested_display_precision)
+                elif self.entity_description.suggested_display_precision is not None:
+                    value = round(float(value), self.entity_description.suggested_display_precision)
+
 
         except IndexError:
             value = "unknown"
