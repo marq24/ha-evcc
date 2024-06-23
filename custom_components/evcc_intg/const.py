@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Final
 
-from homeassistant.components.binary_sensor import BinarySensorEntityDescription
+from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
 from homeassistant.components.select import SelectEntityDescription
@@ -150,12 +150,14 @@ BINARY_SENSORS_PER_LOADPOINT = [
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.CHARGING,
         icon=None,
-        icon_off=None
+        icon_off=None,
+        device_class=BinarySensorDeviceClass.BATTERY_CHARGING
     ),
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.CONNECTED,
         icon=None,
-        icon_off=None
+        icon_off=None,
+        device_class=BinarySensorDeviceClass.CONNECTIVITY
     ),
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.ENABLED,
@@ -221,6 +223,7 @@ NUMBER_SENSORS_PER_LOADPOINT = [
         native_max_value=100,
         native_min_value=20,
         native_step=5,
+        native_unit_of_measurement=PERCENTAGE,
         device_class= NumberDeviceClass.BATTERY,
     ),
     ExtNumberEntityDescriptionStub(
