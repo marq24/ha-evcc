@@ -6,6 +6,7 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SENSOR_SENSORS, SENSOR_SENSORS_PER_LOADPOINT, ExtSensorEntityDescription
 
@@ -65,6 +66,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
         super().__init__(coordinator=coordinator, description=description)
+        self._previous_float_value: float | None = None
 
     @property
     def state(self):
@@ -104,6 +106,20 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             value = "on"
         elif value is False:
             value = "off"
+
+        # make sure that we do not return unknown or smaller values
+        # [see https://github.com/marq24/ha-evcc/discussions/7]
+        if self.tag == Tag.CHARGETOTALIMPORT:
+            if value == "unknown":
+                if self._previous_float_value is not None:
+                    return self._previous_float_value
+            else:
+                a_float_value = float(value)
+                if self._previous_float_value is not None and a_float_value < self._previous_float_value:
+                    _LOGGER.debug(f"prev>new for key {self._attr_translation_key} [prev: '{self._previous_float_value}' new: '{a_float_value}']")
+                    return self._previous_float_value
+                else:
+                    self._previous_float_value = a_float_value
 
         # sensor state must be string?!
         return value
