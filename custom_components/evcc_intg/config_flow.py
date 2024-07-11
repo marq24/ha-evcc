@@ -35,6 +35,9 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if user_input[CONF_HOST].startswith(("http://", "https://")):
                 user_input[CONF_HOST] = user_input[CONF_HOST].split("//")[1]
 
+            while user_input[CONF_HOST].endswith(("/", " ")):
+                user_input[CONF_HOST] = user_input[CONF_HOST][:-1]
+
             valid = await self._test_host(host=user_input[CONF_HOST])
             if valid:
                 user_input[ATTR_SW_VERSION] = self._version
