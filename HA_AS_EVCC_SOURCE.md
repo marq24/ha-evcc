@@ -85,7 +85,6 @@ So as short example (with all replacements) would look like:
       method: GET
       headers:
         - Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNWVjNzg5M2Y0ZjQ0MzBmYjUwOGEwMmU4N2Q0MzFmNyIsImlhdCI6MTcxNTUwNzYxMCwiZXhwIjoyMDMwODY3NjEwfQ.GMWO8saHpawkjNzk-uokxYeaP0GFKPQSeDoP3lCO488
-        - Content-Type: application/json
       insecure: true
       ...
 ```
@@ -101,7 +100,6 @@ meters:
       method: GET
       headers:
         - Authorization: Bearer [YOUR-TOKEN-HERE]
-        - Content-Type: application/json
       insecure: true
       jq: .state|tonumber
       timeout: 2s
@@ -111,7 +109,6 @@ meters:
         method: GET
         headers:
           - Authorization: Bearer [YOUR-TOKEN-HERE]
-          - Content-Type: application/json
         insecure: true
         jq: .state|tonumber
         timeout: 2s
@@ -120,7 +117,6 @@ meters:
         method: GET
         headers:
           - Authorization: Bearer [YOUR-TOKEN-HERE]
-          - Content-Type: application/json
         insecure: true
         jq: .state|tonumber
         timeout: 2s
@@ -129,7 +125,6 @@ meters:
         method: GET
         headers:
           - Authorization: Bearer [YOUR-TOKEN-HERE]
-          - Content-Type: application/json
         insecure: true
         jq: .state|tonumber
         timeout: 2s
@@ -142,7 +137,6 @@ meters:
       method: GET
       headers:
         - Authorization: Bearer [YOUR-TOKEN-HERE]
-        - Content-Taype: application/json
       insecure: true
       jq: .state|tonumber
       timeout: 2s
@@ -155,7 +149,6 @@ meters:
       method: GET
       headers:
         - Authorization: Bearer [YOUR-TOKEN-HERE]
-        - Content-Taype: application/json
       insecure: true
       jq: .state|tonumber * -1 # this does the trick to invert the sensor value for evcc
       timeout: 2s
@@ -165,7 +158,6 @@ meters:
       method: GET
       headers:
         - Authorization: Bearer [YOUR-TOKEN-HERE]
-        - Content-Taype: application/json
       insecure: true
       jq: .state|tonumber
       timeout: 2s
@@ -184,7 +176,6 @@ Just to demonstrate the general concept of adding additional AUX senors (all thi
       method: GET
       headers:
         - Authorization: Bearer [YOUR-TOKEN-HERE]
-        - Content-Taype: application/json
       insecure: true
       jq: .state|tonumber
       timeout: 2s
@@ -197,7 +188,6 @@ Just to demonstrate the general concept of adding additional AUX senors (all thi
       method: GET
       headers:
         - Authorization: Bearer [YOUR-TOKEN-HERE]
-        - Content-Taype: application/json
       insecure: true
       jq: .state|tonumber
       timeout: 2s
@@ -210,7 +200,6 @@ Just to demonstrate the general concept of adding additional AUX senors (all thi
       method: GET
       headers:
         - Authorization: Bearer [YOUR-TOKEN-HERE]
-        - Content-Taype: application/json
       insecure: true
       jq: .state|tonumber
       timeout: 2s
