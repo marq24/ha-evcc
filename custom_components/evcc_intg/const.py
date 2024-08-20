@@ -264,8 +264,8 @@ NUMBER_SENSORS_PER_LOADPOINT = [
         entity_category=EntityCategory.CONFIG,
         icon = "mdi:cash-multiple",
         mode = NumberMode.BOX,
-        native_max_value=20.00,
-        native_min_value=0.00,
+        native_max_value=0.45,
+        native_min_value=-0.05,
         native_step=0.005,
         native_unit_of_measurement="@@@/kWh",
     )
