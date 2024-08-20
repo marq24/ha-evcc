@@ -266,7 +266,7 @@ NUMBER_SENSORS_PER_LOADPOINT = [
         mode = NumberMode.BOX,
         native_max_value=20.00,
         native_min_value=0.00,
-        native_step=0.01,
+        native_step=0.005,
         native_unit_of_measurement="@@@/kWh",
     )
 ]

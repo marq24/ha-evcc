@@ -76,7 +76,7 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
                 return "unknown"
             else:
                 if self.tag == Tag.SMARTCOSTLIMIT:
-                    value = round(float(value), 2)
+                    value = round(float(value), 3)
                 else:
                     value = int(value)
 
@@ -96,7 +96,7 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
     async def async_set_native_value(self, value) -> None:
         try:
             if self.tag == Tag.SMARTCOSTLIMIT:
-                await self.coordinator.async_write_tag(self.tag, round(float(value), 2), self.idx, self)
+                await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self.idx, self)
             else:
                 await self.coordinator.async_write_tag(self.tag, int(value), self.idx, self)
 
