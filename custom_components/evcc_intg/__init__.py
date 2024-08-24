@@ -3,6 +3,15 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
+from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    JSONKEY_LOADPOINTS,
+    JSONKEY_VEHICLES,
+    JSONKEY_PLANS,
+    JSONKEY_PLANS_SOC,
+    JSONKEY_PLANS_TIME
+)
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, _camel_to_snake
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
 from homeassistant.core import Config, Event, SupportsResponse
@@ -15,16 +24,6 @@ from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 from homeassistant.helpers.update_coordinator import UpdateFailed
 from homeassistant.util import slugify
-
-from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
-from custom_components.evcc_intg.pyevcc_ha.const import (
-    JSONKEY_LOADPOINTS,
-    JSONKEY_VEHICLES,
-    JSONKEY_PLANS,
-    JSONKEY_PLANS_SOC,
-    JSONKEY_PLANS_TIME
-)
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, _camel_to_snake
 from .const import (
     NAME,
     DOMAIN,
@@ -107,6 +106,7 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config_entry):
+        _LOGGER.debug(f"starting evcc_intg for: {config_entry}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
         self.bridge = EvccApiBridge(host=config_entry.options.get(CONF_HOST, config_entry.data.get(CONF_HOST)),
@@ -168,8 +168,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         }
 
         self._vehicle = {}
-        for a_veh_name in initdata["vehicles"]:
-            a_veh = initdata["vehicles"][a_veh_name]
+        for a_veh_name in initdata[JSONKEY_VEHICLES]:
+            a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
             if "capacity" in a_veh:
                 self._vehicle[a_veh_name] = {
                     "name": a_veh["title"],
@@ -183,7 +183,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         self._loadpoint = {}
         api_index = 1
-        for a_loadpoint in initdata["loadpoints"]:
+        for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
             self._loadpoint[f"{api_index}"] = {
                 "name": a_loadpoint["title"],
                 "id": slugify(a_loadpoint["title"]),
@@ -205,6 +205,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             self._currency = "€"
 
+        _LOGGER.debug(f"read_evcc_config: LPs: {self._loadpoint} VEHs: {self._vehicle} CT: {self._cost_type} CUR: {self._currency}")
+
     async def _async_update_data(self) -> dict:
         """Update data via library."""
         try:
@@ -214,7 +216,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             # _LOGGER.debug(f"number of fields after query: {len(result)}")
             # return result
             result = await self.bridge.read_all()
-            _LOGGER.debug(f"number of fields after query: {len(result)}")
+            _LOGGER.debug(f"number of fields after query: {len(result)} [is prioritySoc present? {'prioritySoc' in result}]")
             return result
 
         except UpdateFailed as exception:
@@ -249,14 +251,27 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 return value
 
     def read_tag_vehicle_int(self, tag: Tag, loadpoint_idx: int = None):
-        if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data:
+        if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data and loadpoint_idx is not None:
             try:
-                vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.VEHICLENAME.key]
-                if vehicle_id is not None:
-                    return self.read_tag_vehicle_str(tag=tag, vehicle_id=vehicle_id)
+                if len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
+                    if Tag.VEHICLENAME.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.VEHICLENAME.key]
+                        if vehicle_id is not None:
+                            if len(vehicle_id) > 0:
+                                return self.read_tag_vehicle_str(tag=tag, vehicle_id=vehicle_id)
+                            else:
+                                # NO logging of empty vehicleName's -> since this just means no vehicle connected to
+                                # the loadpoint...
+                                pass
+                        else:
+                            _LOGGER.debug(f"read_tag_vehicle_int: vehicle_id is None for: {loadpoint_idx}")
+                    else:
+                        _LOGGER.debug(f"read_tag_vehicle_int: {Tag.VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
+                else:
+                    _LOGGER.debug(f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
 
             except Exception as err:
-                _LOGGER.info(f"could not find a connected vehicle at loadpoint: {loadpoint_idx}")
+                _LOGGER.info(f"read_tag_vehicle_int: could not find a connected vehicle at loadpoint: {loadpoint_idx}")
 
         return None
 
