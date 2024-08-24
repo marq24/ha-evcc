@@ -1,13 +1,12 @@
 import asyncio
 import logging
 
+from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, ExtSelectEntityDescription
 
@@ -106,76 +105,88 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             self._check_max_options(self.current_option)
         elif self.tag in SOCS_TAG_LIST:
             self._check_socs(self.current_option)
-            pass
 
         if is_last:
             self.async_schedule_update_ha_state(force_refresh=True)
 
     def _check_min_options(self, new_max_option: str):
-        min_key = self.entity_id.split('.')[1].replace(Tag.MAXCURRENT.snake_case, Tag.MINCURRENT.snake_case)
-        #_LOGGER.warning(f"CHECK_MIN {min_key} {entities_min_max_dict} {MIN_CURRENT_LIST} {entities_min_max_dict[min_key]}")
-        if min_key in entities_min_max_dict:
-            if new_max_option in MIN_CURRENT_LIST:
-                entities_min_max_dict[min_key].options = MIN_CURRENT_LIST[:MIN_CURRENT_LIST.index(new_max_option) + 1]
-            else:
-                entities_min_max_dict[min_key].options = MIN_CURRENT_LIST
+        try:
+            min_key = self.entity_id.split('.')[1].replace(Tag.MAXCURRENT.snake_case, Tag.MINCURRENT.snake_case)
+            #_LOGGER.warning(f"CHECK_MIN {min_key} {entities_min_max_dict} {MIN_CURRENT_LIST} {entities_min_max_dict[min_key]}")
+            if min_key in entities_min_max_dict:
+                if new_max_option in MIN_CURRENT_LIST:
+                    entities_min_max_dict[min_key].options = MIN_CURRENT_LIST[:MIN_CURRENT_LIST.index(new_max_option) + 1]
+                else:
+                    entities_min_max_dict[min_key].options = MIN_CURRENT_LIST
+
+        except Exception as err:
+            _LOGGER.debug(f"Error _check_min_options for '{new_max_option}' {self.entity_id} {self.tag} {err}")
 
     def _check_max_options(self, new_min_option: str):
-        max_key = self.entity_id.split('.')[1].replace(Tag.MINCURRENT.snake_case, Tag.MAXCURRENT.snake_case)
-        #_LOGGER.warning(f"CHECK_MAX {max_key} {entities_min_max_dict} {MAX_CURRENT_LIST} {entities_min_max_dict[max_key]}")
-        if max_key in entities_min_max_dict:
-            if new_min_option in MAX_CURRENT_LIST:
-                entities_min_max_dict[max_key].options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(new_min_option):]
-            else:
-                entities_min_max_dict[max_key].options = MAX_CURRENT_LIST
+        try:
+            max_key = self.entity_id.split('.')[1].replace(Tag.MINCURRENT.snake_case, Tag.MAXCURRENT.snake_case)
+            #_LOGGER.warning(f"CHECK_MAX {max_key} {entities_min_max_dict} {MAX_CURRENT_LIST} {entities_min_max_dict[max_key]}")
+            if max_key in entities_min_max_dict:
+                if new_min_option in MAX_CURRENT_LIST:
+                    entities_min_max_dict[max_key].options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(new_min_option):]
+                else:
+                    entities_min_max_dict[max_key].options = MAX_CURRENT_LIST
+
+        except Exception as err:
+            _LOGGER.debug(f"Error _check_max_options for '{new_min_option}' {self.entity_id} {self.tag} {err}")
 
     def _check_socs(self, option: str):
-        changed_option = self.entity_id.split('.')[1].split('_')
-        system_id = changed_option[0]
-        changed_option_key = '_'.join(changed_option[1:])
+        try:
+            changed_option = self.entity_id.split('.')[1].split('_')
+            system_id = changed_option[0]
+            changed_option_key = '_'.join(changed_option[1:])
 
-        #_LOGGER.warning(f"SOC CHECK: {system_id} {changed_option_key} {entities_min_max_dict}")
+            #_LOGGER.warning(f"SOC CHECK: {system_id} {changed_option_key} {entities_min_max_dict}")
 
-        # is 'Vehicle first' (BUFFERSOC)
-        if changed_option_key == Tag.BUFFERSOC.snake_case:
-            # we need to adjust the 'Support vehicle charging' (BUFFERSTARTSOC) options
-            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSTARTSOC.snake_case}"]
-            if option in Tag.BUFFERSTARTSOC.options:
-                select.options = Tag.BUFFERSTARTSOC.options[Tag.BUFFERSTARTSOC.options.index(option):]
-            else:
-                select.options = Tag.BUFFERSTARTSOC.options
+            # is 'Vehicle first' (BUFFERSOC)
+            if changed_option_key == Tag.BUFFERSOC.snake_case:
+                # we need to adjust the 'Support vehicle charging' (BUFFERSTARTSOC) options
+                select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSTARTSOC.snake_case}"]
+                if option in Tag.BUFFERSTARTSOC.options:
+                    select.options = Tag.BUFFERSTARTSOC.options[Tag.BUFFERSTARTSOC.options.index(option):]
+                else:
+                    select.options = Tag.BUFFERSTARTSOC.options
 
-            # we need to adjust the 'Home has priority' (PRIORITYSOC) options
-            select = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.snake_case}"]
-            if option in Tag.PRIORITYSOC.options:
-                select.options = Tag.PRIORITYSOC.options[:Tag.PRIORITYSOC.options.index(option)+1]
-            else:
-                select.options = Tag.PRIORITYSOC.options
+                # we need to adjust the 'Home has priority' (PRIORITYSOC) options
+                select = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.snake_case}"]
+                if option in Tag.PRIORITYSOC.options:
+                    select.options = Tag.PRIORITYSOC.options[:Tag.PRIORITYSOC.options.index(option)+1]
+                    _LOGGER.debug(f"True -> {option} -> {select.options} ")
+                else:
+                    select.options = Tag.PRIORITYSOC.options
+                    _LOGGER.debug(f"False -> {option} -> {select.options} ")
 
-        # is 'Home has priority' (PRIORITYSOC)
-        elif changed_option_key == Tag.PRIORITYSOC.snake_case:
-            # we need to adjust the 'Vehicle first' (BUFFERSOC) options
-            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.snake_case}"]
-            if option in Tag.BUFFERSOC.options:
-                select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(option):]
-            else:
-                select.options = Tag.BUFFERSOC.options
-
-        # is 'Support vehicle charging' (BUFFERSTARTSOC)
-        elif changed_option_key == Tag.BUFFERSTARTSOC.snake_case:
-            # we need to adjust the 'Vehicle first' (BUFFERSOC) options
-            low_option = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.snake_case}"].current_option
-            select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.snake_case}"]
-            if int(option) > 0 and option in Tag.BUFFERSOC.options and low_option in Tag.BUFFERSOC.options:
-                select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):Tag.BUFFERSOC.options.index(option)+1]
-            elif int(option) > 0 and option in Tag.BUFFERSOC.options:
-                select.options = Tag.BUFFERSOC.options[:Tag.BUFFERSOC.options.index(option)+1]
-            else:
-                if low_option in Tag.BUFFERSOC.options:
-                    select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):]
+            # is 'Home has priority' (PRIORITYSOC)
+            elif changed_option_key == Tag.PRIORITYSOC.snake_case:
+                # we need to adjust the 'Vehicle first' (BUFFERSOC) options
+                select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.snake_case}"]
+                if option in Tag.BUFFERSOC.options:
+                    select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(option):]
                 else:
                     select.options = Tag.BUFFERSOC.options
 
+            # is 'Support vehicle charging' (BUFFERSTARTSOC)
+            elif changed_option_key == Tag.BUFFERSTARTSOC.snake_case:
+                # we need to adjust the 'Vehicle first' (BUFFERSOC) options
+                low_option = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.snake_case}"].current_option
+                select = entities_min_max_dict[f"{system_id}_{Tag.BUFFERSOC.snake_case}"]
+                if int(option) > 0 and option in Tag.BUFFERSOC.options and low_option in Tag.BUFFERSOC.options:
+                    select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):Tag.BUFFERSOC.options.index(option)+1]
+                elif int(option) > 0 and option in Tag.BUFFERSOC.options:
+                    select.options = Tag.BUFFERSOC.options[:Tag.BUFFERSOC.options.index(option)+1]
+                else:
+                    if low_option in Tag.BUFFERSOC.options:
+                        select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):]
+                    else:
+                        select.options = Tag.BUFFERSOC.options
+
+        except Exception as err:
+            _LOGGER.debug(f"Error _check_socs for '{option}' {self.entity_id} {self.tag} {err}")
 
     # def _on_vehicle_change(self, sel_vehicle_id: str):
     #     if JSONKEY_VEHICLES in self.coordinator.data and sel_vehicle_id in self.coordinator.data[JSONKEY_VEHICLES]:
@@ -201,10 +212,12 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             if isinstance(value, (int, float)):
                 value = str(value)
 
-        except KeyError:
+        except KeyError as kerr:
+            _LOGGER.debug(f"KeyError: '{self.tag}' '{self.idx}' {kerr}")
             value = "unknown"
-        except TypeError:
-            return None
+        except TypeError as terr:
+            _LOGGER.debug(f"TypeError: '{self.tag}' '{self.idx}' {terr}")
+            value = None
         return value
 
     async def async_select_option(self, option: str) -> None:
