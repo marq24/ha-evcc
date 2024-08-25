@@ -205,7 +205,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             self._currency = "€"
 
-        _LOGGER.debug(f"read_evcc_config: LPs: {self._loadpoint} VEHs: {self._vehicle} CT: {self._cost_type} CUR: {self._currency}")
+        _LOGGER.debug(f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency}")
 
     async def _async_update_data(self) -> dict:
         """Update data via library."""
@@ -215,18 +215,18 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             # result = await self.bridge.read_all()
             # _LOGGER.debug(f"number of fields after query: {len(result)}")
             # return result
+
             result = await self.bridge.read_all()
-
             if result is not None:
-                _LOGGER.debug(f"number of fields after query: {len(result)} [prioritySoc - in resp?: {'prioritySoc' in result}]")
+                _LOGGER.debug(f"number of fields after query: {len(result)}")
 
-            if self.data is not None:
-                if 'prioritySoc' in self.data:
-                    _LOGGER.debug(f"... and prioritySoc also in self.data")
-                else:
-                    _LOGGER.debug(f"... but prioritySoc NOT IN self.data {self.data}")
-            else:
-                _LOGGER.debug(f"... and self.data is None?!")
+            # if self.data is not None:
+            #     if 'prioritySoc' in self.data:
+            #         _LOGGER.debug(f"... and prioritySoc also in self.data")
+            #     else:
+            #         _LOGGER.debug(f"... but prioritySoc NOT IN self.data {self.data}")
+            # else:
+            #     _LOGGER.debug(f"... and self.data is None?!")
 
             return result
 
@@ -244,12 +244,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             elif tag.type == EP_TYPE.VEHICLES:
                 ret = self.read_tag_vehicle_int(tag=tag, loadpoint_idx=idx)
             elif tag.type == EP_TYPE.SITE:
-                if tag.key == Tag.PRIORITYSOC.key:
-                    _LOGGER.debug(f"read_tag '{tag.key}' start")
                 if tag.key in self.data:
                     ret = self.data[tag.key]
-                    if tag.key == Tag.PRIORITYSOC.key:
-                        _LOGGER.debug(f"read_tag '{tag.key}' value found {ret}")
 
         # _LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
         return ret

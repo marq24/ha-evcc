@@ -154,12 +154,10 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
                 # we need to adjust the 'Home has priority' (PRIORITYSOC) options
                 select = entities_min_max_dict[f"{system_id}_{Tag.PRIORITYSOC.snake_case}"]
-                if option in Tag.PRIORITYSOC.options:
+                if int(option) > 0 and option in Tag.PRIORITYSOC.options:
                     select.options = Tag.PRIORITYSOC.options[:Tag.PRIORITYSOC.options.index(option)+1]
-                    _LOGGER.debug(f"True -> {option} -> {select.options} ")
                 else:
                     select.options = Tag.PRIORITYSOC.options
-                    _LOGGER.debug(f"False -> {option} -> {select.options} ")
 
             # is 'Home has priority' (PRIORITYSOC)
             elif changed_option_key == Tag.PRIORITYSOC.snake_case:
