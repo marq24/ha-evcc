@@ -1,12 +1,11 @@
 import logging
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
-
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SENSOR_SENSORS, SENSOR_SENSORS_PER_LOADPOINT, ExtSensorEntityDescription
 
@@ -69,7 +68,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         self._previous_float_value: float | None = None
 
     @property
-    def state(self):
+    def native_value(self):
         """Return the state of the sensor."""
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
@@ -78,39 +77,31 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     value = value[self.entity_description.array_idx]
 
             if value is None or len(str(value)) == 0:
-                value = "unknown"
+                value = None
             else:
                 if self.entity_description.lookup is not None:
                     if self.tag.key.lower() in self.coordinator.lang_map:
                         value = self.coordinator.lang_map[self.tag.key.lower()][value]
                     else:
                         _LOGGER.warning(f"{self.tag.key} not found in translations")
+                elif isinstance(value, bool):
+                    if value is True:
+                        value = "on"
+                    elif value is False:
+                        value = "off"
+                else:
+                    # self.entity_description.lookup values are always 'strings' - so there we should not
+                    # have an additional 'factor'
+                    if self.entity_description.factor is not None:
+                        value = float(value)/self.entity_description.factor
 
-                if self.entity_description.factor is not None:
-                    if self.entity_description.suggested_display_precision is None:
-                        value = round(float(value)/self.entity_description.factor, 2)
-                    else:
-                        value = round(float(value)/self.entity_description.factor, self.entity_description.suggested_display_precision)
-                elif self.entity_description.suggested_display_precision is not None:
-                    value = round(float(value), self.entity_description.suggested_display_precision)
-
-
-        except IndexError:
-            value = "unknown"
-        except KeyError:
-            value = "unknown"
-        except TypeError as ex:
-            value = "unknown"
-
-        if value is True:
-            value = "on"
-        elif value is False:
-            value = "off"
+        except (IndexError, ValueError, TypeError):
+            value = None
 
         # make sure that we do not return unknown or smaller values
         # [see https://github.com/marq24/ha-evcc/discussions/7]
         if self.tag == Tag.CHARGETOTALIMPORT:
-            if value == "unknown":
+            if value is None or value == "unknown":
                 if self._previous_float_value is not None:
                     return self._previous_float_value
             else:
@@ -121,5 +112,5 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 else:
                     self._previous_float_value = a_float_value
 
-        # sensor state must be string?!
+        # final return statement...
         return value

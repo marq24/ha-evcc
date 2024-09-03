@@ -1,6 +1,7 @@
 from dataclasses import dataclass
 from typing import Final
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
@@ -17,8 +18,6 @@ from homeassistant.const import (
     PERCENTAGE
 )
 from homeassistant.util.frozen_dataclass_compat import FrozenOrThawed
-
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 
 # Base component constants
 MANUFACTURER: Final = "marq24 [not connected with the evcc.io team]"
@@ -558,7 +557,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGEREMAININGENERGY,
         icon="mdi:lightning-bolt-outline",
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         factor=1000,
@@ -577,18 +576,18 @@ SENSOR_SENSORS_PER_LOADPOINT = [
     ExtSensorEntityDescriptionStub(
         tag=Tag.PHASEACTION,
         icon="mdi:numeric",
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=None,
         native_unit_of_measurement=None,
-        device_class=None,
+        device_class=SensorDeviceClass.ENUM,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PHASEACTION,
         lookup=True,
         icon="mdi:numeric",
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=None,
         native_unit_of_measurement=None,
-        device_class=None
+        device_class=SensorDeviceClass.ENUM
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PHASEREMAINING,
@@ -683,7 +682,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.DATE
+        #device_class=SensorDeviceClass.DATE,
+        device_class=None
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PLANENERGY,
@@ -699,7 +699,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.DATE,
+        #device_class=SensorDeviceClass.DATE,
+        device_class=None,
         entity_registry_enabled_default=False
     ),
 ]

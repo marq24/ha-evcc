@@ -353,7 +353,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if "0001-01-01T00:00:00Z" == value:
             return None
 
-        # we need to convert UTC in loal time
+        # we need to convert UTC in local time
         value = value.replace("Z", "+00:00")
         if ".000" in value:
             dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
