@@ -144,7 +144,15 @@ class ExtSwitchEntityDescription(SwitchEntityDescription):
 
 PLATFORMS: Final = ["binary_sensor", "button", "number", "select", "sensor", "switch"]
 
-BINARY_SENSORS = []
+BINARY_SENSORS = [
+    ExtBinarySensorEntityDescription(
+        tag=Tag.BATTERYGRIDCHARGEACTIVE,
+        key=Tag.BATTERYGRIDCHARGEACTIVE.key,
+        icon="mdi:battery-charging-outline",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=None
+    ),
+]
 BINARY_SENSORS_PER_LOADPOINT = [
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.CHARGING,
@@ -211,7 +219,18 @@ NUMBER_SENSORS = [
         native_min_value=-5000,
         native_step=50,
         native_unit_of_measurement=UnitOfPower.WATT,
-        device_class= NumberDeviceClass.POWER,
+        device_class=NumberDeviceClass.POWER,
+    ),
+    ExtNumberEntityDescription(
+        tag=Tag.BATTERYGRIDCHARGELIMIT,
+        key=Tag.BATTERYGRIDCHARGELIMIT.key,
+        entity_category=EntityCategory.CONFIG,
+        icon = "mdi:cash-multiple",
+        mode = NumberMode.BOX,
+        native_max_value=0.45,
+        native_min_value=-0.05,
+        native_step=0.005,
+        native_unit_of_measurement="@@@/kWh"
     ),
 ]
 NUMBER_SENSORS_PER_LOADPOINT = [
@@ -712,6 +731,6 @@ SWITCH_SENSORS = [
         icon="mdi:battery-off-outline",
         entity_category=EntityCategory.CONFIG,
         device_class=None
-    ),
+    )
 ]
 SWITCH_SENSORS_PER_LOADPOINT = []

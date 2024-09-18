@@ -2,8 +2,8 @@
   "selector": {
     "dummy": {
       "options": {
-        "d1":  "Montags",
-        "d2":  "Dienstags"
+        "d1": "Montags",
+        "d2": "Dienstags"
       }
     }
   },
@@ -59,21 +59,23 @@
       "connected": {"name": "Verbunden"},
       "enabled": {"name": "Aktiviert"},
       "smartcostactive": {"name": "Smartes Netzladen"},
-      "vehicledetectionactive": {"name": "Fahrzeugerkennung"}
+      "vehicledetectionactive": {"name": "Fahrzeugerkennung"},
+      "batterygridchargeactive": {"name": "Hausbatterie: Netzladen"}
     },
     "button": {
-      "vehicleplansdelete": {"name":  "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
-      "plandelete": {"name":  "Ladeplanung: Abfahrt löschen (Ladepunkt/Energie)"},
-      "detectvehicle": {"name":  "Fahrzeugerkennung starten"}
+      "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
+      "plandelete": {"name": "Ladeplanung: Abfahrt löschen (Ladepunkt/Energie)"},
+      "detectvehicle": {"name": "Fahrzeugerkennung starten"}
     },
     "number": {
       "limitsoc": {"name": "Standard Ladelimit (SOC)"},
       "limitenergy": {"name": "Standard Ladelimit (Energie)"},
-      "enablethreshold": {"name":  "Schwellwert Aktivierung"},
-      "disablethreshold": {"name":  "Schwellwert Deaktivierung"},
-      "residualpower": {"name":  "Restleistung"},
-      "smartcostlimit_co2": {"name":  "CO₂ Limit ≤"},
-      "smartcostlimit": {"name":  "@@@ Limit ≤"}
+      "enablethreshold": {"name": "Schwellwert Aktivierung"},
+      "disablethreshold": {"name": "Schwellwert Deaktivierung"},
+      "residualpower": {"name": "Restleistung"},
+      "smartcostlimit_co2": {"name": "CO₂ Limit ≤"},
+      "smartcostlimit": {"name": "@@@ Limit ≤"},
+      "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"}
     },
     "select": {
       "prioritysoc": {
@@ -198,7 +200,7 @@
       "chargecurrents_1": {"name": "Ladestrom P2"},
       "chargecurrents_2": {"name": "Ladestrom P3"},
       "chargeduration": {"name": "Ladedauer"},
-      "chargeremainingduration": {"name":  "Laderestzeit"},
+      "chargeremainingduration": {"name": "Laderestzeit"},
       "chargepower": {"name": "Ladeleistung"},
       "chargetotalimport": {"name": "Netzbezug"},
       "chargedenergy": {"name": "Ladeenergie"},

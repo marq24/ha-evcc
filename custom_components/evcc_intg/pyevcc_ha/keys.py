@@ -124,6 +124,14 @@ class Tag(ApiKey, Enum):
     # "tariffPriceHome": 0,
     TARIFFPRICEHOME = ApiKey(key="tariffPriceHome", type=EP_TYPE.SITE)
 
+    # -> NONE FREQUENT
+    # POST /api/batterydischargecontrol/<status>: enable/disable battery discharge control (true/false)
+    # batteryGridChargeActive: false,
+    BATTERYGRIDCHARGEACTIVE = ApiKey(key="batteryGridChargeActive", type=EP_TYPE.SITE, write_key="batterygridchargeactive")
+
+    # batteryGridChargeLimit: ??
+    BATTERYGRIDCHARGELIMIT = ApiKey(key="batteryGridChargeLimit", type=EP_TYPE.SITE, write_key="batterygridchargelimit")
+
     ###################################
     # LOADPOINT-DATA
     ###################################

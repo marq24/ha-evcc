@@ -397,7 +397,7 @@ class EvccBaseEntity(Entity):
                        platform_translations: dict[str, Any], ) -> str | UndefinedType | None:
 
         tmp = super()._name_internal(device_class_name, platform_translations)
-        if "@@@" in tmp:
+        if tmp is not None and "@@@" in tmp:
             tmp = tmp.replace("@@@", self.coordinator._currency)
         if self._attr_name_addon is not None:
             return f"{self._attr_name_addon} {tmp}"

@@ -2,8 +2,8 @@
   "selector": {
     "dummy": {
       "options": {
-        "d1":  "Mo",
-        "d2":  "Tu"
+        "d1": "Mo",
+        "d2": "Tu"
       }
     }
   },
@@ -59,21 +59,23 @@
       "connected": {"name": "Connected"},
       "enabled": {"name": "Enabled"},
       "smartcostactive": {"name": "Smart Grid Charging"},
-      "vehicledetectionactive": {"name": "Vehicle detection"}
+      "vehicledetectionactive": {"name": "Vehicle detection"},
+      "batterygridchargeactive": {"name": "Home-Battery: grid charging"}
     },
     "button": {
-      "vehicleplansdelete": {"name":  "Charging plan: Delete Departure (Vehicle/SOC)"},
-      "plandelete": {"name":  "Charging plan: Delete Departure (Loadpoint/Energy)"},
-      "detectvehicle": {"name":  "Start vehicle detection"}
+      "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
+      "plandelete": {"name": "Charging plan: Delete Departure (Loadpoint/Energy)"},
+      "detectvehicle": {"name": "Start vehicle detection"}
     },
     "number": {
       "limitsoc": {"name": "Default Charging limit (SOC)"},
       "limitenergy": {"name": "Default Charging limit (Energy)"},
-      "enablethreshold": {"name":  "Enable threshold"},
-      "disablethreshold": {"name":  "Disable threshold"},
-      "residualpower": {"name":  "Residual power"},
-      "smartcostlimit_co2": {"name":  "CO₂ limit ≤"},
-      "smartcostlimit": {"name":  "@@@ limit ≤"}
+      "enablethreshold": {"name": "Enable threshold"},
+      "disablethreshold": {"name": "Disable threshold"},
+      "residualpower": {"name": "Residual power"},
+      "smartcostlimit_co2": {"name": "CO₂ limit ≤"},
+      "smartcostlimit": {"name": "@@@ limit ≤"},
+      "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"}
     },
     "select": {
       "prioritysoc": {
@@ -268,7 +270,7 @@
       "chargecurrents_1": {"name": "Charge current P2"},
       "chargecurrents_2": {"name": "Charge current P3"},
       "chargeduration": {"name": "Charge duration"},
-      "chargeremainingduration": {"name":  "Charge remaining time"},
+      "chargeremainingduration": {"name": "Charge remaining time"},
       "chargepower": {"name": "Charge power"},
       "chargetotalimport": {"name": "Grid imported"},
       "chargedenergy": {"name": "Charge energy"},
