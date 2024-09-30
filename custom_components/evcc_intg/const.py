@@ -700,7 +700,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         tag=Tag.VEHICLEPLANSTIME,
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
-        state_class=SensorStateClass.MEASUREMENT,
+        #state_class=SensorStateClass.MEASUREMENT,
         #device_class=SensorDeviceClass.DATE,
         device_class=None
     ),
@@ -717,7 +717,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         tag=Tag.PLANTIME,
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
-        state_class=SensorStateClass.MEASUREMENT,
+        #state_class=SensorStateClass.MEASUREMENT,
         #device_class=SensorDeviceClass.DATE,
         device_class=None,
         entity_registry_enabled_default=False
