@@ -312,7 +312,24 @@
       "pvpower": {"name": "Power Solar"},
 
       "tariffgrid": {"name": "Costs Grid"},
-      "tariffpricehome": {"name": "Costs Usage"}
+      "tariffpricehome": {"name": "Costs Usage"},
+
+      "stattotalsolarpercentage": {"name": "Statistics: Total Solar"},
+      "stattotalchargedkwh": {"name": "Statistics: Total Charge energy"},
+      "stattotalavgprice": {"name": "Statistics: Total Ø Price"},
+      "stattotalavgco2": {"name": "Statistics: Total Ø CO₂"},
+      "statthisyearsolarpercentage": {"name": "Statistics: This year Solar"},
+      "statthisyearchargedkwh": {"name": "Statistics: This year Charge energy"},
+      "statthisyearavgprice": {"name": "Statistics: This year Ø Price"},
+      "statthisyearavgco2": {"name": "Statistics: This year Ø CO₂"},
+      "stat365solarpercentage": {"name": "Statistics: Last 356 days Solar"},
+      "stat365chargedkwh": {"name": "Statistics: Last 356 days Charge energy"},
+      "stat365avgprice": {"name": "Statistics: Last 356 days Ø Price"},
+      "stat365avgco2": {"name": "Statistics: Last 356 days Ø CO₂"},
+      "stat30solarpercentage": {"name": "Statistics: Last 30 days Solar"},
+      "stat30chargedkwh": {"name": "Statistics: Last 30 days Charge energy"},
+      "stat30avgprice": {"name": "Statistics: Last 30 days Ø Price"},
+      "stat30avgco2": {"name": "Statistics: Last 30 days Ø CO₂"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"}

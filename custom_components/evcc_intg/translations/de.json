@@ -242,7 +242,24 @@
       "pvpower": {"name": "Leistung PV"},
 
       "tariffgrid": {"name": "Kosten Netz"},
-      "tariffpricehome": {"name": "Kosten Verbrauch"}
+      "tariffpricehome": {"name": "Kosten Verbrauch"},
+
+      "stattotalsolarpercentage": {"name": "Statistik: gesamt Sonnenenergie"},
+      "stattotalchargedkwh": {"name": "Statistik: gesamt Ladeenergie"},
+      "stattotalavgprice": {"name": "Statistik: gesamt Ø Preis"},
+      "stattotalavgco2": {"name": "Statistik: gesamt Ø CO₂"},
+      "statthisyearsolarpercentage": {"name": "Statistik: dieses Jahr Sonnenenergie"},
+      "statthisyearchargedkwh": {"name": "Statistik: dieses Jahr Ladeenergie"},
+      "statthisyearavgprice": {"name": "Statistik: dieses Jahr Ø Preis"},
+      "statthisyearavgco2": {"name": "Statistik: dieses Jahr Ø CO₂"},
+      "stat365solarpercentage": {"name": "Statistik: letzten 356 Tage Sonnenenergie"},
+      "stat365chargedkwh": {"name": "Statistik: letzten 356 Tage Ladeenergie"},
+      "stat365avgprice": {"name": "Statistik: letzten 356 Tage Ø Preis"},
+      "stat365avgco2": {"name": "Statistik: letzten 356 Tage Ø CO₂"},
+      "stat30solarpercentage": {"name": "Statistik: letzten 30 Tage Sonnenenergie"},
+      "stat30chargedkwh": {"name": "Statistik: letzten 30 Tage Ladeenergie"},
+      "stat30avgprice": {"name": "Statistik: letzten 30 Tage Ø Preis"},
+      "stat30avgco2": {"name": "Statistik: letzten 30 Tage Ø CO₂"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"}

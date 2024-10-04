@@ -9,7 +9,13 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     MIN_CURRENT_LIST,
     MAX_CURRENT_LIST,
     JSONKEY_LOADPOINTS,
-    JSONKEY_VEHICLES, BATTERY_LIST
+    JSONKEY_VEHICLES,
+    JSONKEY_STATISTICS,
+    JSONKEY_STATISTICS_TOTAL,
+    JSONKEY_STATISTICS_THISYEAR,
+    JSONKEY_STATISTICS_365D,
+    JSONKEY_STATISTICS_30D,
+    BATTERY_LIST
 )
 
 # from aenum import Enum, extend_enum
@@ -31,11 +37,14 @@ def _camel_to_snake(a_key: str):
 class EP_TYPE(Enum):
     LOADPOINTS = JSONKEY_LOADPOINTS
     VEHICLES = JSONKEY_VEHICLES
+    STATISTICS = JSONKEY_STATISTICS
     SITE = "site"
 
 class ApiKey(NamedTuple):
     key: str
     type: str
+    subtype: str = None
+    entity_key: str = None
     write_key: str = None
     write_type: str = None
     options: list[str] = None
@@ -308,3 +317,27 @@ class Tag(ApiKey, Enum):
     VEHICLEPLANSTIME = ApiKey(key="vehiclePlansTime", type=EP_TYPE.VEHICLES)
     # delete plan button
     VEHICLEPLANSDELETE= ApiKey(key="vehiclePlansDelete", type=EP_TYPE.VEHICLES, writeable=True, write_key="plan/soc")
+
+    ###################################
+    # STATISTICS
+    ###################################
+
+    STATTOTALAVGCO2 = ApiKey(entity_key="statTotalAvgCo2", key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+    STATTOTALAVGPRICE = ApiKey(entity_key="statTotalAvgPrice", key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+    STATTOTALCHARGEDKWH = ApiKey(entity_key="statTotalChargedKWh", key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+    STATTOTALSOLARPERCENTAGE = ApiKey(entity_key="statTotalSolarPercentage", key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+
+    STATTHISYEARAVGCO2 = ApiKey(entity_key="statThisYearAvgCo2", key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+    STATTHISYEARAVGPRICE = ApiKey(entity_key="statThisYearAvgPrice", key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+    STATTHISYEARCHARGEDKWH = ApiKey(entity_key="statThisYearChargedKWh", key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+    STATTHISYEARSOLARPERCENTAGE = ApiKey(entity_key="statThisYearSolarPercentage", key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+
+    STAT365AVGCO2 = ApiKey(entity_key="stat365AvgCo2", key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+    STAT365AVGPRICE = ApiKey(entity_key="stat365AvgPrice", key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+    STAT365CHARGEDKWH = ApiKey(entity_key="stat365ChargedKWh", key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+    STAT365SOLARPERCENTAGE = ApiKey(entity_key="stat365SolarPercentage", key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+
+    STAT30AVGCO2 = ApiKey(entity_key="stat30AvgCo2", key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
+    STAT30AVGPRICE = ApiKey(entity_key="stat30AvgPrice", key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
+    STAT30CHARGEDKWH = ApiKey(entity_key="stat30ChargedKWh", key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
+    STAT30SOLARPERCENTAGE = ApiKey(entity_key="stat30SolarPercentage", key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)

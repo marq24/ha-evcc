@@ -9,7 +9,12 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_VEHICLES,
     JSONKEY_PLANS,
     JSONKEY_PLANS_SOC,
-    JSONKEY_PLANS_TIME
+    JSONKEY_PLANS_TIME,
+    JSONKEY_STATISTICS,
+    JSONKEY_STATISTICS_TOTAL,
+    JSONKEY_STATISTICS_THISYEAR,
+    JSONKEY_STATISTICS_365D,
+    JSONKEY_STATISTICS_30D,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, _camel_to_snake
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
@@ -205,7 +210,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             self._currency = "€"
 
-        _LOGGER.debug(f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency}")
+        _LOGGER.debug(
+            f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency}")
 
     async def _async_update_data(self) -> dict:
         """Update data via library."""
@@ -246,9 +252,16 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             elif tag.type == EP_TYPE.SITE:
                 if tag.key in self.data:
                     ret = self.data[tag.key]
-
+            elif tag.type == EP_TYPE.STATISTICS:
+                ret = self.read_tag_statistics(tag=tag)
         # _LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
         return ret
+
+    def read_tag_statistics(self, tag: Tag):
+        if JSONKEY_STATISTICS in self.data:
+            if tag.subtype in self.data[JSONKEY_STATISTICS]:
+                if tag.key in self.data[JSONKEY_STATISTICS][tag.subtype]:
+                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key]
 
     def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
         if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
@@ -277,9 +290,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                         else:
                             _LOGGER.debug(f"read_tag_vehicle_int: vehicle_id is None for: {loadpoint_idx}")
                     else:
-                        _LOGGER.debug(f"read_tag_vehicle_int: {Tag.VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
+                        _LOGGER.debug(
+                            f"read_tag_vehicle_int: {Tag.VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
                 else:
-                    _LOGGER.debug(f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
+                    _LOGGER.debug(
+                        f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
 
             except Exception as err:
                 _LOGGER.info(f"read_tag_vehicle_int: could not find a connected vehicle at loadpoint: {loadpoint_idx}")
