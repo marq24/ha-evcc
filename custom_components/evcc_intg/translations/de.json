@@ -220,6 +220,7 @@
       "sessionpriceperkwh": {"name": "Ladevorgang @@@/kWh"},
       "sessionsolarpercentage": {"name": "Ladevorgang PV Verwendung"},
 
+      "vehicleodometer": {"name": "Fahrzeug Kilometerstand"},
       "vehiclerange": {"name": "Fahrzeug Reichweite"},
       "vehiclesoc": {"name": "Fahrzeug Ladestand"},
 
