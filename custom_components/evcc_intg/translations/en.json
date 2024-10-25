@@ -290,6 +290,7 @@
       "sessionpriceperkwh": {"name": "Session @@@/kWh"},
       "sessionsolarpercentage": {"name": "Session Solar usage"},
 
+      "vehicleodometer": {"name": "Vehicle odometer"},
       "vehiclerange": {"name": "Vehicle range"},
       "vehiclesoc": {"name": "Vehicle charge"},
 

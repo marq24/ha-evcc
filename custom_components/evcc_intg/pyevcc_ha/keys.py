@@ -244,7 +244,7 @@ class Tag(ApiKey, Enum):
     VEHICLENAME = ApiKey(key="vehicleName", type=EP_TYPE.LOADPOINTS, writeable=True, write_key = "vehicle")
 
     # "vehicleOdometer": 0,
-    # ???
+    VEHICLEODOMETER = ApiKey(key="vehicleOdometer", type=EP_TYPE.LOADPOINTS)
 
     # "vehicleRange": 0,
     VEHICLERANGE = ApiKey(key="vehicleRange", type=EP_TYPE.LOADPOINTS)
