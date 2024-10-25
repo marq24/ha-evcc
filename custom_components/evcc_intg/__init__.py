@@ -146,6 +146,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return True
 
     def clear_data(self):
+        _LOGGER.debug(f"clear_data called...")
         self.bridge.clear_data()
         self.data.clear()
 
@@ -215,6 +216,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def _async_update_data(self) -> dict:
         """Update data via library."""
+        _LOGGER.debug(f"_async_update_data called")
         try:
             # if self.data is not None:
             #    _LOGGER.debug(f"number of fields before query: {len(self.data)} ")
@@ -357,9 +359,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
             elif tag.type == EP_TYPE.VEHICLES:
                 # TODO ?!
+                _LOGGER.debug(f"{tag} no data update!")
                 pass
 
         if entity is not None:
+            _LOGGER.debug(f"schedule update...")
             entity.async_schedule_update_ha_state(force_refresh=True)
 
         return result

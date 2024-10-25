@@ -111,6 +111,7 @@ class ExtSelectEntityDescription(SelectEntityDescription):
 @dataclass
 class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
     state_class: SensorStateClass | str | None = None
+    suggested_unit_of_measurement: str | None = None
     suggested_display_precision: int | None = None
     native_unit_of_measurement: str | None = None
 
@@ -689,9 +690,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         tag=Tag.CHARGEDURATION,
         icon="mdi:clock-digital",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfTime.MINUTES,
-        factor = 60000000000,
-        #factor = 60000000,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        suggested_unit_of_measurement=UnitOfTime.MINUTES,
         device_class=SensorDeviceClass.DURATION,
         suggested_display_precision=0
     ),
@@ -699,9 +699,9 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         tag=Tag.CHARGEREMAININGDURATION,
         icon="mdi:clock-digital",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfTime.MINUTES,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        suggested_unit_of_measurement=UnitOfTime.MINUTES,
         device_class=SensorDeviceClass.DURATION,
-        factor = 60000000000,
         suggested_display_precision=0
     ),
     ExtSensorEntityDescriptionStub(
