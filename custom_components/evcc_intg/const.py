@@ -184,7 +184,21 @@ BINARY_SENSORS_PER_LOADPOINT = [
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:car-search",
         icon_off="mdi:car-search-outline"
+    ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.VEHICLECLIMATERACTIVE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:snowflake-thermometer",
+        icon_off="mdi:snowflake-off"
+    ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.VEHICLEWELCOMEACTIVE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:gift-outline",
+        icon_off="mdi:gift-off-outline",
     )
+
+
 ]
 
 BUTTONS = []

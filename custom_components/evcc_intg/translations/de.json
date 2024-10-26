@@ -27,6 +27,7 @@
       "user": {
         "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.",
         "data": {
+          "host": "Deine lokale evcc URL (einschließlich des Ports)",
           "scan_interval": "Aktualisierungsintervall in Sekunden",
           "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
         }
@@ -60,7 +61,9 @@
       "enabled": {"name": "Aktiviert"},
       "smartcostactive": {"name": "Smartes Netzladen"},
       "vehicledetectionactive": {"name": "Fahrzeugerkennung"},
-      "batterygridchargeactive": {"name": "Hausbatterie: Netzladen"}
+      "batterygridchargeactive": {"name": "Hausbatterie: Netzladen"},
+      "vehicleclimateractive": {"name": "Fahrzeug Klimatisierung"},
+      "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},

@@ -252,6 +252,12 @@ class Tag(ApiKey, Enum):
     # "vehicleSoc": 0
     VEHICLESOC = ApiKey(key="vehicleSoc", type=EP_TYPE.LOADPOINTS)
 
+    # "vehicleClimaterActive": null,
+    VEHICLECLIMATERACTIVE = ApiKey(key="vehicleClimaterActive", type=EP_TYPE.LOADPOINTS)
+
+    #"vehicleWelcomeActive": false
+    VEHICLEWELCOMEACTIVE = ApiKey(key="vehicleWelcomeActive", type=EP_TYPE.LOADPOINTS)
+
     # "mode": "off", -> (off/pv/minpv/now)
     MODE = ApiKey(
         key="mode", type=EP_TYPE.LOADPOINTS,

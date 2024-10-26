@@ -27,6 +27,7 @@
       "user": {
         "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
+          "host": "Your local evcc URL (including the port)",
           "scan_interval": "Polling Interval in seconds",
           "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
         }
@@ -60,7 +61,10 @@
       "enabled": {"name": "Enabled"},
       "smartcostactive": {"name": "Smart Grid Charging"},
       "vehicledetectionactive": {"name": "Vehicle detection"},
-      "batterygridchargeactive": {"name": "Home-Battery: grid charging"}
+      "batterygridchargeactive": {"name": "Home-Battery: grid charging"},
+      "vehicleclimateractive": {"name": "Fahrzeug Climatisation"},
+      "vehiclewelcomeactive": {"name": "Fahrzeug Wellcome function"}
+
     },
     "button": {
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
