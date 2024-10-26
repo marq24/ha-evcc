@@ -830,6 +830,14 @@ SENSOR_SENSORS_PER_LOADPOINT = [
     ),
 
     ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLEODOMETER,
+        icon="mdi:counter",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=None,
+        suggested_display_precision=0
+    ),
+    ExtSensorEntityDescriptionStub(
         tag=Tag.VEHICLERANGE,
         icon="mdi:ev-station",
         state_class=SensorStateClass.MEASUREMENT,
