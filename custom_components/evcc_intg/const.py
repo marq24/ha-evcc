@@ -483,8 +483,8 @@ SENSOR_SENSORS = [
         key=Tag.BATTERYCAPACITY.key,
         icon="mdi:battery",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.KILO_WATT,
-        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=1
     ),
     ExtSensorEntityDescription(
