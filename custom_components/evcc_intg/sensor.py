@@ -46,8 +46,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 native_unit_of_measurement=a_stub.native_unit_of_measurement,
                 suggested_display_precision=a_stub.suggested_display_precision,
                 array_idx=a_stub.array_idx,
+                tuple_idx=a_stub.tuple_idx,
                 factor=a_stub.factor,
-                lookup=a_stub.lookup
+                lookup=a_stub.lookup,
+                ignore_zero=a_stub.ignore_zero
             )
 
             # if it's a lookup value, we just patch the translation key...
@@ -72,9 +74,24 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         """Return the state of the sensor."""
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
-            if isinstance(value, list) and self.entity_description.array_idx is not None:
-                if len(value) > self.entity_description.array_idx:
-                    value = value[self.entity_description.array_idx]
+            if isinstance(value, list):
+                if self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
+                    array_idx1 = self.entity_description.tuple_idx[0]
+                    array_idx2 = self.entity_description.tuple_idx[1]
+                    if len(value) > array_idx1 or array_idx1 in value:
+                        value = value[array_idx1]
+                        if isinstance(value, list) and len(value) > array_idx2 or array_idx2 in value:
+                            value = value[array_idx2]
+
+                elif self.entity_description.array_idx is not None:
+                    array_idx = self.entity_description.array_idx
+                    if len(value) > array_idx or array_idx in value:
+                        value = value[array_idx]
+
+                if isinstance(value, list):
+                    # if the value is a list, but could not be extracted (cause of none matching indices) we need
+                    # to purge the value to None!
+                    value = None
 
             if value is None or len(str(value)) == 0:
                 value = None
@@ -111,6 +128,15 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     return self._previous_float_value
                 else:
                     self._previous_float_value = a_float_value
+
+        # make sure that we only return values > 0
+        if self.entity_description.ignore_zero:
+            isZeroVal = value is None or value == "unknown" or value <= 0.1
+
+            if isZeroVal and self._previous_float_value is not None and self._previous_float_value > 0:
+                value = self._previous_float_value
+            elif value > 0:
+                self._previous_float_value = value
 
         # final return statement...
         return value

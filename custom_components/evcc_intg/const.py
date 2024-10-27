@@ -116,8 +116,11 @@ class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
     native_unit_of_measurement: str | None = None
 
     array_idx: int | None = None
+    tuple_idx: list | None = None
     factor: int | None = None
     lookup: bool | None = None
+    ignore_zero: bool | None = None
+
 
 @dataclass
 class ExtSensorEntityDescription(SensorEntityDescription):
@@ -126,8 +129,10 @@ class ExtSensorEntityDescription(SensorEntityDescription):
     name_addon: str | None = None
 
     array_idx: int | None = None
+    tuple_idx: list | None = None
     factor: int | None = None
     lookup: bool | None = None
+    ignore_zero: bool | None = None
 
 @dataclass
 class ExtSwitchEntityDescriptionStub(EntityDescriptionStub):
@@ -459,6 +464,7 @@ SENSOR_SENSORS = [
         icon="mdi:transmission-tower",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
         device_class=SensorDeviceClass.POWER
     ),
     ExtSensorEntityDescription(
@@ -467,6 +473,7 @@ SENSOR_SENSORS = [
         icon="mdi:home-lightning-bolt",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
         device_class=SensorDeviceClass.POWER
     ),
     ExtSensorEntityDescription(
@@ -475,9 +482,53 @@ SENSOR_SENSORS = [
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
         device_class=SensorDeviceClass.POWER
     ),
-
+    ExtSensorEntityDescription(
+        tag=Tag.PV,
+        key="pv_0_power",
+        tuple_idx = [0, "power"],
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.PV,
+        key="pv_1_power",
+        tuple_idx = [1, "power"],
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.PV,
+        key="pv_2_power",
+        tuple_idx = [2, "power"],
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.PV,
+        key="pv_3_power",
+        tuple_idx = [3, "power"],
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
     ExtSensorEntityDescription(
         tag=Tag.BATTERYCAPACITY,
         key=Tag.BATTERYCAPACITY.key,
@@ -513,7 +564,7 @@ SENSOR_SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
-        suggested_display_precision=4
+        suggested_display_precision=2
     ),
     ExtSensorEntityDescription(
         tag=Tag.STATTOTALCHARGEDKWH,
@@ -550,7 +601,7 @@ SENSOR_SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
-        suggested_display_precision=4,
+        suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -590,7 +641,7 @@ SENSOR_SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
-        suggested_display_precision=4,
+        suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -630,7 +681,7 @@ SENSOR_SENSORS = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
-        suggested_display_precision=4,
+        suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -849,7 +900,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
         device_class=None,
-        suggested_display_precision=0
+        suggested_display_precision=0,
+        ignore_zero=True
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.VEHICLERANGE,

@@ -244,6 +244,10 @@
       "gridpower": {"name": "Leistung Netz"},
       "homepower": {"name": "Leistung Heim"},
       "pvpower": {"name": "Leistung PV"},
+      "pv_0_power": {"name": "Leistung PV 1"},
+      "pv_1_power": {"name": "Leistung PV 2"},
+      "pv_2_power": {"name": "Leistung PV 3"},
+      "pv_3_power": {"name": "Leistung PV 4"},
 
       "tariffgrid": {"name": "Kosten Netz"},
       "tariffpricehome": {"name": "Kosten Verbrauch"},

@@ -315,6 +315,10 @@
       "gridpower": {"name": "Power Grid"},
       "homepower": {"name": "Power Home"},
       "pvpower": {"name": "Power Solar"},
+      "pv_0_power": {"name": "Power Solar 1"},
+      "pv_1_power": {"name": "Power Solar 2"},
+      "pv_2_power": {"name": "Power Solar 3"},
+      "pv_3_power": {"name": "Power Solar 4"},
 
       "tariffgrid": {"name": "Costs Grid"},
       "tariffpricehome": {"name": "Costs Usage"},

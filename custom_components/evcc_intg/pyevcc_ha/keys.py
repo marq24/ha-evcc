@@ -91,6 +91,9 @@ class Tag(ApiKey, Enum):
     # "pvPower": 8871.22,
     PVPOWER = ApiKey(key="pvPower", type=EP_TYPE.SITE)
 
+    # "pv": [{"power": 8871.22}], -> we must access this attribute via tuple_idx
+    PV = ApiKey(key="pv", type=EP_TYPE.SITE)
+
     # -> NONE FREQUENT
     # POST /api/batterydischargecontrol/<status>: enable/disable battery discharge control (true/false)
     BATTERYDISCHARGECONTROL = ApiKey(
