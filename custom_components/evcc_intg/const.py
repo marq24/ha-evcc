@@ -477,6 +477,15 @@ SENSOR_SENSORS = [
         device_class=SensorDeviceClass.POWER
     ),
     ExtSensorEntityDescription(
+        tag=Tag.PVENERGY,
+        key=Tag.PVENERGY.key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.ENERGY,
+    ),
+    ExtSensorEntityDescription(
         tag=Tag.PVPOWER,
         key=Tag.PVPOWER.key,
         icon="mdi:solar-power",

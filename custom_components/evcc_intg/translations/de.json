@@ -244,6 +244,7 @@
       "gridpower": {"name": "Leistung Netz"},
       "homepower": {"name": "Leistung Heim"},
       "pvpower": {"name": "Leistung PV"},
+      "pvenergy": {"name": "Energie PV"},
       "pv_0_power": {"name": "Leistung PV 1"},
       "pv_1_power": {"name": "Leistung PV 2"},
       "pv_2_power": {"name": "Leistung PV 3"},

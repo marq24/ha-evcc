@@ -315,6 +315,7 @@
       "gridpower": {"name": "Power Grid"},
       "homepower": {"name": "Power Home"},
       "pvpower": {"name": "Power Solar"},
+      "pvenergy": {"name": "Energy Solar"},
       "pv_0_power": {"name": "Power Solar 1"},
       "pv_1_power": {"name": "Power Solar 2"},
       "pv_2_power": {"name": "Power Solar 3"},
