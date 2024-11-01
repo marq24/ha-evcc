@@ -45,7 +45,7 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 2. Once the repository is added, use the search bar and type `evcc☀️🚘- Solar Charging`
 3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration - the latest release version is automatically selected. Only select a different version if you have specific reasons.
 4. After you presses download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
-5. Setup the go-eCharger custom integration as described below (see _Step II: Adding or enabling the integration_)
+5. Setup the evcc custom integration as described below (see _Step II: Adding or enabling the integration_)
 
   <!--1. In HACS Store, search for [***marq24/ha-evcc***]-->
 
