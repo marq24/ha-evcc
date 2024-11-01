@@ -62,8 +62,8 @@
       "smartcostactive": {"name": "Smart Grid Charging"},
       "vehicledetectionactive": {"name": "Vehicle detection"},
       "batterygridchargeactive": {"name": "Home-Battery: grid charging"},
-      "vehicleclimateractive": {"name": "Fahrzeug Climatisation"},
-      "vehiclewelcomeactive": {"name": "Fahrzeug Wellcome function"}
+      "vehicleclimateractive": {"name": "Vehicle Air Conditioning"},
+      "vehiclewelcomeactive": {"name": "Vehicle Welcome function"}
 
     },
     "button": {
