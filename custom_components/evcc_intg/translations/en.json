@@ -69,7 +69,8 @@
     "button": {
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
       "plandelete": {"name": "Charging plan: Delete Departure (Loadpoint/Energy)"},
-      "detectvehicle": {"name": "Start vehicle detection"}
+      "detectvehicle": {"name": "Start vehicle detection"},
+      "smartcostlimit": {"name": "@@@ Limit remove"}
     },
     "number": {
       "limitsoc": {"name": "Default Charging limit (SOC)"},

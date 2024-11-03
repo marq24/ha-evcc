@@ -226,6 +226,13 @@ BUTTONS_PER_LOADPOINT = [
         device_class=None,
         icon="mdi:car-search-outline"
     ),
+    ExtButtonEntityDescriptionStub(
+        tag=Tag.SMARTCOSTLIMIT,
+        entity_category=EntityCategory.CONFIG,
+        device_class=None,
+        icon = "mdi:cash-off",
+        entity_registry_enabled_default=False
+    )
 ]
 
 NUMBER_SENSORS = [

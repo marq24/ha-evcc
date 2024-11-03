@@ -68,7 +68,8 @@
     "button": {
       "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
       "plandelete": {"name": "Ladeplanung: Abfahrt löschen (Ladepunkt/Energie)"},
-      "detectvehicle": {"name": "Fahrzeugerkennung starten"}
+      "detectvehicle": {"name": "Fahrzeugerkennung starten"},
+      "smartcostlimit": {"name": "@@@ Limit entfernen"}
     },
     "number": {
       "limitsoc": {"name": "Standard Ladelimit (SOC)"},
