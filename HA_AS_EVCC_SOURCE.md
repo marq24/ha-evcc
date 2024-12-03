@@ -74,7 +74,7 @@ Below you will find a valid evcc meters configuration - __but you have to make t
 
 2. The text '__[YOUR-TOKEN-HERE]__' have to be replaced with the _Long-lived access token_ you have just created in HA.
 
-   E.g. when your token is: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNWVjNzg5M2Y0ZjQ0MzBmYjUwOGEwMmU4N2Q0MzFmNyIsImlhdCI6MTcxNTUwNzYxMCwiZXhwIjoyMDMwODY3NjEwfQ.GMWO8saHpawkjNzk-uokxYeaP0GFKPQSeDoP3lCO488`, then you need to replaced `[YOUR-HA-INSTANCE]` with this (long) token text.
+   E.g. when your token is: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNWVjNzg5M2Y0ZjQ0MzBmYjUwOGEwMmU4N2Q0MzFmNyIsImlhdCI6MTcxNTUwNzYxMCwiZXhwIjoyMDMwODY3NjEwfQ.GMWO8saHpawkjNzk-uokxYeaP0GFKPQSeDoP3lCO488`, then you need to replaced `[YOUR-TOKEN-HERE]` with this (long) token text.
 
 So as short example (with all replacements) would look like:
 
@@ -90,7 +90,7 @@ So as short example (with all replacements) would look like:
 ```
 
 ### Complete sample evcc.yaml meters section for SENEC.Home Sensors
-```
+```yaml
 meters:
   - name: SENEC.grid
     type: custom
