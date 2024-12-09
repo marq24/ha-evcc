@@ -367,17 +367,20 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return result
 
     def _convert_time(self, value: str):
-        if "0001-01-01T00:00:00Z" == value:
-            return None
+        if value is not None and len(value) > 0:
+            if "0001-01-01T00:00:00Z" == value:
+                return None
 
-        # we need to convert UTC in local time
-        value = value.replace("Z", "+00:00")
-        if ".000" in value:
-            dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
+            # we need to convert UTC in local time
+            value = value.replace("Z", "+00:00")
+            if ".000" in value:
+                dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S.%f%z")
+            else:
+                dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S%z")
+            value = dt.astimezone().isoformat(sep=" ", timespec="minutes")
+            return value.split("+")[0]
         else:
-            dt = datetime.strptime(value, "%Y-%m-%dT%H:%M:%S%z")
-        value = dt.astimezone().isoformat(sep=" ", timespec="minutes")
-        return value.split("+")[0]
+            return None
 
 
 class EvccBaseEntity(Entity):
