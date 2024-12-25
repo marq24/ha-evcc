@@ -237,9 +237,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             return result
 
         except UpdateFailed as exception:
+            _LOGGER.warning(f"UpdateFailed: {exception}")
             raise UpdateFailed() from exception
         except Exception as other:
-            _LOGGER.warning(f"unexpected: {other}")
+            _LOGGER.warning(f"UpdateFailed unexpected: {other}")
             raise UpdateFailed() from other
 
     def read_tag(self, tag: Tag, idx: int = None):
