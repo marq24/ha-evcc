@@ -347,7 +347,8 @@
       "stat30avgco2": {"name": "Statistics: Last 30 days Ø CO₂"}
     },
     "switch": {
-      "batterydischargecontrol": {"name": "Home-Battery: discharge lock"}
+      "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},
+      "batteryboost": {"name": "Boost from Home-Battery"}
     }
   }
 }

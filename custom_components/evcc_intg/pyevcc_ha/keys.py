@@ -161,7 +161,6 @@ class Tag(ApiKey, Enum):
     CHARGEDURATION = ApiKey(key="chargeDuration", type=EP_TYPE.LOADPOINTS)
     CHARGEREMAININGDURATION = ApiKey(key="chargeRemainingDuration", type=EP_TYPE.LOADPOINTS)
 
-
     # "chargePower": 0,
     CHARGEPOWER = ApiKey(key="chargePower", type=EP_TYPE.LOADPOINTS)
 
@@ -290,6 +289,9 @@ class Tag(ApiKey, Enum):
         key="maxCurrent", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="maxcurrent", options=MAX_CURRENT_LIST
     )
 
+    # enable/disable BatteryBoost (per Loadpoint)
+    BATTERYBOOST = ApiKey(key="batteryBoost", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="batteryboost")
+
     # "disableThreshold": 0, -> write 'disable/threshold' (in W)
     DISABLETHRESHOLD = ApiKey(
         key="disableThreshold", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="disable/threshold"
@@ -309,7 +311,6 @@ class Tag(ApiKey, Enum):
 
     # delete plan button
     PLANDELETE = ApiKey(key="planDelete", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="plan/energy")
-
 
     ###################################
     # VEHICLE

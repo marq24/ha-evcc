@@ -1024,4 +1024,12 @@ SWITCH_SENSORS = [
         device_class=None
     )
 ]
-SWITCH_SENSORS_PER_LOADPOINT = []
+SWITCH_SENSORS_PER_LOADPOINT = [
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.BATTERYBOOST,
+        icon="mdi:battery-plus",
+        icon_off="mdi:battery-plus-outline",
+        device_class=None,
+        entity_registry_enabled_default=False
+    ),
+]

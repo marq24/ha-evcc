@@ -276,7 +276,8 @@
       "stat30avgco2": {"name": "Statistik: letzten 30 Tage Ø CO₂"}
     },
     "switch": {
-      "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"}
+      "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},
+      "batteryboost": {"name": "Boost von Hausbatterie"}
     }
   }
 }
