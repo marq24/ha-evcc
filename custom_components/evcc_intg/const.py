@@ -1030,6 +1030,6 @@ SWITCH_SENSORS_PER_LOADPOINT = [
         icon="mdi:battery-plus",
         icon_off="mdi:battery-plus-outline",
         device_class=None,
-        entity_registry_enabled_default=False
+        entity_registry_enabled_default=True
     ),
 ]

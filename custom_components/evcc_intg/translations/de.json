@@ -277,7 +277,7 @@
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},
-      "batteryboost": {"name": "Boost von Hausbatterie"}
+      "batteryboost": {"name": "Schnell aus Hausbatterie laden."}
     }
   }
 }

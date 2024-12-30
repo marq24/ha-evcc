@@ -6,7 +6,6 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_ON, STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SWITCH_SENSORS, SWITCH_SENSORS_PER_LOADPOINT, ExtSwitchEntityDescription
 
@@ -60,14 +59,16 @@ class EvccSwitch(EvccBaseEntity, SwitchEntity):
     async def async_turn_on(self, **kwargs):
        """Turn on the switch."""
        try:
-           await self.coordinator.async_write_tag(self.tag, True, self.idx, self)
+           # cause of a minor bug in evcc, we need to write 1 instead of True
+           await self.coordinator.async_write_tag(self.tag, 1, self.idx, self)
        except ValueError:
            return "unavailable"
 
     async def async_turn_off(self, **kwargs):
        """Turn off the switch."""
        try:
-            await self.coordinator.async_write_tag(self.tag, False, self.idx, self)
+            # cause of a minor bug in evcc, we need to write 0 instead of False
+            await self.coordinator.async_write_tag(self.tag, 0, self.idx, self)
        except ValueError:
            return "unavailable"
 
