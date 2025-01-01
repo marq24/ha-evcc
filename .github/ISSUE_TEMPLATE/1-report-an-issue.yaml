@@ -8,6 +8,8 @@ body:
       label: Checklist
       description: Please go though this short checklist - TIA
       options:
+        - label: I confirm, that I my evcc instance is configured, is up & running and that **I can access the default evcc webinterface**
+          required: true
         - label: I have installed the **latest** release (or BETA) version of the integration and home assistant.
           required: true
         - label: I have prepared DEBUG log output (for technical issues) | In most of the cases of a technical error/issue I would have the need to ask for DEBUG log output of the integration. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md)
