@@ -1,11 +1,10 @@
 import logging
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.number import NumberEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, NUMBER_SENSORS, ExtNumberEntityDescription, NUMBER_SENSORS_PER_LOADPOINT
 
@@ -16,6 +15,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
     for description in NUMBER_SENSORS:
+        # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
+        if description.tag == Tag.BATTERYGRIDCHARGELIMIT:
+            if coordinator._currency != "€":
+                new_val = description.native_max_value * 10
+                description.native_max_value=new_val
+
         entity = EvccNumber(coordinator, description)
         entities.append(entity)
 
@@ -50,13 +55,19 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 step=a_stub.step,
             )
 
-            if a_stub.tag == Tag.SMARTCOSTLIMIT and coordinator._cost_type == "co2":
-                description.translation_key = f"{a_stub.tag.key}_co2"
-                description.icon = "mdi:molecule-co2"
-                description.native_max_value=500
-                description.native_min_value=0
-                description.native_step=5
-                description.native_unit_of_measurement="g/kWh"
+            if a_stub.tag == Tag.SMARTCOSTLIMIT:
+                if coordinator._cost_type == "co2":
+                    description.translation_key = f"{a_stub.tag.key}_co2"
+                    description.icon = "mdi:molecule-co2"
+                    description.native_max_value=500
+                    description.native_min_value=0
+                    description.native_step=5
+                    description.native_unit_of_measurement="g/kWh"
+
+                # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
+                elif coordinator._currency != "€":
+                    new_val = a_stub.native_max_value * 10
+                    description.native_max_value=new_val
 
             entity = EvccNumber(coordinator, description)
             entities.append(entity)
