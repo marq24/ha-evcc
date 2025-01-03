@@ -166,7 +166,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 ("IP", self._config_entry.options.get(CONF_HOST, self._config_entry.data.get(CONF_HOST))),
             },
             "manufacturer": MANUFACTURER,
-            "suggested_area": "Basement",
             "name": NAME,
             "sw_version": self._version
         }
