@@ -74,9 +74,12 @@ Just click the following Button to start the configuration automatically (for th
 Use the following steps for a manual configuration by adding the custom integration using the web interface and follow instruction on screen:
 
 - Go to `Configuration -> Integrations` and add "evcc☀️🚘- Solar Charging" integration
+
+#### Common further steps 
+
 - Provide a unique name for the integration installation (will be used in each sensor entity_id) created by the integration
-- Provide the URL of your evcc web server (including the port) - e.g. `http://your-evcc-ip-here:7070`
-- Provide area where the wallbox is located
+- Provide the URL of your __evcc web server__ (including the port) - e.g. `http://your-evcc-server-ip:7070`
+- [optional] Provide the area where the evcc installation is located
 
 After the integration was added you can use the 'config' button to adjust your settings, you can additionally modify the update interval
 
