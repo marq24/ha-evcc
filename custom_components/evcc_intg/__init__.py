@@ -136,6 +136,13 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # config_entry only need for providing the '_device_info_dict'...
         self._config_entry = config_entry
 
+        # attribute creation
+        self._cost_type = None
+        self._device_info_dict = {}
+        self._loadpoint = {}
+        self._vehicle = {}
+        self._version = None
+
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
     # Callable[[Event], Any]
@@ -170,7 +177,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "sw_version": self._version
         }
 
-        self._vehicle = {}
         for a_veh_name in initdata[JSONKEY_VEHICLES]:
             a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
             if "capacity" in a_veh:
@@ -184,7 +190,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "capacity": None
                 }
 
-        self._loadpoint = {}
         api_index = 1
         for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
             self._loadpoint[f"{api_index}"] = {
