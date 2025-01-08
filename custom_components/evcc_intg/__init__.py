@@ -138,6 +138,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         # attribute creation
         self._cost_type = None
+        self._currency = "€"
         self._device_info_dict = {}
         self._loadpoint = {}
         self._vehicle = {}
@@ -210,8 +211,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             self._currency = initdata["currency"]
             if self._currency == "EUR":
                 self._currency = "€"
-        else:
-            self._currency = "€"
 
         _LOGGER.debug(
             f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency}")
