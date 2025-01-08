@@ -45,20 +45,14 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
             else:
                 self._errors["base"] = "auth"
-        else:
-            user_input = {}
-            user_input[CONF_NAME] = "evcc"
-            user_input[CONF_HOST] = "http://your-evcc-ip:7070"
-            user_input[CONF_SCAN_INTERVAL] = 15
-            user_input[CONF_INCLUDE_EVCC] = False
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
-                vol.Required(CONF_NAME, default=user_input.get(CONF_NAME)): str,
-                vol.Required(CONF_HOST, default=user_input.get(CONF_HOST)): str,
-                vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
-                vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
+                vol.Required(CONF_NAME, default=user_input.get(CONF_NAME, "evcc")): str,
+                vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "http://your-evcc-ip:7070")): str,
+                vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL, 15)): int,
+                vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC, False)): bool,
             }),
             last_step=True,
             errors=self._errors
