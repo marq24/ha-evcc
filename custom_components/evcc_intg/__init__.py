@@ -197,7 +197,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             self._loadpoint[f"{api_index}"] = {
                 "name": a_loadpoint["title"],
                 "id": slugify(a_loadpoint["title"]),
-                "has_phase_auto_option": a_loadpoint.get("chargerPhases1p3p") is not None,
+                "has_phase_auto_option": (a_loadpoint.get("chargerPhases1p3p") or a_loadpoint.get("chargerPhaseSwitching")),
                 "vehicle_key": a_loadpoint["vehicleName"],
                 "obj": a_loadpoint
             }
