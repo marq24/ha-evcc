@@ -342,9 +342,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         return result
 
-    async def async_write_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
+    async def async_write_tag(self, tag: Tag, value, idx_str: str = None, entity: Entity = None) -> dict:
         """Update single data"""
-        result = await self.bridge.write_tag(tag, value, idx)
+        idx = int(idx_str)
+        result = await self.bridge.write_tag(tag, value, idx_str)
         _LOGGER.debug(f"write result: {result}")
 
         if tag.key not in result or result[tag.key] is None:
