@@ -110,7 +110,7 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config_entry):
-        _LOGGER.debug(f"starting evcc_intg for: {config_entry}")
+        _LOGGER.debug(f"starting evcc_intg for: {config_entry.options}\n{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
         self.bridge = EvccApiBridge(host=config_entry.options.get(CONF_HOST, config_entry.data.get(CONF_HOST)),
