@@ -187,10 +187,18 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._loadpoint = {}
         api_index = 1
         for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
+            phaseSwitching = False
+            if "chargerPhases1p3p" in a_loadpoint:
+                phaseSwitching = a_loadpoint["chargerPhases1p3p"]
+            elif "chargerPhaseSwitching" in a_loadpoint:
+                phaseSwitching = a_loadpoint["chargerPhaseSwitching"]
+            else:
+                phaseSwitching = False
+
             self._loadpoint[f"{api_index}"] = {
                 "name": a_loadpoint["title"],
                 "id": slugify(a_loadpoint["title"]),
-                "has_phase_auto_option": a_loadpoint["chargerPhases1p3p"],
+                "has_phase_auto_option": phaseSwitching,
                 "vehicle_key": a_loadpoint["vehicleName"],
                 "obj": a_loadpoint
             }
