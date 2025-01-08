@@ -16,7 +16,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_365D,
     JSONKEY_STATISTICS_30D,
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, _camel_to_snake
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, Event, SupportsResponse
@@ -72,10 +72,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         config_entry.add_update_listener(async_reload_entry)
 
     # initialize our service...
-    service = EvccService(hass, config_entry, coordinator)
-    hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, service.set_loadpoint_plan,
+    services = EvccService(hass, config_entry, coordinator)
+    hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, services.set_loadpoint_plan,
                                  supports_response=SupportsResponse.OPTIONAL)
-    hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, service.set_vehicle_plan,
+    hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, services.set_vehicle_plan,
                                  supports_response=SupportsResponse.OPTIONAL)
 
     # Do we need to patch something?!
@@ -389,6 +389,18 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             return None
 
+    @property
+    def system_id(self):
+        return self._system_id
+
+    @property
+    def currency(self):
+        return self._currency
+
+    @property
+    def device_info_dict(self):
+        return self._device_info_dict
+
 
 class EvccBaseEntity(Entity):
     _attr_should_poll = False
@@ -396,9 +408,15 @@ class EvccBaseEntity(Entity):
     _attr_name_addon = None
 
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
-        self.tag = description.tag
+        if hasattr(description, "tag"):
+            _LOGGER.error(f"Got TAG in {description}")
+            self.tag = description.tag
+        else:
+            self.tag = None
+
         self.idx = None
-        if hasattr(description, "idx") and description.idx is not None:
+        if hasattr(description, "idx"):
+            _LOGGER.error(f"Got IDX in {description}")
             self.idx = description.idx
         else:
             self.idx = None
@@ -408,24 +426,26 @@ class EvccBaseEntity(Entity):
         else:
             self._attr_translation_key = description.key.lower()
 
-        if hasattr(description, "name_addon") and description.name_addon is not None:
+        if hasattr(description, "name_addon"):
             self._attr_name_addon = description.name_addon
+        else:
+            self._attr_name_addon = None
 
         if hasattr(description, "native_unit_of_measurement") and description.native_unit_of_measurement is not None:
             if "@@@" in description.native_unit_of_measurement:
                 description.native_unit_of_measurement = description.native_unit_of_measurement.replace("@@@",
-                                                                                                        coordinator._currency)
+                                                                                                        coordinator.currency)
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.{self.coordinator._system_id}_{_camel_to_snake(description.key)}"
+        self.entity_id = f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
 
     def _name_internal(self, device_class_name: str | None,
                        platform_translations: dict[str, Any], ) -> str | UndefinedType | None:
 
         tmp = super()._name_internal(device_class_name, platform_translations)
         if tmp is not None and "@@@" in tmp:
-            tmp = tmp.replace("@@@", self.coordinator._currency)
+            tmp = tmp.replace("@@@", self.coordinator.currency)
         if self._attr_name_addon is not None:
             return f"{self._attr_name_addon} {tmp}"
         else:
@@ -433,7 +453,7 @@ class EvccBaseEntity(Entity):
 
     @property
     def device_info(self) -> dict:
-        return self.coordinator._device_info_dict
+        return self.coordinator.device_info_dict
 
     @property
     def available(self):

@@ -27,8 +27,7 @@ IS_TRIGGER: Final = "TRIGGER"
 CC_P1: Final = re.compile(r"(.)([A-Z][a-z]+)")
 CC_P2: Final = re.compile(r"([a-z0-9])([A-Z])")
 
-@staticmethod
-def _camel_to_snake(a_key: str):
+def camel_to_snake(a_key: str):
     if a_key.lower().endswith("kwh"):
         a_key = a_key[:-3] + "_kwh"
     a_key = re.sub(CC_P1, r'\1_\2', a_key)
