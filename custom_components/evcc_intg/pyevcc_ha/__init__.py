@@ -104,7 +104,7 @@ class EvccApiBridge:
         # make sure that idx is really an int...
         _LOGGER.info(f"going to read all frequent_data from evcc@{self.host}")
         req = f"{self.host}/api/state{STATE_QUERY}"
-        _LOGGER.debug(f"GET request: ->{req}<-")
+        _LOGGER.debug(f"GET request: {req}")
         return await do_request(method = self.web_session.get(req))
 
     async def press_tag(self, tag: Tag, value, idx:str = None) -> dict:
