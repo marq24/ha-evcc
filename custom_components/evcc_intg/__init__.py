@@ -372,7 +372,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         return result
 
-    def _convert_time(self, value: str):
+    @staticmethod
+    def _convert_time(value: str):
         if value is not None and len(value) > 0:
             if "0001-01-01T00:00:00Z" == value:
                 return None
