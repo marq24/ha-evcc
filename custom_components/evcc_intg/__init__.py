@@ -71,10 +71,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         config_entry.add_update_listener(async_reload_entry)
 
     # initialize our service...
-    services = EvccService(hass, config_entry, coordinator)
-    hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, services.set_loadpoint_plan,
+    evcc_services = EvccService(hass, config_entry, coordinator)
+    hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, evcc_services.set_loadpoint_plan,
                                  supports_response=SupportsResponse.OPTIONAL)
-    hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, services.set_vehicle_plan,
+    hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, evcc_services.set_vehicle_plan,
                                  supports_response=SupportsResponse.OPTIONAL)
 
     # Do we need to patch something?!
@@ -193,18 +193,18 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         api_index = 1
         for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
-            phaseSwitching = False
+            phase_switching_supported = False
             if "chargerPhases1p3p" in a_loadpoint:
-                phaseSwitching = a_loadpoint["chargerPhases1p3p"]
+                phase_switching_supported = a_loadpoint["chargerPhases1p3p"]
             elif "chargerPhaseSwitching" in a_loadpoint:
-                phaseSwitching = a_loadpoint["chargerPhaseSwitching"]
+                phase_switching_supported = a_loadpoint["chargerPhaseSwitching"]
             else:
-                phaseSwitching = False
+                phase_switching_supported = False
 
             self._loadpoint[f"{api_index}"] = {
                 "name": a_loadpoint["title"],
                 "id": slugify(a_loadpoint["title"]),
-                "has_phase_auto_option": phaseSwitching,
+                "has_phase_auto_option": phase_switching_supported,
                 "vehicle_key": a_loadpoint["vehicleName"],
                 "obj": a_loadpoint
             }

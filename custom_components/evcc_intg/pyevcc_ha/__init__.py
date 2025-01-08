@@ -51,6 +51,10 @@ async def do_request(method: Callable) -> dict:
 
 class EvccApiBridge:
     def __init__(self, host: str, web_session, lang: str = "en") -> None:
+        # make sure we are compliant with old configurations (that does not include the schema in the host variable)
+        if not host.startswith(("http://", "https://")):
+            host = f"http://{host}"
+
         self.host = host
         self.web_session = web_session
         self.lang_map = None
@@ -90,7 +94,7 @@ class EvccApiBridge:
         _LOGGER.info(f"going to read all data from evcc@{self.host}")
         req = f"{self.host}/api/state"
         _LOGGER.debug(f"GET request: {req}")
-        json_resp = await do_request(method = self.web_session.get(req))
+        json_resp = await do_request(method = self.web_session.get(url=req, ssl=False))
         if len(json_resp) is not None:
             self._LAST_FULL_STATE_UPDATE_TS = time()
 
@@ -105,7 +109,7 @@ class EvccApiBridge:
         _LOGGER.info(f"going to read all frequent_data from evcc@{self.host}")
         req = f"{self.host}/api/state{STATE_QUERY}"
         _LOGGER.debug(f"GET request: {req}")
-        return await do_request(method = self.web_session.get(req))
+        return await do_request(method = self.web_session.get(url=req, ssl=False))
 
     async def press_tag(self, tag: Tag, value, idx:str = None) -> dict:
         ret = {}
@@ -144,15 +148,15 @@ class EvccApiBridge:
             if write_key == Tag.DETECTVEHICLE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/vehicle"
                 _LOGGER.debug(f"PATCH request: {req}")
-                r_json = await do_request(method = self.web_session.patch(req))
+                r_json = await do_request(method = self.web_session.patch(url=req, ssl=False))
             else:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await do_request(method = self.web_session.delete(req))
+                r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
         else:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(req))
+            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -173,13 +177,13 @@ class EvccApiBridge:
             if write_key == Tag.VEHICLEPLANSDELETE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await do_request(method = self.web_session.delete(req))
+                r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
             else:
                 pass
         else:
             req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(req))
+            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -230,11 +234,11 @@ class EvccApiBridge:
         if value is None:
             req = f"{self.host}/api/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await do_request(method = self.web_session.delete(req))
+            r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
         else:
             req = f"{self.host}/api/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(req))
+            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -255,11 +259,11 @@ class EvccApiBridge:
         if value is None:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await do_request(method = self.web_session.delete(req))
+            r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
         else:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(req))
+            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -277,7 +281,7 @@ class EvccApiBridge:
         _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
         req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
         _LOGGER.debug(f"POST request: {req}")
-        r_json = await do_request(method = self.web_session.post(req))
+        r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -292,7 +296,7 @@ class EvccApiBridge:
             try:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
                 _LOGGER.debug(f"POST request: {req}")
-                r_json = await do_request(method = self.web_session.post(req))
+                r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
                 if r_json is not None and len(r_json) > 0:
                     if "result" in r_json:
                         self._LAST_FULL_STATE_UPDATE_TS = 0
@@ -313,7 +317,7 @@ class EvccApiBridge:
                 if vehicle_id is not None:
                     req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
                     _LOGGER.debug(f"POST request: {req}")
-                    r_json = await do_request(method = self.web_session.post(req))
+                    r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
                     if r_json is not None and len(r_json) > 0:
                         if "result" in r_json:
                             self._LAST_FULL_STATE_UPDATE_TS = 0

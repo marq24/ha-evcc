@@ -1,13 +1,13 @@
 import logging
 
 import voluptuous as vol
+
+from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, ATTR_SW_VERSION, CONF_NAME
 from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-
-from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from .const import (
     DOMAIN,
     CONF_INCLUDE_EVCC
@@ -56,8 +56,6 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_HOST] = "http://your-evcc-ip:7070"
             user_input[CONF_SCAN_INTERVAL] = 15
             user_input[CONF_INCLUDE_EVCC] = False
-
-        user_input = user_input or {}
 
         return self.async_show_form(
             step_id="user",
