@@ -409,14 +409,12 @@ class EvccBaseEntity(Entity):
 
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
         if hasattr(description, "tag"):
-            _LOGGER.error(f"Got TAG in {description}")
             self.tag = description.tag
         else:
             self.tag = None
 
         self.idx = None
         if hasattr(description, "idx"):
-            _LOGGER.error(f"Got IDX in {description}")
             self.idx = description.idx
         else:
             self.idx = None

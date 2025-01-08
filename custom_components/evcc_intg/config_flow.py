@@ -33,7 +33,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
         if user_input is not None:
             if not user_input[CONF_HOST].startswith(("http://", "https://")):
-                if user_input[CONF_HOST].contains(":"):
+                if ":" in user_input[CONF_HOST]:
                     # we have NO schema but a colon, so assume http
                     user_input[CONF_HOST] = "http://" + user_input[CONF_HOST]
                 else:
