@@ -32,8 +32,13 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._errors = {}
 
         if user_input is not None:
-            if user_input[CONF_HOST].startswith(("http://", "https://")):
-                user_input[CONF_HOST] = user_input[CONF_HOST].split("//")[1]
+            if not user_input[CONF_HOST].startswith(("http://", "https://")):
+                if ":" in user_input[CONF_HOST]:
+                    # we have NO schema but a colon, so assume http
+                    user_input[CONF_HOST] = "http://" + user_input[CONF_HOST]
+                else:
+                    # https otherwise
+                    user_input[CONF_HOST] = "https://" + user_input[CONF_HOST]
 
             while user_input[CONF_HOST].endswith(("/", " ")):
                 user_input[CONF_HOST] = user_input[CONF_HOST][:-1]
@@ -51,6 +56,8 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_HOST] = "http://your-evcc-ip:7070"
             user_input[CONF_SCAN_INTERVAL] = 15
             user_input[CONF_INCLUDE_EVCC] = False
+
+        user_input = user_input or {}
 
         return self.async_show_form(
             step_id="user",

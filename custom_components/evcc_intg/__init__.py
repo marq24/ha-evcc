@@ -16,7 +16,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_365D,
     JSONKEY_STATISTICS_30D,
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, _camel_to_snake
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, Event, SupportsResponse
@@ -71,10 +71,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         config_entry.add_update_listener(async_reload_entry)
 
     # initialize our service...
-    service = EvccService(hass, config_entry, coordinator)
-    hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, service.set_loadpoint_plan,
+    services = EvccService(hass, config_entry, coordinator)
+    hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, services.set_loadpoint_plan,
                                  supports_response=SupportsResponse.OPTIONAL)
-    hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, service.set_vehicle_plan,
+    hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, services.set_vehicle_plan,
                                  supports_response=SupportsResponse.OPTIONAL)
 
     # Do we need to patch something?!
@@ -109,7 +109,7 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config_entry):
-        _LOGGER.debug(f"starting evcc_intg for: {config_entry}")
+        _LOGGER.debug(f"starting evcc_intg for: {config_entry.options}\n{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
         self.bridge = EvccApiBridge(host=config_entry.options.get(CONF_HOST, config_entry.data.get(CONF_HOST)),
@@ -135,6 +135,14 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         # config_entry only need for providing the '_device_info_dict'...
         self._config_entry = config_entry
+
+        # attribute creation
+        self._cost_type = None
+        self._currency = "€"
+        self._device_info_dict = {}
+        self._loadpoint = {}
+        self._vehicle = {}
+        self._version = None
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
@@ -170,7 +178,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "sw_version": self._version
         }
 
-        self._vehicle = {}
         for a_veh_name in initdata[JSONKEY_VEHICLES]:
             a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
             if "capacity" in a_veh:
@@ -184,7 +191,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "capacity": None
                 }
 
-        self._loadpoint = {}
         api_index = 1
         for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
             phaseSwitching = False
@@ -213,8 +219,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             self._currency = initdata["currency"]
             if self._currency == "EUR":
                 self._currency = "€"
-        else:
-            self._currency = "€"
 
         _LOGGER.debug(
             f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency}")
@@ -345,9 +349,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         return result
 
-    async def async_write_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
+    async def async_write_tag(self, tag: Tag, value, idx_str: str = None, entity: Entity = None) -> dict:
         """Update single data"""
-        result = await self.bridge.write_tag(tag, value, idx)
+        idx = int(idx_str)
+        result = await self.bridge.write_tag(tag, value, idx_str)
         _LOGGER.debug(f"write result: {result}")
 
         if tag.key not in result or result[tag.key] is None:
@@ -374,7 +379,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         return result
 
-    def _convert_time(self, value: str):
+    @staticmethod
+    def _convert_time(value: str):
         if value is not None and len(value) > 0:
             if "0001-01-01T00:00:00Z" == value:
                 return None
@@ -390,6 +396,18 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             return None
 
+    @property
+    def system_id(self):
+        return self._system_id
+
+    @property
+    def currency(self):
+        return self._currency
+
+    @property
+    def device_info_dict(self):
+        return self._device_info_dict
+
 
 class EvccBaseEntity(Entity):
     _attr_should_poll = False
@@ -397,9 +415,13 @@ class EvccBaseEntity(Entity):
     _attr_name_addon = None
 
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
-        self.tag = description.tag
+        if hasattr(description, "tag"):
+            self.tag = description.tag
+        else:
+            self.tag = None
+
         self.idx = None
-        if hasattr(description, "idx") and description.idx is not None:
+        if hasattr(description, "idx"):
             self.idx = description.idx
         else:
             self.idx = None
@@ -409,24 +431,26 @@ class EvccBaseEntity(Entity):
         else:
             self._attr_translation_key = description.key.lower()
 
-        if hasattr(description, "name_addon") and description.name_addon is not None:
+        if hasattr(description, "name_addon"):
             self._attr_name_addon = description.name_addon
+        else:
+            self._attr_name_addon = None
 
         if hasattr(description, "native_unit_of_measurement") and description.native_unit_of_measurement is not None:
             if "@@@" in description.native_unit_of_measurement:
                 description.native_unit_of_measurement = description.native_unit_of_measurement.replace("@@@",
-                                                                                                        coordinator._currency)
+                                                                                                        coordinator.currency)
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.{self.coordinator._system_id}_{_camel_to_snake(description.key)}"
+        self.entity_id = f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
 
     def _name_internal(self, device_class_name: str | None,
                        platform_translations: dict[str, Any], ) -> str | UndefinedType | None:
 
         tmp = super()._name_internal(device_class_name, platform_translations)
         if tmp is not None and "@@@" in tmp:
-            tmp = tmp.replace("@@@", self.coordinator._currency)
+            tmp = tmp.replace("@@@", self.coordinator.currency)
         if self._attr_name_addon is not None:
             return f"{self._attr_name_addon} {tmp}"
         else:
@@ -434,7 +458,7 @@ class EvccBaseEntity(Entity):
 
     @property
     def device_info(self) -> dict:
-        return self.coordinator._device_info_dict
+        return self.coordinator.device_info_dict
 
     @property
     def available(self):
