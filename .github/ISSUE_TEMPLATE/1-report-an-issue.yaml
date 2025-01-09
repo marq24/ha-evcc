@@ -10,7 +10,11 @@ body:
       options:
         - label: I confirm, that I my evcc instance is configured, is up & running and that **I can access the default evcc webinterface**
           required: true
-        - label: I have installed the **latest** release (or BETA) version of the integration and home assistant.
+        - label: My home assistant version is up to date.
+          required: true
+        - label: I am using the **latest** version of the integration | See the [release list @github](https://github.com/marq24/ha-evcc/releases) or in home assistant use the HACS 'Update Information' function to ensure that the **latest** released version of the integration is installed. This HACS function can be accessed via the 3-dot menu on the right side for each integration in the HACS integration list.
+          required: true
+        - label: I have [checked all issues (incl. the closed ones)](https://github.com/marq24/ha-evcc/issues?q=is%3Aissue+is%3Aclosed) for similar issues in order to avoid reporting a duplicate issue .
           required: true
         - label: I have prepared DEBUG log output (for technical issues) | In most of the cases of a technical error/issue I would have the need to ask for DEBUG log output of the integration. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md)
           required: true
