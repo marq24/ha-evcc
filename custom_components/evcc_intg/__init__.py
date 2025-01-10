@@ -143,6 +143,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._loadpoint = {}
         self._vehicle = {}
         self._version = None
+        self._grid_data_as_object = False
 
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
@@ -220,8 +221,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if self._currency == "EUR":
                 self._currency = "€"
 
+        if "grid" in initdata:
+            if "power" in initdata["grid"] and "currents" in initdata["grid"]:
+                self._grid_data_as_object = True
+
         _LOGGER.debug(
-            f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency}")
+            f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
 
     async def _async_update_data(self) -> dict:
         """Update data via library."""
@@ -397,17 +402,20 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             return None
 
     @property
-    def system_id(self):
+    def system_id(self) -> str:
         return self._system_id
 
     @property
-    def currency(self):
+    def currency(self) -> str:
         return self._currency
 
     @property
-    def device_info_dict(self):
+    def device_info_dict(self) -> dict:
         return self._device_info_dict
 
+    @property
+    def grid_data_as_object(self) -> bool:
+        return self._grid_data_as_object
 
 class EvccBaseEntity(Entity):
     _attr_should_poll = False

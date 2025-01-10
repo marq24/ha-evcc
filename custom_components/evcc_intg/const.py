@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Final
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
@@ -396,6 +396,91 @@ SELECT_SENSORS_PER_LOADPOINT = [
     )
 ]
 
+SENSOR_SENSORS_GRID_AS_PREFIX = [
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDPOWER,
+        key=Tag.GRIDPOWER.key,
+        icon="mdi:transmission-tower",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.POWER
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDCURRENTS,
+        key=f"{Tag.GRIDCURRENTS.key}_0",
+        array_idx=0,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDCURRENTS,
+        key=f"{Tag.GRIDCURRENTS.key}_1",
+        array_idx=1,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRIDCURRENTS,
+        key=f"{Tag.GRIDCURRENTS.key}_2",
+        array_idx=2,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    )
+]
+
+SENSOR_SENSORS_GRID_AS_OBJECT = [
+    ExtSensorEntityDescription(
+        tag=Tag.GRID,
+        key=Tag.GRIDPOWER.key, # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        idx = GRID_CONTENT.POWER,
+        icon="mdi:transmission-tower",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.POWER
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRID,
+        key=f"{Tag.GRIDCURRENTS.key}_0", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        tuple_idx = [GRID_CONTENT.CURRENTS, 0],
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRID,
+        key=f"{Tag.GRIDCURRENTS.key}_1", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        tuple_idx = [GRID_CONTENT.CURRENTS, 1],
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRID,
+        key=f"{Tag.GRIDCURRENTS.key}_2", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        tuple_idx = [GRID_CONTENT.CURRENTS, 2],
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+]
+
 SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.AUXPOWER,
@@ -436,45 +521,6 @@ SENSOR_SENSORS = [
         suggested_display_precision=0
     ),
     ExtSensorEntityDescription(
-        tag=Tag.GRIDCURRENTS,
-        key=f"{Tag.GRIDCURRENTS.key}_0",
-        array_idx=0,
-        icon="mdi:current-ac",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.GRIDCURRENTS,
-        key=f"{Tag.GRIDCURRENTS.key}_1",
-        array_idx=1,
-        icon="mdi:current-ac",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.GRIDCURRENTS,
-        key=f"{Tag.GRIDCURRENTS.key}_2",
-        array_idx=2,
-        icon="mdi:current-ac",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.GRIDPOWER,
-        key=Tag.GRIDPOWER.key,
-        icon="mdi:transmission-tower",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        suggested_display_precision=2,
-        device_class=SensorDeviceClass.POWER
-    ),
-    ExtSensorEntityDescription(
         tag=Tag.HOMEPOWER,
         key=Tag.HOMEPOWER.key,
         icon="mdi:home-lightning-bolt",
@@ -495,7 +541,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_0_energy",
-        tuple_idx = [0, "energy"],
+        tuple_idx = [0, PV_CONTENT.ENERGY],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -506,7 +552,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_1_energy",
-        tuple_idx = [1, "energy"],
+        tuple_idx = [1, PV_CONTENT.ENERGY],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -517,7 +563,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_2_energy",
-        tuple_idx = [2, "energy"],
+        tuple_idx = [2, PV_CONTENT.ENERGY],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -528,7 +574,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_3_energy",
-        tuple_idx = [3, "energy"],
+        tuple_idx = [3, PV_CONTENT.ENERGY],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -548,7 +594,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_0_power",
-        tuple_idx = [0, "power"],
+        tuple_idx = [0, PV_CONTENT.POWER],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -559,7 +605,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_1_power",
-        tuple_idx = [1, "power"],
+        tuple_idx = [1, PV_CONTENT.POWER],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -570,7 +616,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_2_power",
-        tuple_idx = [2, "power"],
+        tuple_idx = [2, PV_CONTENT.POWER],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -581,7 +627,7 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_3_power",
-        tuple_idx = [3, "power"],
+        tuple_idx = [3, PV_CONTENT.POWER],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,

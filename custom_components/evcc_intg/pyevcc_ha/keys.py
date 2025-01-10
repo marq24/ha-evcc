@@ -39,6 +39,14 @@ class EP_TYPE(Enum):
     STATISTICS = JSONKEY_STATISTICS
     SITE = "site"
 
+class GRID_CONTENT(Enum):
+    CURRENTS = "currents"
+    POWER = "power"
+
+class PV_CONTENT(Enum):
+    ENERGY = "energy"
+    POWER = "power"
+
 class ApiKey(NamedTuple):
     key: str
     type: str
@@ -51,7 +59,7 @@ class ApiKey(NamedTuple):
 
     @property
     def snake_case(self) -> str:
-        return _camel_to_snake(self.key)
+        return camel_to_snake(self.key)
 
 # see https://docs.evcc.io/docs/reference/api for details
 class Tag(ApiKey, Enum):
@@ -83,6 +91,11 @@ class Tag(ApiKey, Enum):
 
     # "gridPower": -6280.24,
     GRIDPOWER = ApiKey(key="gridPower", type=EP_TYPE.SITE)
+
+    # "grid": { "currents": [17.95, 7.71, 1.99],
+    #           "power": -6280.24,
+    #           ...}
+    GRID = ApiKey(key="grid", type=EP_TYPE.SITE)
 
     # "homePower": 2594.19,
     HOMEPOWER = ApiKey(key="homePower", type=EP_TYPE.SITE)

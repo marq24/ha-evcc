@@ -2,6 +2,17 @@ name: Problem Report
 description: please report any technical issue with this home assistant integration - please note this is not a official evcc repository or service
 labels: bug
 body:
+  - type: markdown
+    attributes:
+      value: |
+        ## Issue with `chargerPhases1p3p` is already fixed! - Update your integration via HACS to get the latest version!
+        1. In Home Assistant go to `HACS`
+        2. In the list of installed integrations search for `evcc`
+        3. Click on the 3-dot menu on the right side of the `evcc` integration list entry
+        4. Click on `Update Information`
+        5. Note now that a new version is available
+        6. Install the update
+        7. Go into a corner and shame yourself for next 3 minutes - TIA
   - type: checkboxes
     id: checklist
     attributes:

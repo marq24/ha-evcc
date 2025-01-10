@@ -7,7 +7,8 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SENSOR_SENSORS, SENSOR_SENSORS_PER_LOADPOINT, ExtSensorEntityDescription
+from .const import DOMAIN, SENSOR_SENSORS, SENSOR_SENSORS_GRID_AS_PREFIX, SENSOR_SENSORS_GRID_AS_OBJECT, \
+    SENSOR_SENSORS_PER_LOADPOINT, ExtSensorEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -19,6 +20,19 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     for description in SENSOR_SENSORS:
         entity = EvccSensor(coordinator, description)
         entities.append(entity)
+
+    # we need to check if the grid data (power & currents) is available as separate object...
+    # or if it's still part of the main/site object (as gridPower, gridCurrents)
+    if coordinator.grid_data_as_object:
+        _LOGGER.debug("evcc 'grid' data is available as separate object")
+        for description in SENSOR_SENSORS_GRID_AS_OBJECT:
+            entity = EvccSensor(coordinator, description)
+            entities.append(entity)
+    else:
+        _LOGGER.debug("evcc 'grid' as prefix")
+        for description in SENSOR_SENSORS_GRID_AS_PREFIX:
+            entity = EvccSensor(coordinator, description)
+            entities.append(entity)
 
     multi_loadpoint_config = len(coordinator._loadpoint) > 1
     for a_lp_key in coordinator._loadpoint:
