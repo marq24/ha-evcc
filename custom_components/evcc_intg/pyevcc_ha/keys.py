@@ -51,7 +51,7 @@ class ApiKey(NamedTuple):
 
     @property
     def snake_case(self) -> str:
-        return _camel_to_snake(self.key)
+        return camel_to_snake(self.key)
 
 # see https://docs.evcc.io/docs/reference/api for details
 class Tag(ApiKey, Enum):
