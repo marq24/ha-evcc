@@ -1,10 +1,10 @@
 # Home Assistant Integration: __evcc☀️🚘- Solar Charging__ (unofficial)
 
-![logo](https://github.com/marq24/ha-evcc/raw/main/logo.png)
+![ha-logo](https://github.com/marq24/ha-evcc/raw/main/logo-ha.png)&nbsp;&nbsp;![evcc-logo](https://github.com/marq24/ha-evcc/raw/main/logo.png)
 
-I was surprised that looks like that there does not exist a simple Home Assistant integration for evcc - even if I do not believe that I have the need for evcc at all, I want to contribute a very simple & basic integration which allow you to control evcc objects simply via the default HA gui.
+I was surprised that looks like that there does not exist a simple Home Assistant integration for the very popular evcc. So before my first EV spawned at my driveway, I want to contribute a very simple & basic integration which allow you to control evcc objects simply via the default HA gui and use sensors and switches in your automations.
 
-__Please note__, _that this integration is not official and not supported by the evcc developers. I am not affiliated with evcc in any way. This integration is based on the evcc API and the evcc API documentation._
+__Please note__, _that this Home Assistant integration is not official and not supported by the evcc developers. I am not affiliated with evcc in any way. This integration is based on the evcc API and the evcc API documentation._
 
 [![hacs_badge][hacsbadge]][hacs] [![github][ghsbadge]][ghs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![PayPal][paypalbadge]][paypal] [![hainstall][hainstallbadge]][hainstall]
 
@@ -37,11 +37,15 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 
 ## Installation
 
+### Before you start - there is a 'tiny' requirement!
+
+**You must have installed & configured an evcc instance in your network.** This can be either a stand-alone installation (e.g via Docker) or as a HASS-IO-AddOn. This __AddOn__ is available via the [official evcc hassio-addon repository](https://github.com/evcc-io/hassio-addon).
+
 ### Step I: Install the integration
 
 #### Option 1: via HACS
 
-1. Add a custom integration repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)
+1. Add a custom **integration** repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)<br/>**Let me repeat**: This is an **HACS _integration_**, not an **HASS-IO _AddOn_**, so you need to have HACS installed, and you need to add this as custom **integration repository** to HACS.
 2. Once the repository is added, use the search bar and type `evcc☀️🚘- Solar Charging`
 3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration - the latest release version is automatically selected. Only select a different version if you have specific reasons.
 4. After you presses download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
