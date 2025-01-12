@@ -356,7 +356,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_write_tag(self, tag: Tag, value, idx_str: str = None, entity: Entity = None) -> dict:
         """Update single data"""
-        idx = int(idx_str)
         result = await self.bridge.write_tag(tag, value, idx_str)
         _LOGGER.debug(f"write result: {result}")
 
@@ -369,9 +368,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     self.data[tag.key] = value
 
             elif tag.type == EP_TYPE.LOADPOINTS:
-                if idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > idx - 1:
-                    if tag.key in self.data[JSONKEY_LOADPOINTS][idx - 1]:
-                        self.data[JSONKEY_LOADPOINTS][idx - 1][tag.key] = value
+                if idx_str is not None:
+                    idx = int(idx_str)
+                    if len(self.data[JSONKEY_LOADPOINTS]) > idx - 1:
+                        if tag.key in self.data[JSONKEY_LOADPOINTS][idx - 1]:
+                            self.data[JSONKEY_LOADPOINTS][idx - 1][tag.key] = value
 
             elif tag.type == EP_TYPE.VEHICLES:
                 # TODO ?!

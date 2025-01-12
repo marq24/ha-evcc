@@ -195,7 +195,7 @@ class EvccApiBridge:
             else:
                 return {"err": r_json}
 
-    async def write_tag(self, tag: Tag, value, idx:str = None) -> dict:
+    async def write_tag(self, tag: Tag, value, idx_str:str = None) -> dict:
         ret = {}
         if hasattr(tag, "write_type") and tag.write_type is not None:
             final_type = tag.write_type
@@ -205,21 +205,21 @@ class EvccApiBridge:
         if final_type == EP_TYPE.SITE:
             ret[tag.key] = await self.write_site_key(tag.write_key, value)
 
-        elif final_type == EP_TYPE.LOADPOINTS and idx is not None:
-            ret[tag.key] = await self.write_loadpoint_key(idx, tag.write_key, value)
+        elif final_type == EP_TYPE.LOADPOINTS and idx_str is not None:
+            ret[tag.key] = await self.write_loadpoint_key(idx_str, tag.write_key, value)
 
         elif final_type == EP_TYPE.VEHICLES:
             # before we can write something to the vehicle endpoints, we must know the vehicle_id!
             # -> so we have to grab from the loadpoint the current vehicle!
             if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
-                    int_idx = int(idx) - 1
+                    int_idx = int(idx_str) - 1
                     vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
                     if vehicle_id is not None:
                         ret[tag.key] = await self.write_vehicle_key(vehicle_id, tag.write_key, value)
 
                 except Exception as err:
-                    _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx}")
+                    _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx_str}")
 
         return ret
 
@@ -247,21 +247,21 @@ class EvccApiBridge:
             else:
                 return {"err": r_json}
 
-    async def write_loadpoint_key(self, lp_idx, write_key, value) -> dict:
+    async def write_loadpoint_key(self, lp_idx_str, write_key, value) -> dict:
         # idx will start with 1!
         if isinstance(value, (bool, int, float)):
             value = str(value).lower()
         elif value is not None:
             value = str(value)
 
-        _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-loadpoint{lp_idx}@{self.host}")
+        _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-loadpoint{lp_idx_str}@{self.host}")
         r_json = None
         if value is None:
-            req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}"
+            req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
             r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
         else:
-            req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}/{value}"
+            req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
             r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
 
