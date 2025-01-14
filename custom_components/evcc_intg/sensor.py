@@ -121,8 +121,8 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     if self.entity_description.factor is not None:
                         value = float(value)/self.entity_description.factor
 
-        except (IndexError, ValueError, TypeError) as err:
-            _LOGGER.debug(f"tag: {self.tag} (idx:{self.idx}) caused {err}")
+        except (IndexError, ValueError, TypeError, KeyError) as err:
+            _LOGGER.debug(f"tag: {self.tag} (idx: '{self.idx}') (value: '{value}') caused {err}")
             value = None
 
         # make sure that we do not return unknown or smaller values
