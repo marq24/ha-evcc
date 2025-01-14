@@ -115,7 +115,7 @@ class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
     suggested_display_precision: int | None = None
     native_unit_of_measurement: str | None = None
 
-    array_idx: int | None = None
+    array_idx: str | int | None = None
     tuple_idx: list | None = None
     factor: int | None = None
     lookup: bool | None = None
@@ -128,7 +128,7 @@ class ExtSensorEntityDescription(SensorEntityDescription):
     idx: int | None = None
     name_addon: str | None = None
 
-    array_idx: int | None = None
+    array_idx:  str | int | None = None
     tuple_idx: list | None = None
     factor: int | None = None
     lookup: bool | None = None
@@ -442,7 +442,7 @@ SENSOR_SENSORS_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
         key=Tag.GRIDPOWER.key, # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
-        idx = GRID_CONTENT.POWER,
+        array_idx = GRID_CONTENT.POWER,
         icon="mdi:transmission-tower",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,

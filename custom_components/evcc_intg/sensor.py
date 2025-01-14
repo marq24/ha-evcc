@@ -91,15 +91,11 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             if hasattr(self.entity_description, "tuple_idx") and self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
                 array_idx1 = self.entity_description.tuple_idx[0]
                 array_idx2 = self.entity_description.tuple_idx[1]
-                if len(value) > array_idx1 or array_idx1 in value:
-                    value = value[array_idx1]
-                    if len(value) > array_idx2 or array_idx2 in value:
-                        value = value[array_idx2]
+                value = value[array_idx1][array_idx2]
 
             elif hasattr(self.entity_description, "array_idx") and self.entity_description.array_idx is not None:
                 array_idx = self.entity_description.array_idx
-                if len(value) > array_idx or array_idx in value:
-                    value = value[array_idx]
+                value = value[array_idx]
 
             if isinstance(value, (dict, list)):
                 # if the value is a list (or dict), but could not be extracted (cause of none matching indices) we need
@@ -125,7 +121,8 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     if self.entity_description.factor is not None:
                         value = float(value)/self.entity_description.factor
 
-        except (IndexError, ValueError, TypeError):
+        except (IndexError, ValueError, TypeError) as err:
+            _LOGGER.debug(f"tag: {self.tag} (idx:{self.idx}) caused {err}")
             value = None
 
         # make sure that we do not return unknown or smaller values
