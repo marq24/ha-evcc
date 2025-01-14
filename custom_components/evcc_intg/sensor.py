@@ -88,24 +88,23 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         """Return the state of the sensor."""
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
-            if isinstance(value, list):
-                if self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
-                    array_idx1 = self.entity_description.tuple_idx[0]
-                    array_idx2 = self.entity_description.tuple_idx[1]
-                    if len(value) > array_idx1 or array_idx1 in value:
-                        value = value[array_idx1]
-                        if isinstance(value, list) and len(value) > array_idx2 or array_idx2 in value:
-                            value = value[array_idx2]
+            if hasattr(self.entity_description, "tuple_idx") and self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
+                array_idx1 = self.entity_description.tuple_idx[0]
+                array_idx2 = self.entity_description.tuple_idx[1]
+                if len(value) > array_idx1 or array_idx1 in value:
+                    value = value[array_idx1]
+                    if len(value) > array_idx2 or array_idx2 in value:
+                        value = value[array_idx2]
 
-                elif self.entity_description.array_idx is not None:
-                    array_idx = self.entity_description.array_idx
-                    if len(value) > array_idx or array_idx in value:
-                        value = value[array_idx]
+            elif hasattr(self.entity_description, "array_idx") and self.entity_description.array_idx is not None:
+                array_idx = self.entity_description.array_idx
+                if len(value) > array_idx or array_idx in value:
+                    value = value[array_idx]
 
-                if isinstance(value, list):
-                    # if the value is a list, but could not be extracted (cause of none matching indices) we need
-                    # to purge the value to None!
-                    value = None
+            if isinstance(value, (dict, list)):
+                # if the value is a list (or dict), but could not be extracted (cause of none matching indices) we need
+                # to purge the value to None!
+                value = None
 
             if value is None or len(str(value)) == 0:
                 value = None
