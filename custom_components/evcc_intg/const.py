@@ -251,7 +251,7 @@ NUMBER_SENSORS = [
     ExtNumberEntityDescription(
         tag=Tag.BATTERYGRIDCHARGELIMIT,
         key=Tag.BATTERYGRIDCHARGELIMIT.key,
-        entity_category=EntityCategory.CONFIG.value,
+        entity_category=EntityCategory.CONFIG,
         icon = "mdi:cash-multiple",
         mode = NumberMode.BOX,
         native_max_value=2.50,
