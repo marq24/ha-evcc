@@ -223,7 +223,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 self._currency = "€"
 
         if "grid" in initdata:
-            if "power" in initdata["grid"] and "currents" in initdata["grid"]:
+            if ("power" in initdata["grid"] or
+                "currents" in initdata["grid"] or
+                "energy" in initdata["grid"] or
+                "powers" in initdata["grid"] ):
                 self._grid_data_as_object = True
 
         _LOGGER.debug(
