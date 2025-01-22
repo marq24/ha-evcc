@@ -535,8 +535,8 @@ SENSOR_SENSORS = [
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        suggested_display_precision=2,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
     ),
     ExtSensorEntityDescription(
         tag=Tag.PV,
@@ -545,8 +545,8 @@ SENSOR_SENSORS = [
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        suggested_display_precision=2,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -556,8 +556,8 @@ SENSOR_SENSORS = [
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        suggested_display_precision=2,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -567,8 +567,8 @@ SENSOR_SENSORS = [
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        suggested_display_precision=2,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -578,8 +578,8 @@ SENSOR_SENSORS = [
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        suggested_display_precision=2,
         device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -588,8 +588,8 @@ SENSOR_SENSORS = [
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
         suggested_display_precision=2,
-        device_class=SensorDeviceClass.POWER
     ),
     ExtSensorEntityDescription(
         tag=Tag.PV,
@@ -1045,7 +1045,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         tag=Tag.PLANENERGY,
         icon="mdi:battery-charging",
         entity_category=EntityCategory.DIAGNOSTIC,
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         entity_registry_enabled_default=False

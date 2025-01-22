@@ -1,6 +1,7 @@
 from typing import Final
 
 JSONKEY_PLANS: Final = "plans"
+JSONKEY_PLAN: Final = "plan"
 JSONKEY_PLANS_SOC: Final = "soc"
 JSONKEY_PLANS_TIME: Final = "time"
 
