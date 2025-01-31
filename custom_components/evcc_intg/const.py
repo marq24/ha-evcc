@@ -919,7 +919,14 @@ SENSOR_SENSORS_PER_LOADPOINT = [
     #     unit_of_measurement=UnitOfTime.MINUTES,
     #     device_class=None
     # ),
-
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EFFECTIVELIMITSOC,
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0
+    ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PHASEACTION,
         icon="mdi:numeric",

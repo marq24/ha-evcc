@@ -283,6 +283,8 @@
 
       "connectedduration": {"name": "Connected duration"},
 
+      "effectivelimitsoc": {"name": "Effective Charging limit (SOC)"},
+
       "phaseaction": {"name": "Phases activity [CODE]"},
       "phaseaction_value": {"name": "Phases activity"},
       "phaseremaining": {"name": "Phases remaining"},
