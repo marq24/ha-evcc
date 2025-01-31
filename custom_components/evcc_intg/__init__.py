@@ -3,6 +3,8 @@ import logging
 from datetime import datetime, timedelta
 from typing import Any
 
+from packaging.version import Version
+
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
 from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_LOADPOINTS,
@@ -222,11 +224,16 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if self._currency == "EUR":
                 self._currency = "€"
 
-        if "grid" in initdata:
+        # here we have an issue, when there is no grid data
+        # available (or is no object) at system start....
+        if "grid" in initdata and len(initdata["grid"]) > 0:
             if ("power" in initdata["grid"] or
                 "currents" in initdata["grid"] or
                 "energy" in initdata["grid"] or
                 "powers" in initdata["grid"] ):
+                self._grid_data_as_object = True
+        elif Tag.VERSION.key in initdata:
+            if Version("0.133.0") >= Version(initdata[Tag.VERSION.key]):
                 self._grid_data_as_object = True
 
         _LOGGER.debug(
