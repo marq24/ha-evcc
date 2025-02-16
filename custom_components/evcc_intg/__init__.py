@@ -226,7 +226,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         # here we have an issue, when there is no grid data
         # available (or is no object) at system start....
-        if "grid" in initdata and len(initdata["grid"]) > 0:
+        if "grid" in initdata and initdata["grid"] is not None and isinstance(initdata["grid"], (dict, list)):
             if ("power" in initdata["grid"] or
                 "currents" in initdata["grid"] or
                 "energy" in initdata["grid"] or
