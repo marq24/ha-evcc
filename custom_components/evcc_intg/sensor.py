@@ -1,6 +1,6 @@
 import logging
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -84,7 +84,19 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         self._previous_float_value: float | None = None
 
     @property
+    def extra_state_attributes(self):
+        """Return sensor attributes"""
+        if self.tag.type == EP_TYPE.TARIFF:
+            return self.coordinator.read_tag_tariff(self.tag)
+
+        return None
+
+    @property
     def native_value(self):
+        if self.tag.type == EP_TYPE.TARIFF:
+            # TODO must return a value... i
+            return "1"
+
         """Return the state of the sensor."""
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)

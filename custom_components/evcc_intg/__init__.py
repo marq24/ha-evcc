@@ -18,13 +18,14 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_THISYEAR,
     JSONKEY_STATISTICS_365D,
     JSONKEY_STATISTICS_30D,
+    ADDITIONAL_ENDPOINTS_DATA_TARIFF,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
 from homeassistant.core import HomeAssistant, Event, SupportsResponse
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as config_val  # , translation
+from homeassistant.helpers import config_validation as config_val, entity_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
@@ -64,7 +65,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
     else:
-        await coordinator.read_evcc_config_on_startup()
+        await coordinator.read_evcc_config_on_startup(hass)
 
     hass.data[DOMAIN][config_entry.entry_id] = coordinator
 
@@ -160,7 +161,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self.bridge.clear_data()
         self.data.clear()
 
-    async def read_evcc_config_on_startup(self):
+    async def read_evcc_config_on_startup(self, hass: HomeAssistant):
         # we will fetch th config from evcc:
         # b) vehicles
         # a) how many loadpoints
@@ -233,8 +234,37 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 "powers" in initdata["grid"] ):
                 self._grid_data_as_object = True
         elif Tag.VERSION.key in initdata:
-            if Version("0.133.0") >= Version(initdata[Tag.VERSION.key]):
+            if Version(initdata[Tag.VERSION.key]) >= Version("0.133.0"):
                 self._grid_data_as_object = True
+
+        # enable the additional tariff endpoints...
+        if Tag.VERSION.key in initdata:
+            _LOGGER.debug(f"check for tariff endpoints... {initdata[Tag.VERSION.key]} - {Version(initdata[Tag.VERSION.key]) >= Version("0.200.0")}")
+            if Version(initdata[Tag.VERSION.key]) >= Version("0.200.0"):
+                request_tariff_keys = []
+
+                # we must check, if the tariff entities are enabled...
+                if hass is not None:
+                    registry = entity_registry.async_get(hass)
+                    if registry is not None:
+                        entity_id = f"sensor.{self._system_id}_{Tag.TARIF_GRID.entity_key}".lower()
+                        a_entity = registry.async_get(entity_id)
+                        if a_entity is not None and a_entity.disabled_by is None:
+                            _LOGGER.info("***** QUERY_TARIF_GRID ********")
+                            request_tariff_keys.append(Tag.TARIF_GRID.key)
+
+                        entity_id = f"sensor.{self._system_id}_{Tag.TARIF_SOLAR.entity_key}".lower()
+                        a_entity = registry.async_get(entity_id)
+                        if a_entity is not None and a_entity.disabled_by is None:
+                            _LOGGER.info("***** QUERY_TARIF_SOLAR ********")
+                            request_tariff_keys.append(Tag.TARIF_SOLAR.key)
+
+                if len(request_tariff_keys) > 0:
+                    self.bridge.enable_tariff_endpoints(request_tariff_keys)
+        # else:
+        #     _LOGGER.debug(f"no version available... {initdata}")
+        #     for a_key in initdata:
+        #         _LOGGER.error(f"key: {a_key}")
 
         _LOGGER.debug(
             f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
@@ -282,8 +312,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     ret = self.data[tag.key]
             elif tag.type == EP_TYPE.STATISTICS:
                 ret = self.read_tag_statistics(tag=tag)
+            elif tag.type == EP_TYPE.TARIFF:
+                ret = self.read_tag_tariff(tag=tag)
         # _LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
         return ret
+
+    def read_tag_tariff(self, tag: Tag):
+        if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self.data:
+            if tag.key in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
+                return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key]
 
     def read_tag_statistics(self, tag: Tag):
         if JSONKEY_STATISTICS in self.data:

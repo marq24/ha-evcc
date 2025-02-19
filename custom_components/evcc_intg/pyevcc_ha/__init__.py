@@ -11,6 +11,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     STATE_QUERY,
     JSONKEY_VEHICLES,
     STATES,
+    ADDITIONAL_ENDPOINTS_DATA_TARIFF,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
 
@@ -66,6 +67,16 @@ class EvccApiBridge:
         self._LAST_FULL_STATE_UPDATE_TS = 0
         self._data = {}
 
+        # by default, we do not request the tariff endpoints
+        self.request_tariff_endpoints = False
+        self.request_tariff_keys = []
+
+    def enable_tariff_endpoints(self, keys: list):
+        self._LAST_FULL_STATE_UPDATE_TS = 0
+        self.request_tariff_endpoints = True
+        self.request_tariff_keys = keys
+        _LOGGER.debug(f"enabled tariff endpoints with keys: {keys}")
+
     def available_fields(self) -> int:
         return len(self._data)
 
@@ -102,6 +113,8 @@ class EvccApiBridge:
             json_resp = json_resp["result"]
 
         self._data = json_resp
+        if self.request_tariff_endpoints:
+            json_resp = await self.read_tariff_data(json_resp)
         return json_resp
 
     async def read_frequent_data(self) -> dict:
@@ -110,6 +123,23 @@ class EvccApiBridge:
         req = f"{self.host}/api/state{STATE_QUERY}"
         _LOGGER.debug(f"GET request: {req}")
         return await do_request(method = self.web_session.get(url=req, ssl=False))
+
+    async def read_tariff_data(self, json_resp: dict) -> dict:
+        #_LOGGER.info(f"going to request additional tariff data from evcc@{self.host}")
+        if ADDITIONAL_ENDPOINTS_DATA_TARIFF not in json_resp:
+            json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = {}
+
+        for a_key in self.request_tariff_keys:
+            try:
+                req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{a_key}"
+                _LOGGER.debug(f"GET request: {req}")
+                tariff_resp = await do_request(method = self.web_session.get(url=req, ssl=False))
+                if "result" in tariff_resp:
+                    json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF][a_key] = tariff_resp["result"]
+            except Exception as err:
+                _LOGGER.info(f"could not read tariff data for '{a_key}' -> '{err}'")
+
+        return json_resp
 
     async def press_tag(self, tag: Tag, value, idx:str = None) -> dict:
         ret = {}

@@ -275,7 +275,10 @@
       "stat30solarpercentage": {"name": "Statistik: letzten 30 Tage Sonnenenergie"},
       "stat30chargedkwh": {"name": "Statistik: letzten 30 Tage Ladeenergie"},
       "stat30avgprice": {"name": "Statistik: letzten 30 Tage Ø Preis"},
-      "stat30avgco2": {"name": "Statistik: letzten 30 Tage Ø CO₂"}
+      "stat30avgco2": {"name": "Statistik: letzten 30 Tage Ø CO₂"},
+
+      "tariff_api_solar": {"name": "Solar Prognose"},
+      "tariff_api_grid": {"name": "Strom Tarife"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

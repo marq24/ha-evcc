@@ -819,6 +819,28 @@ SENSOR_SENSORS = [
         device_class=None,
         suggested_display_precision=4,
         entity_registry_enabled_default=False
+    ),
+
+    # the new tarif endpoints... [GRID & SOLAR]
+    ExtSensorEntityDescription(
+        tag=Tag.TARIF_GRID,
+        key=Tag.TARIF_GRID.entity_key,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@",
+        device_class=None,
+        suggested_display_precision=3,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIF_SOLAR,
+        key=Tag.TARIF_SOLAR.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=None,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
     )
 ]
 SENSOR_SENSORS_PER_LOADPOINT = [

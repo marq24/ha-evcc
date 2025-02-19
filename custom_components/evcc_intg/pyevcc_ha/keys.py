@@ -38,6 +38,7 @@ class EP_TYPE(Enum):
     VEHICLES = JSONKEY_VEHICLES
     STATISTICS = JSONKEY_STATISTICS
     SITE = "site"
+    TARIFF = "tariff"
 
 class GRID_CONTENT(Enum):
     CURRENTS = "currents"
@@ -366,3 +367,6 @@ class Tag(ApiKey, Enum):
     STAT30AVGPRICE = ApiKey(entity_key="stat30AvgPrice", key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
     STAT30CHARGEDKWH = ApiKey(entity_key="stat30ChargedKWh", key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
     STAT30SOLARPERCENTAGE = ApiKey(entity_key="stat30SolarPercentage", key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
+
+    TARIF_GRID = ApiKey(entity_key="tariff_api_grid", key="grid", type=EP_TYPE.TARIFF)
+    TARIF_SOLAR = ApiKey(entity_key="tariff_api_solar", key="solar", type=EP_TYPE.TARIFF)
