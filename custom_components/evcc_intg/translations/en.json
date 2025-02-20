@@ -63,8 +63,9 @@
       "vehicledetectionactive": {"name": "Vehicle detection"},
       "batterygridchargeactive": {"name": "Home-Battery: grid charging"},
       "vehicleclimateractive": {"name": "Vehicle Air Conditioning"},
-      "vehiclewelcomeactive": {"name": "Vehicle Welcome function"}
-
+      "vehiclewelcomeactive": {"name": "Vehicle Welcome function"},
+      "planactive": {"name": "Plan activated"},
+      "planactivealt": {"name": "Plan activated (alt)"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
@@ -305,6 +306,11 @@
       "vehicleplanstime": {"name": "Charging plan: Departure time (SOC)"},
       "planenergy": {"name": "Charging plan: Departure charging goal (Energy)"},
       "plantime": {"name": "Charging plan: Departure time (Energy)"},
+
+      "effectiveplansoc": {"name": "Effective Plan: Departure charging goal (SOC)"},
+      "effectiveplantime": {"name": "Effective Plan: Departure time (SOC)"},
+      "planprojectedstart": {"name": "Plan: Start (projected)"},
+      "planprojectedend": {"name": "Plan: End (projected)"},
 
       "auxpower": {"name": "Power AUX"},
       "batterycapacity": {"name": "Battery capacity"},

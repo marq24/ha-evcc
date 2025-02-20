@@ -204,9 +204,20 @@ class Tag(ApiKey, Enum):
 
     # "effectiveMaxCurrent": 16,
     # "effectiveMinCurrent": 6,
-    # "effectivePlanSoc": 0,
-    # "effectivePlanTime": "0001-01-01T00:00:00Z",
     # "effectivePriority": 0,
+
+    # "planActive": false,
+    PLANACTIVE = ApiKey(key="planActive", type=EP_TYPE.LOADPOINTS)
+    # this value is NOT present in the data - and must be calculated internally
+    PLANACTIVEALT = ApiKey(key="planActiveAlt", type=EP_TYPE.LOADPOINTS)
+    # "effectivePlanSoc": 0,
+    EFFECTIVEPLANSOC = ApiKey(key="effectivePlanSoc", type=EP_TYPE.LOADPOINTS)
+    # "effectivePlanTime": "0001-01-01T00:00:00Z",
+    EFFECTIVEPLANTIME = ApiKey(key="effectivePlanTime", type=EP_TYPE.LOADPOINTS)
+    # "planProjectedEnd": "2025-02-20T13:34:32+01:00",
+    PLANPROJECTEDEND = ApiKey(key="planProjectedEnd", type=EP_TYPE.LOADPOINTS)
+    # "planProjectedStart": "2025-02-20T13:00:00+01:00",
+    PLANPROJECTEDSTART = ApiKey(key="planProjectedStart", type=EP_TYPE.LOADPOINTS)
 
     # "enabled": false,
     ENABLED = ApiKey(key="enabled", type=EP_TYPE.LOADPOINTS)
@@ -224,7 +235,6 @@ class Tag(ApiKey, Enum):
     PHASESENABLED = ApiKey(key="phasesEnabled", type=EP_TYPE.LOADPOINTS)
 
     # "planOverrun": 0,
-    # "planProjectedStart": "0001-01-01T00:00:00Z",
     # "priority": 0,
     # "pvAction": "inactive",
     # "pvRemaining": 0,

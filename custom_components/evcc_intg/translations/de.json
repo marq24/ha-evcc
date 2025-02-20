@@ -63,7 +63,9 @@
       "vehicledetectionactive": {"name": "Fahrzeugerkennung"},
       "batterygridchargeactive": {"name": "Hausbatterie: Netzladen"},
       "vehicleclimateractive": {"name": "Fahrzeug Klimatisierung"},
-      "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"}
+      "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"},
+      "planactive": {"name": "Plan aktiviert"},
+      "planactivealt": {"name": "Plan aktiviert (alt)"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
@@ -234,6 +236,11 @@
       "vehicleplanstime": {"name": "Ladeplanung: Abfahrt Zeitpunkt (SOC)"},
       "planenergy": {"name": "Ladeplanung: Abfahrt Ladeziel (Energie)"},
       "plantime": {"name": "Ladeplanung: Abfahrt Zeitpunkt (Energie)"},
+
+      "effectiveplansoc": {"name": "Effektiver Plan: Abfahrt Ladeziel (SOC)"},
+      "effectiveplantime": {"name": "Effektiver Plan: Abfahrt Zeitpunkt (SOC)"},
+      "planprojectedstart": {"name": "Plan: Start (erwartet)"},
+      "planprojectedend": {"name": "Plan: Ende (erwartet)"},
 
       "auxpower": {"name": "Leistung AUX"},
       "batterycapacity": {"name": "Batterie Kapazität"},

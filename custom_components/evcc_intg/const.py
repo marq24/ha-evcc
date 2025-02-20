@@ -201,9 +201,22 @@ BINARY_SENSORS_PER_LOADPOINT = [
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:gift-outline",
         icon_off="mdi:gift-off-outline",
+    ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.PLANACTIVE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:calendar-clock",
+        icon_off="mdi:calendar-blank",
+    ),
+    # for what ever reason, the 'PLANACTIVE' api value is sometimes false, while the plan is already
+    # activated in evcc (and the 'effectivePlanTime' is already set - so this can be used as fallback)
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.PLANACTIVEALT,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:calendar-check",
+        icon_off="mdi:calendar-blank",
+        entity_registry_enabled_default=False
     )
-
-
 ]
 
 BUTTONS = []
@@ -1087,6 +1100,38 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         #device_class=SensorDeviceClass.DATE,
         device_class=None,
         entity_registry_enabled_default=False
+    ),
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EFFECTIVEPLANTIME,
+        icon="mdi:calendar-arrow-right",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        #state_class=SensorStateClass.MEASUREMENT,
+        #device_class=SensorDeviceClass.DATE,
+        device_class=None,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PLANPROJECTEDSTART,
+        icon="mdi:calendar-start",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        #state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.DATE,
+        #device_class=None,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PLANPROJECTEDEND,
+        icon="mdi:calendar-end",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        #state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.DATE,
+        #device_class=None,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EFFECTIVEPLANSOC,
+        icon="mdi:battery-charging",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
     ),
 ]
 

@@ -8,6 +8,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, BINARY_SENSORS, BINARY_SENSORS_PER_LOADPOINT, ExtBinarySensorEntityDescription
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -59,7 +60,12 @@ class EvccBinarySensor(EvccBaseEntity, BinarySensorEntity):
     @property
     def is_on(self) -> bool | None:
         try:
-            value = self.coordinator.read_tag(self.tag, self.idx)
+            if self.tag == Tag.PLANACTIVEALT:
+                # here we have a special implementation, since the attribute will not be provided via the API (yet)
+                # so we check here, if the 'effectivePlanTime' is not none...
+                value = self.coordinator.read_tag(Tag.EFFECTIVEPLANTIME, self.idx) is not None
+            else:
+                value = self.coordinator.read_tag(self.tag, self.idx)
 
         except IndexError:
             if self.entity_description.idx is not None:
