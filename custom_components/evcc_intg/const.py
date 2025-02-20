@@ -1080,8 +1080,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,
-        #device_class=SensorDeviceClass.DATE,
-        device_class=None
+        device_class=SensorDeviceClass.TIMESTAMP,
+        #device_class=None
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PLANENERGY,
@@ -1097,8 +1097,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,
-        #device_class=SensorDeviceClass.DATE,
-        device_class=None,
+        device_class=SensorDeviceClass.TIMESTAMP,
+        #device_class=None,
         entity_registry_enabled_default=False
     ),
 
@@ -1107,15 +1107,15 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,
-        #device_class=SensorDeviceClass.DATE,
-        device_class=None,
+        device_class=SensorDeviceClass.TIMESTAMP,
+        #device_class=None,
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PLANPROJECTEDSTART,
         icon="mdi:calendar-start",
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.DATE,
+        device_class=SensorDeviceClass.TIMESTAMP,
         #device_class=None,
     ),
     ExtSensorEntityDescriptionStub(
@@ -1123,7 +1123,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         icon="mdi:calendar-end",
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,
-        device_class=SensorDeviceClass.DATE,
+        device_class=SensorDeviceClass.TIMESTAMP,
         #device_class=None,
     ),
     ExtSensorEntityDescriptionStub(

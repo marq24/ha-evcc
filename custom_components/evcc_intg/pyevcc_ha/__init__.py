@@ -1,8 +1,8 @@
 import logging
+from datetime import datetime, timezone
 from json import JSONDecodeError
 from time import time
 from typing import Callable
-from datetime import datetime, timezone
 
 from aiohttp import ClientResponseError
 
@@ -128,7 +128,7 @@ class EvccApiBridge:
 
     async def read_frequent_data(self) -> dict:
         # make sure that idx is really an int...
-        _LOGGER.info(f"going to read all frequent_data from evcc@{self.host}")
+        _LOGGER.info(f"going to read only frequent_data from evcc@{self.host}")
         req = f"{self.host}/api/state{STATE_QUERY}"
         _LOGGER.debug(f"GET request: {req}")
         return await do_request(method = self.web_session.get(url=req, ssl=False))

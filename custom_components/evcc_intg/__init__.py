@@ -342,8 +342,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if tag == Tag.PLANPROJECTEDSTART or tag == Tag.PLANPROJECTEDEND:
                     # the API already return a ISO 8601 'date' here - but we need to convert it to a datetime object
                     # so that it then can be finally converted by the default Sensor to a ISO 8601 date...
-                    if value is not None:
-                        value = datetime.fromisoformat(str(value))
+                    value = self._convert_time(value)
                 return value
 
     def read_tag_vehicle_int(self, tag: Tag, loadpoint_idx: int = None):
@@ -445,7 +444,21 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return result
 
     @staticmethod
-    def _convert_time(value: str):
+    def _convert_time(value):
+        if value is not None:
+            value = str(value)
+            if len(value) > 0:
+                if "0001-01-01T00:00:00Z" == value:
+                    return None
+
+                return datetime.fromisoformat(value)
+
+            return None
+        else:
+            return None
+
+    @staticmethod
+    def _convert_time_old(value: str):
         if value is not None and len(value) > 0:
             if "0001-01-01T00:00:00Z" == value:
                 return None
