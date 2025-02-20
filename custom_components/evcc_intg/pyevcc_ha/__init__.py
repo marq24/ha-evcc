@@ -2,6 +2,7 @@ import logging
 from json import JSONDecodeError
 from time import time
 from typing import Callable
+from datetime import datetime, timezone
 
 from aiohttp import ClientResponseError
 
@@ -65,6 +66,7 @@ class EvccApiBridge:
             self.lang_map = TRANSLATIONS["en"]
 
         self._LAST_FULL_STATE_UPDATE_TS = 0
+        self._LAST_UPDATE_HOUR = -1
         self._data = {}
 
         # by default, we do not request the tariff endpoints
@@ -73,6 +75,7 @@ class EvccApiBridge:
 
     def enable_tariff_endpoints(self, keys: list):
         self._LAST_FULL_STATE_UPDATE_TS = 0
+        self._LAST_UPDATE_HOUR = -1
         self.request_tariff_endpoints = True
         self.request_tariff_keys = keys
         _LOGGER.debug(f"enabled tariff endpoints with keys: {keys}")
@@ -82,6 +85,7 @@ class EvccApiBridge:
 
     def clear_data(self):
         self._LAST_FULL_STATE_UPDATE_TS = 0
+        self._LAST_UPDATE_HOUR = -1
         self._data = {}
 
     async def read_all(self) -> dict:
@@ -114,7 +118,12 @@ class EvccApiBridge:
 
         self._data = json_resp
         if self.request_tariff_endpoints:
-            json_resp = await self.read_tariff_data(json_resp)
+            # we only update the tariff data once per hour...
+            current_hour = datetime.now(timezone.utc).hour
+            if self._LAST_UPDATE_HOUR != current_hour:
+                json_resp = await self.read_tariff_data(json_resp)
+                self._LAST_UPDATE_HOUR = current_hour
+
         return json_resp
 
     async def read_frequent_data(self) -> dict:

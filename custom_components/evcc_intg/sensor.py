@@ -1,4 +1,5 @@
 import logging
+from datetime import datetime, timezone
 
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE
 from homeassistant.components.sensor import SensorEntity
@@ -82,6 +83,9 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
         super().__init__(coordinator=coordinator, description=description)
         self._previous_float_value: float | None = None
+        if self.tag.type == EP_TYPE.TARIFF:
+            self._last_calculated_hour = -1
+            self._last_calculated_price = None
 
     @property
     def extra_state_attributes(self):
@@ -93,11 +97,23 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
 
     @property
     def native_value(self):
-        if self.tag.type == EP_TYPE.TARIFF:
-            # TODO must return a value... i
-            return "1"
-
         """Return the state of the sensor."""
+        if self.tag.type == EP_TYPE.TARIFF:
+            attr_data = self.coordinator.read_tag_tariff(self.tag)
+            if attr_data is not None and "rates" in attr_data:
+                rates = attr_data["rates"]
+                current_time = datetime.now(timezone.utc)
+                if self._last_calculated_hour != current_time.hour:
+                    self._last_calculated_hour = current_time.hour
+                    for a_rate in rates:
+                        start_dt = datetime.fromisoformat(a_rate["start"]).astimezone(timezone.utc)
+                        end_dt = datetime.fromisoformat(a_rate["end"]).astimezone(timezone.utc)
+                        if start_dt < current_time < end_dt:
+                            self._last_calculated_price = a_rate["price"]
+                            break
+
+                return self._last_calculated_price
+
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
             if hasattr(self.entity_description, "tuple_idx") and self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
