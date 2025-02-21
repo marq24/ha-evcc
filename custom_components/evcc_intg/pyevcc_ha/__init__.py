@@ -116,14 +116,18 @@ class EvccApiBridge:
         if "result" in json_resp:
             json_resp = json_resp["result"]
 
-        self._data = json_resp
         if self.request_tariff_endpoints:
             # we only update the tariff data once per hour...
             current_hour = datetime.now(timezone.utc).hour
             if self._LAST_UPDATE_HOUR != current_hour:
                 json_resp = await self.read_tariff_data(json_resp)
                 self._LAST_UPDATE_HOUR = current_hour
+            else:
+                # we must copy the previous existing data to the new json_resp!
+                if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
+                    json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
 
+        self._data = json_resp
         return json_resp
 
     async def read_frequent_data(self) -> dict:
