@@ -225,6 +225,13 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if self._currency == "EUR":
                 self._currency = "€"
 
+        _version_info = None
+        if Tag.VERSION.key in initdata:
+            _version_info = initdata[Tag.VERSION.key]
+            # we need to check for possible NightlyBuild tags in the Version key
+            if " (" in _version_info:
+                _version_info = _version_info.split(" (")[0].strip()
+
         # here we have an issue, when there is no grid data
         # available (or is no object) at system start....
         if "grid" in initdata and initdata["grid"] is not None and isinstance(initdata["grid"], (dict, list)):
@@ -233,14 +240,14 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 "energy" in initdata["grid"] or
                 "powers" in initdata["grid"] ):
                 self._grid_data_as_object = True
-        elif Tag.VERSION.key in initdata:
-            if Version(initdata[Tag.VERSION.key]) >= Version("0.133.0"):
+        elif _version_info is not None:
+            if Version(_version_info) >= Version("0.133.0"):
                 self._grid_data_as_object = True
 
         # enable the additional tariff endpoints...
-        if Tag.VERSION.key in initdata:
-            _LOGGER.debug(f"check for tariff endpoints... {initdata[Tag.VERSION.key]} - {Version(initdata[Tag.VERSION.key]) >= Version("0.200.0")}")
-            if Version(initdata[Tag.VERSION.key]) >= Version("0.200.0"):
+        if _version_info is not None:
+            _LOGGER.debug(f"check for tariff endpoints... {_version_info} - {Version(_version_info) >= Version("0.200.0")} - {initdata[Tag.VERSION.key]}")
+            if Version(_version_info) >= Version("0.200.0"):
                 request_tariff_keys = []
 
                 # we must check, if the tariff entities are enabled...
