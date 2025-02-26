@@ -236,8 +236,15 @@ class Tag(ApiKey, Enum):
 
     # "planOverrun": 0,
     # "priority": 0,
-    # "pvAction": "inactive",
+
+    # "pvAction": "inactive", "activ", "disable"
+    PVACTION = ApiKey(key="pvAction", type=EP_TYPE.LOADPOINTS)
     # "pvRemaining": 0,
+    PVREMAINING = ApiKey(key="pvRemaining", type=EP_TYPE.LOADPOINTS)
+    # "enableDelay": 60,
+    ENABLEDELAY = ApiKey(key="enableDelay", write_key="enable/delay", type=EP_TYPE.LOADPOINTS)
+    # "disableDelay": 180,
+    DISABLEDELAY = ApiKey(key="disableDelay", write_key="disable/delay", type=EP_TYPE.LOADPOINTS)
 
     # "sessionCo2PerKWh": null,
     SESSIONCO2PERKWH = ApiKey(key="sessionCo2PerKWh", type=EP_TYPE.LOADPOINTS)

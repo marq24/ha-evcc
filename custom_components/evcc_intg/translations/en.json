@@ -81,7 +81,9 @@
       "residualpower": {"name": "Residual power"},
       "smartcostlimit_co2": {"name": "CO₂ limit ≤"},
       "smartcostlimit": {"name": "@@@ limit ≤"},
-      "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"}
+      "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"},
+      "enabledelay": {"name":  "Delay Enable"},
+      "disabledelay": {"name":  "Delay Disable"}
     },
     "select": {
       "prioritysoc": {
@@ -355,7 +357,11 @@
       "stat30avgco2": {"name": "Statistics: Last 30 days Ø CO₂"},
 
       "tariff_api_solar": {"name": "Solar Prognoses"},
-      "tariff_api_grid": {"name": "Grid Tariffs"}
+      "tariff_api_grid": {"name": "Grid Tariffs"},
+
+      "pvaction": {"name": "PV Action [CODE]"},
+      "pvaction_value": {"name": "PV Action"},
+      "pvremaining": {"name":  "PV Remaining"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

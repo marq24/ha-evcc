@@ -81,7 +81,9 @@
       "residualpower": {"name": "Restleistung"},
       "smartcostlimit_co2": {"name": "CO₂ Limit ≤"},
       "smartcostlimit": {"name": "@@@ Limit ≤"},
-      "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"}
+      "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"},
+      "enabledelay": {"name":  "Verzögerung Aktivierung"},
+      "disabledelay": {"name":  "Verzögerung Deaktivierung"}
     },
     "select": {
       "prioritysoc": {
@@ -285,7 +287,11 @@
       "stat30avgco2": {"name": "Statistik: letzten 30 Tage Ø CO₂"},
 
       "tariff_api_solar": {"name": "Solar Prognose"},
-      "tariff_api_grid": {"name": "Strom Tarife"}
+      "tariff_api_grid": {"name": "Strom Tarife"},
+
+      "pvaction": {"name": "PV Aktivität [CODE]"},
+      "pvaction_value": {"name": "PV Aktivität"},
+      "pvremaining": {"name":  "PV verbleibend"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

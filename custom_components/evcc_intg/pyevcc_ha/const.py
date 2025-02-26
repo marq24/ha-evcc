@@ -58,6 +58,11 @@ TRANSLATIONS: Final = {
             "scale1p": "Reduziere auf einphasig",
             "scale3p": "Erhöhe auf dreiphasig",
             "inactive": "-keine-"
+        },
+        "pvaction":{
+            "enable": "Ausreichend PV-Leistung vorhanden",
+            "disable": "Unzureichende PV-Leistung, Aktivierung des Timeouts",
+            "inactive": "Auch nach dem Timeout ist keine PV-Leistung verfügbar"
         }
     },
     "en": {
@@ -71,6 +76,11 @@ TRANSLATIONS: Final = {
             "scale1p": "Reducing to 1-phase charging",
             "scale3p": "Increasing to 3-phase charging",
             "inactive": "-none-"
+        },
+        "pvaction":{
+            "enable": "Sufficient PV power available",
+            "disable": "Insufficient PV power, activating the timeout",
+            "inactive": "No PV power available even after the timeout"
         }
     }
 }

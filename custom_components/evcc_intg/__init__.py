@@ -1,6 +1,6 @@
 import asyncio
 import logging
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from packaging.version import Version
@@ -346,10 +346,19 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if tag == Tag.PLANTIME or tag == Tag.EFFECTIVEPLANTIME:
                     value = self._convert_time(value)
 
-                if tag == Tag.PLANPROJECTEDSTART or tag == Tag.PLANPROJECTEDEND:
+                elif tag == Tag.PLANPROJECTEDSTART or tag == Tag.PLANPROJECTEDEND:
                     # the API already return a ISO 8601 'date' here - but we need to convert it to a datetime object
                     # so that it then can be finally converted by the default Sensor to a ISO 8601 date...
                     value = self._convert_time(value)
+
+                elif tag == Tag.PVREMAINING:
+                    # the API just return seconds here - but we need to convert it to a datetime object so actually
+                    # the value is 'now' + seconds...
+                    if value != 0:
+                        value = datetime.now(timezone.utc) + timedelta(seconds=value)
+                    else:
+                        value = None
+
                 return value
 
     def read_tag_vehicle_int(self, tag: Tag, loadpoint_idx: int = None):

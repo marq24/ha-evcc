@@ -326,7 +326,27 @@ NUMBER_SENSORS_PER_LOADPOINT = [
         native_min_value=-0.05,
         native_step=0.005,
         native_unit_of_measurement="@@@/kWh",
-    )
+    ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.ENABLEDELAY,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:weather-sunset-up",
+        mode = NumberMode.BOX,
+        native_max_value=6000,
+        native_min_value=0,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.DISABLEDELAY,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:weather-sunset-down",
+        mode = NumberMode.BOX,
+        native_max_value=6000,
+        native_min_value=0,
+        native_step=1,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+    ),
 ]
 
 SELECT_SENSORS = [
@@ -1133,6 +1153,29 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
     ),
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PVACTION,
+        lookup=True,
+        icon="mdi:state-machine",
+        native_unit_of_measurement=None,
+        device_class=SensorDeviceClass.ENUM
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PVACTION,
+        icon="mdi:state-machine",
+        state_class=None,
+        native_unit_of_measurement=None,
+        device_class=SensorDeviceClass.ENUM
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.PVREMAINING,
+        icon="mdi:sun-clock",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        #state_class=SensorStateClass.MEASUREMENT,
+        device_class=SensorDeviceClass.TIMESTAMP,
+        #device_class=None,
+    )
 ]
 
 SWITCH_SENSORS = [
