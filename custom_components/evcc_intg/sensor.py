@@ -85,7 +85,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         self._previous_float_value: float | None = None
         if self.tag.type == EP_TYPE.TARIFF:
             self._last_calculated_hour = -1
-            self._last_calculated_price = None
+            self._last_calculated_value = None
 
     @property
     def extra_state_attributes(self):
@@ -109,10 +109,14 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         start_dt = datetime.fromisoformat(a_rate["start"]).astimezone(timezone.utc)
                         end_dt = datetime.fromisoformat(a_rate["end"]).astimezone(timezone.utc)
                         if start_dt < current_time < end_dt:
-                            self._last_calculated_price = a_rate["price"]
-                            break
+                            if "value" in a_rate:
+                                self._last_calculated_value = a_rate["value"]
+                                break
+                            elif "price" in a_rate:
+                                self._last_calculated_value = a_rate["price"]
+                                break
 
-                return self._last_calculated_price
+                return self._last_calculated_value
 
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
