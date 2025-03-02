@@ -45,6 +45,8 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 
 #### Option 1: via HACS
 
+[![Open your Home Assistant instance and adding repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=marq24&repository=ha-evcc&category=integration)
+
 1. Add a custom **integration** repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)<br/>**Let me repeat**: This is an **HACS _integration_**, not an **HASS-IO _AddOn_**, so you need to have HACS installed, and you need to add this as custom **integration repository** to HACS.
 2. Once the repository is added, use the search bar and type `evcc☀️🚘- Solar Charging`
 3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration - the latest release version is automatically selected. Only select a different version if you have specific reasons.
@@ -72,6 +74,7 @@ __You must have installed the integration (manually or via HACS before)!__
 Just click the following Button to start the configuration automatically (for the rest see _Option 2: Manually steps by step_):
 
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=evcc_intg)
+
 
 #### Option 2: Manually steps by step
 
