@@ -10,7 +10,8 @@ from homeassistant.core import callback
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from .const import (
     DOMAIN,
-    CONF_INCLUDE_EVCC
+    CONF_INCLUDE_EVCC,
+    CONF_USE_WS
 )
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -55,6 +56,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_NAME] = "evcc"
             user_input[CONF_HOST] = "http://your-evcc-ip:7070"
             user_input[CONF_SCAN_INTERVAL] = 15
+            user_input[CONF_USE_WS] = False
             user_input[CONF_INCLUDE_EVCC] = False
 
         return self.async_show_form(
@@ -63,6 +65,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_NAME, default=user_input.get(CONF_NAME)): str,
                 vol.Required(CONF_HOST, default=user_input.get(CONF_HOST)): str,
                 vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
+                vol.Required(CONF_USE_WS, default=user_input.get(CONF_USE_WS)): bool,
                 vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
             }),
             last_step=True,
@@ -104,6 +107,10 @@ class EvccOptionsFlowHandler(config_entries.OptionsFlow):
         else:
             self.options = dict(config_entry.options)
 
+        # implement fallback...
+        if CONF_USE_WS not in self.options:
+            self.options[CONF_USE_WS] = False
+
     async def async_step_init(self, user_input=None):  # pylint: disable=unused-argument
         """Manage the options."""
         return await self.async_step_user()
@@ -119,6 +126,7 @@ class EvccOptionsFlowHandler(config_entries.OptionsFlow):
             step_id="user",
             data_schema=vol.Schema({
                 vol.Required(CONF_SCAN_INTERVAL, default=self.options.get(CONF_SCAN_INTERVAL, 15)): int,
+                vol.Required(CONF_USE_WS, default=self.options.get(CONF_USE_WS)): bool,
                 vol.Required(CONF_INCLUDE_EVCC, default=self.options.get(CONF_INCLUDE_EVCC)): bool,
             })
         )

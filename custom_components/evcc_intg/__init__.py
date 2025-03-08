@@ -1,7 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
-from typing import Any
+from typing import Any, Final
 
 from packaging.version import Version
 
@@ -22,12 +22,13 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from homeassistant.config_entries import ConfigEntry, ConfigEntryState
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL
-from homeassistant.core import HomeAssistant, Event, SupportsResponse
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import config_validation as config_val, entity_registry
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity, EntityDescription
+from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.util import slugify
@@ -39,15 +40,18 @@ from .const import (
     STARTUP_MESSAGE,
     SERVICE_SET_LOADPOINT_PLAN,
     SERVICE_SET_VEHICLE_PLAN,
-    CONF_INCLUDE_EVCC
+    CONF_INCLUDE_EVCC,
+    CONF_USE_WS
 )
 from .service import EvccService
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 SCAN_INTERVAL = timedelta(seconds=10)
-CONFIG_SCHEMA = config_val.removed(DOMAIN, raise_if_present=False)
+WS_SCAN_INTERVAL: Final = timedelta(seconds=1)
+WEBSOCKET_WATCHDOG_INTERVAL: Final = timedelta(seconds=60)
 
+CONFIG_SCHEMA = config_val.removed(DOMAIN, raise_if_present=False)
 
 async def async_setup(hass: HomeAssistant, config: dict):  # pylint: disable=unused-argument
     """Set up this integration using YAML is not supported."""
@@ -59,6 +63,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         value = "UNKOWN"
         _LOGGER.info(STARTUP_MESSAGE)
         hass.data.setdefault(DOMAIN, {"manifest_version": value})
+
 
     coordinator = EvccDataUpdateCoordinator(hass, config_entry)
     await coordinator.async_refresh()
@@ -85,6 +90,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # if coordinator.check_for_max_of_16a:
     #     asyncio.create_task(coordinator.check_for_16a_limit(hass, config_entry.entry_id))
 
+    # If Home Assistant is already in a running state, start the watchdog
+    # immediately, else trigger it after Home Assistant has finished starting.
+    use_ws = config_entry.options.get(CONF_USE_WS, config_entry.data.get(CONF_USE_WS, False))
+    if(use_ws):
+        if hass.state is CoreState.running:
+            await coordinator.start_watchdog()
+        else:
+            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
+
     # ok we are done...
     return True
 
@@ -95,6 +109,7 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
     if unload_ok:
         if DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]:
             coordinator = hass.data[DOMAIN][config_entry.entry_id]
+            coordinator.stop_watchdog()
             coordinator.clear_data()
             hass.data[DOMAIN].pop(config_entry.entry_id)
 
@@ -149,12 +164,34 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._version = None
         self._grid_data_as_object = False
 
+        self._watchdog = None
         super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
     # Callable[[Event], Any]
     def __call__(self, evt: Event) -> bool:
         _LOGGER.debug(f"Event arrived: {evt}")
         return True
+
+    async def start_watchdog(self, event=None):
+        """Start websocket watchdog."""
+        await self._async_connect_websocket_if_disconnected()
+        self._watchdog = async_track_time_interval(
+            self.hass,
+            self._async_connect_websocket_if_disconnected,
+            WEBSOCKET_WATCHDOG_INTERVAL,
+        )
+
+    def stop_watchdog(self):
+        if hasattr(self, "_watchdog") and self._watchdog is not None:
+            self._watchdog()
+
+    async def _async_connect_websocket_if_disconnected(self, *_):
+        """Reconnect the websocket if it fails."""
+        if not self.bridge.ws_connected:
+            _LOGGER.info(f"check websocket: ws reconnect required")
+            self._config_entry.async_create_background_task(self.hass, self.bridge.connect_ws(), "ws_connection")
+        else:
+            _LOGGER.debug(f"check websocket: is connected...")
 
     def clear_data(self):
         _LOGGER.debug(f"clear_data called...")
@@ -274,31 +311,39 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         #         _LOGGER.error(f"key: {a_key}")
 
         _LOGGER.debug(
-            f"read_evcc_config: LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
+            f"read_evcc_config: Using WebSocket: {self.bridge.ws_connected} LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
 
     async def _async_update_data(self) -> dict:
         """Update data via library."""
-        _LOGGER.debug(f"_async_update_data called")
         try:
-            # if self.data is not None:
-            #    _LOGGER.debug(f"number of fields before query: {len(self.data)} ")
-            # result = await self.bridge.read_all()
-            # _LOGGER.debug(f"number of fields after query: {len(result)}")
-            # return result
+            if self.bridge.ws_connected:
+                # we can use a much higher update interval for our data...
+                if self.update_interval != WS_SCAN_INTERVAL:
+                    self.update_interval = WS_SCAN_INTERVAL
 
-            result = await self.bridge.read_all()
-            if result is not None:
-                _LOGGER.debug(f"number of fields after query: {len(result)}")
+                return await self.bridge.read_all()
+            else:
+                if self.update_interval != SCAN_INTERVAL:
+                    self.update_interval = SCAN_INTERVAL
+                _LOGGER.debug(f"_async_update_data called")
+                # if self.data is not None:
+                #    _LOGGER.debug(f"number of fields before query: {len(self.data)} ")
+                # result = await self.bridge.read_all()
+                # _LOGGER.debug(f"number of fields after query: {len(result)}")
+                # return result
 
-            # if self.data is not None:
-            #     if 'prioritySoc' in self.data:
-            #         _LOGGER.debug(f"... and prioritySoc also in self.data")
-            #     else:
-            #         _LOGGER.debug(f"... but prioritySoc NOT IN self.data {self.data}")
-            # else:
-            #     _LOGGER.debug(f"... and self.data is None?!")
+                result = await self.bridge.read_all()
+                if result is not None:
+                    _LOGGER.debug(f"number of fields after query: {len(result)}")
 
-            return result
+                # if self.data is not None:
+                #     if 'prioritySoc' in self.data:
+                #         _LOGGER.debug(f"... and prioritySoc also in self.data")
+                #     else:
+                #         _LOGGER.debug(f"... but prioritySoc NOT IN self.data {self.data}")
+                # else:
+                #     _LOGGER.debug(f"... and self.data is None?!")
+                return result
 
         except UpdateFailed as exception:
             _LOGGER.warning(f"UpdateFailed: {exception}")

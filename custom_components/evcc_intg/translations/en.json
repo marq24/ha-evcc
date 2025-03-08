@@ -14,7 +14,8 @@
         "data": {
           "host": "Your local evcc URL (including the port)",
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
-          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
+          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
+          "use_websocket": "Use Websocket (experimental) - Polling Interval will be ignored"
         }
       }
     },
@@ -29,7 +30,8 @@
         "data": {
           "host": "Your local evcc URL (including the port)",
           "scan_interval": "Polling Interval in seconds",
-          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
+          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
+          "use_websocket": "Use Websocket (experimental) - Polling Interval will be ignored"
         }
       }
     }

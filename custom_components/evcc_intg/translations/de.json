@@ -14,7 +14,8 @@
         "data": {
           "host": "Deine lokale evcc URL (einschließlich des Ports)",
           "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
-          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
+          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen",
+          "use_websocket": "Websocket verwenden (experimental) - Aktualisierungsintervall wird ignoriert"
         }
       }
     },
@@ -29,7 +30,8 @@
         "data": {
           "host": "Deine lokale evcc URL (einschließlich des Ports)",
           "scan_interval": "Aktualisierungsintervall in Sekunden",
-          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
+          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen",
+          "use_websocket": "Websocket verwenden (experimental) - Aktualisierungsintervall wird ignoriert"
         }
       }
     }

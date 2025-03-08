@@ -4,7 +4,8 @@ from json import JSONDecodeError
 from time import time
 from typing import Callable
 
-from aiohttp import ClientResponseError
+import aiohttp
+from aiohttp import ClientResponseError, ClientConnectorError
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
@@ -19,7 +20,7 @@ from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
-async def do_request(method: Callable) -> dict:
+async def _do_request(method: Callable) -> dict:
     async with method as res:
         try:
             if res.status == 200:
@@ -57,6 +58,13 @@ class EvccApiBridge:
         if not host.startswith(("http://", "https://")):
             host = f"http://{host}"
 
+        # getting the correct web socket URL...
+        if host.startswith("https://"):
+            self.web_socket_url = f"wss://{host[8:]}/ws"
+        else:
+            self.web_socket_url = f"ws://{host[7:]}/ws"
+        self.ws_connected = False
+
         self.host = host
         self.web_session = web_session
         self.lang_map = None
@@ -88,20 +96,80 @@ class EvccApiBridge:
         self._LAST_UPDATE_HOUR = -1
         self._data = {}
 
-    async def read_all(self) -> dict:
-        # 1 day = 24h * 60min * 60sec = 86400 sec
-        # 1 hour = 60min * 60sec = 3600 sec
-        # 5 min = 300 sec
-        if self._LAST_FULL_STATE_UPDATE_TS + 300 < time():
-            await self.read_all_data()
-        else:
-            new_data = await self.read_frequent_data()
-            if new_data is not None:
-                for key in STATES:
-                    if key in new_data:
-                        self._data[key] = new_data[key]
+    async def connect_ws(self):
+        try:
+            async with self.web_session.ws_connect(self.web_socket_url) as ws:
+                self.ws_connected = True
+                _LOGGER.info(f"connected to websocket: {self.web_socket_url}")
+                async for msg in ws:
+                    if msg.type == aiohttp.WSMsgType.TEXT:
+                        try:
+                            ws_data = msg.json()
+                            for key, value in ws_data.items():
+                                if "." in key:
+                                    key_parts = key.split(".")
+                                    if len(key_parts) > 2:
+                                        idx = int(key_parts[1])
+                                        if key_parts[0] in self._data and len(self._data[key_parts[0]]) > idx:
+                                            if key_parts[2] in self._data[key_parts[0]][idx]:
+                                                self._data[key_parts[0]][idx][key_parts[2]] = value
+                                            else:
+                                                self._data[key_parts[0]][idx][key_parts[2]] = value
+                                                _LOGGER.debug(f"adding '{key_parts[2]}' to {key_parts[0]}[{idx}]")
+                                        else:
+                                            _LOGGER.info(f"unhandledB {key} - ignoring: {value}")
+                                        # if key_parts[0] == "loadpoints":
+                                        #     pass
+                                        # elif key_parts[0] == "vehicles":
+                                        #     pass
+                                    else:
+                                        _LOGGER.info(f"unhandledC {key} - ignoring: {value}")
+                                else:
+                                    if key in self._data:
+                                        self._data[key] = value
+                                    else:
+                                        if key != "releaseNotes":
+                                            _LOGGER.info(f"'{key}' is missing in self._data - so ignoring: {value}")
+
+                                #_LOGGER.debug(f"key: {key} value: {value}")
+
+                        except Exception as e:
+                            _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
+                    elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+                        _LOGGER.debug(f"received: {msg}")
+                        break
                     else:
-                        _LOGGER.info(f"missing '{key}' in response {new_data}")
+                        _LOGGER.error(f"xxx: {msg}")
+        except ClientConnectorError as con:
+            _LOGGER.error(f"Could not connect to websocket: {con}")
+        except BaseException as x:
+            _LOGGER.error(f"!!!: {x}")
+
+        self.ws_connected = False
+
+    def tarrifs_need_update(self) -> bool:
+        if self.request_tariff_endpoints and self._LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
+            return True
+        else:
+            return False
+
+    async def read_all(self) -> dict:
+        if len(self._data) == 0 or not self.ws_connected or self.tarrifs_need_update():
+            # 1 day = 24h * 60min * 60sec = 86400 sec
+            # 1 hour = 60min * 60sec = 3600 sec
+            # 5 min = 300 sec
+            if self._LAST_FULL_STATE_UPDATE_TS + 300 < time():
+                await self.read_all_data()
+            else:
+                new_data = await self.read_frequent_data()
+                if new_data is not None:
+                    for key in STATES:
+                        if key in new_data:
+                            self._data[key] = new_data[key]
+                        else:
+                            _LOGGER.info(f"missing '{key}' in response {new_data}")
+        else:
+            _LOGGER.debug("skip request - since we use the websocket feed")
 
         return self._data
 
@@ -109,7 +177,7 @@ class EvccApiBridge:
         _LOGGER.info(f"going to read all data from evcc@{self.host}")
         req = f"{self.host}/api/state"
         _LOGGER.debug(f"GET request: {req}")
-        json_resp = await do_request(method = self.web_session.get(url=req, ssl=False))
+        json_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
         if len(json_resp) is not None:
             self._LAST_FULL_STATE_UPDATE_TS = time()
 
@@ -135,7 +203,7 @@ class EvccApiBridge:
         _LOGGER.info(f"going to read only frequent_data from evcc@{self.host}")
         req = f"{self.host}/api/state{STATE_QUERY}"
         _LOGGER.debug(f"GET request: {req}")
-        return await do_request(method = self.web_session.get(url=req, ssl=False))
+        return await _do_request(method = self.web_session.get(url=req, ssl=False))
 
     async def read_tariff_data(self, json_resp: dict) -> dict:
         #_LOGGER.info(f"going to request additional tariff data from evcc@{self.host}")
@@ -146,7 +214,7 @@ class EvccApiBridge:
             try:
                 req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{a_key}"
                 _LOGGER.debug(f"GET request: {req}")
-                tariff_resp = await do_request(method = self.web_session.get(url=req, ssl=False))
+                tariff_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
                 if "result" in tariff_resp:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF][a_key] = tariff_resp["result"]
             except Exception as err:
@@ -191,15 +259,15 @@ class EvccApiBridge:
             if write_key == Tag.DETECTVEHICLE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/vehicle"
                 _LOGGER.debug(f"PATCH request: {req}")
-                r_json = await do_request(method = self.web_session.patch(url=req, ssl=False))
+                r_json = await _do_request(method = self.web_session.patch(url=req, ssl=False))
             else:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
+                r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
         else:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -220,13 +288,13 @@ class EvccApiBridge:
             if write_key == Tag.VEHICLEPLANSDELETE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
+                r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
             else:
                 pass
         else:
             req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -277,11 +345,11 @@ class EvccApiBridge:
         if value is None:
             req = f"{self.host}/api/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
+            r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
         else:
             req = f"{self.host}/api/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -302,11 +370,11 @@ class EvccApiBridge:
         if value is None:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await do_request(method = self.web_session.delete(url=req, ssl=False))
+            r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
         else:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -324,7 +392,7 @@ class EvccApiBridge:
         _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
         req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
         _LOGGER.debug(f"POST request: {req}")
-        r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
+        r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
@@ -339,7 +407,7 @@ class EvccApiBridge:
             try:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
                 _LOGGER.debug(f"POST request: {req}")
-                r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
+                r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
                 if r_json is not None and len(r_json) > 0:
                     if "result" in r_json:
                         self._LAST_FULL_STATE_UPDATE_TS = 0
@@ -360,7 +428,7 @@ class EvccApiBridge:
                 if vehicle_id is not None:
                     req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
                     _LOGGER.debug(f"POST request: {req}")
-                    r_json = await do_request(method = self.web_session.post(url=req, ssl=False))
+                    r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
                     if r_json is not None and len(r_json) > 0:
                         if "result" in r_json:
                             self._LAST_FULL_STATE_UPDATE_TS = 0
