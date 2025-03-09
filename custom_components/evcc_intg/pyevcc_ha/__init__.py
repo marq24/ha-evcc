@@ -109,18 +109,29 @@ class EvccApiBridge:
                                 if "." in key:
                                     key_parts = key.split(".")
                                     if len(key_parts) > 2:
+                                        domain = key_parts[0]
                                         idx = int(key_parts[1])
-                                        if key_parts[0] in self._data and len(self._data[key_parts[0]]) > idx:
-                                            if key_parts[2] in self._data[key_parts[0]][idx]:
-                                                self._data[key_parts[0]][idx][key_parts[2]] = value
+                                        sub_key = key_parts[2]
+                                        if domain in self._data:
+                                            if len(self._data[domain]) > idx:
+                                                if sub_key in self._data[domain][idx]:
+                                                    self._data[domain][idx][sub_key] = value
+                                                else:
+                                                    self._data[domain][idx][sub_key] = value
+                                                    _LOGGER.debug(f"adding '{sub_key}' to {domain}[{idx}]")
                                             else:
-                                                self._data[key_parts[0]][idx][key_parts[2]] = value
-                                                _LOGGER.debug(f"adding '{key_parts[2]}' to {key_parts[0]}[{idx}]")
+                                                # we need to add a new entry to the list... - well
+                                                # if we get index 4 but length is only 2 we must add multiple
+                                                # empty entries to the list...
+                                                while(len(self._data[domain]) <= idx):
+                                                    self._data[domain].append({})
+                                                self._data[domain][idx] = {sub_key: value}
+                                                _LOGGER.debug(f"adding index {idx} to '{domain}' -> {self._data[domain][idx]}")
                                         else:
                                             _LOGGER.info(f"unhandledB {key} - ignoring: {value}")
-                                        # if key_parts[0] == "loadpoints":
+                                        # if domain == "loadpoints":
                                         #     pass
-                                        # elif key_parts[0] == "vehicles":
+                                        # elif domain == "vehicles":
                                         #     pass
                                     else:
                                         _LOGGER.info(f"unhandledC {key} - ignoring: {value}")
