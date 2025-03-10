@@ -48,7 +48,6 @@ from .service import EvccService
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 SCAN_INTERVAL = timedelta(seconds=10)
-WS_SCAN_INTERVAL: Final = timedelta(seconds=1)
 WEBSOCKET_WATCHDOG_INTERVAL: Final = timedelta(seconds=60)
 
 CONFIG_SCHEMA = config_val.removed(DOMAIN, raise_if_present=False)
@@ -64,16 +63,27 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         _LOGGER.info(STARTUP_MESSAGE)
         hass.data.setdefault(DOMAIN, {"manifest_version": value})
 
-
     coordinator = EvccDataUpdateCoordinator(hass, config_entry)
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
     else:
-        await coordinator.read_evcc_config_on_startup(hass)
+        pass
+        # ok we could initially connect to the evcc...
 
+    # If Home Assistant is already in a running state, start the watchdog
+    # immediately, else trigger it after Home Assistant has finished starting.
+    if(coordinator.use_ws):
+        if hass.state is CoreState.running:
+            await coordinator.start_watchdog()
+        else:
+            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
+
+    # now we can initialize our coordinator with the data already read...
+    await coordinator.read_evcc_config_on_startup(hass)
+
+    # then we can start the entity registrations...
     hass.data[DOMAIN][config_entry.entry_id] = coordinator
-
     await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
     if config_entry.state != ConfigEntryState.LOADED:
@@ -89,15 +99,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # Do we need to patch something?!
     # if coordinator.check_for_max_of_16a:
     #     asyncio.create_task(coordinator.check_for_16a_limit(hass, config_entry.entry_id))
-
-    # If Home Assistant is already in a running state, start the watchdog
-    # immediately, else trigger it after Home Assistant has finished starting.
-    use_ws = config_entry.options.get(CONF_USE_WS, config_entry.data.get(CONF_USE_WS, False))
-    if(use_ws):
-        if hass.state is CoreState.running:
-            await coordinator.start_watchdog()
-        else:
-            hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
 
     # ok we are done...
     return True
@@ -131,8 +132,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         _LOGGER.debug(f"starting evcc_intg for: {config_entry.options}\n{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
+        self.use_ws = config_entry.options.get(CONF_USE_WS, config_entry.data.get(CONF_USE_WS, False))
+
         self.bridge = EvccApiBridge(host=config_entry.options.get(CONF_HOST, config_entry.data.get(CONF_HOST)),
                                     web_session=async_get_clientsession(hass),
+                                    coordinator=self,
                                     lang=lang)
 
         global SCAN_INTERVAL
@@ -165,7 +169,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._grid_data_as_object = False
 
         self._watchdog = None
-        super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
+
+        # when we use the websocket we need to call the super constructor without update_interval...
+        if self.use_ws:
+            super().__init__(hass, _LOGGER, name=DOMAIN)
+        else:
+            super().__init__(hass, _LOGGER, name=DOMAIN, update_interval=SCAN_INTERVAL)
 
     # Callable[[Event], Any]
     def __call__(self, evt: Event) -> bool:
@@ -174,10 +183,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def start_watchdog(self, event=None):
         """Start websocket watchdog."""
-        await self._async_connect_websocket_if_disconnected()
+        await self._async_watchdog_check()
         self._watchdog = async_track_time_interval(
             self.hass,
-            self._async_connect_websocket_if_disconnected,
+            self._async_watchdog_check,
             WEBSOCKET_WATCHDOG_INTERVAL,
         )
 
@@ -185,13 +194,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if hasattr(self, "_watchdog") and self._watchdog is not None:
             self._watchdog()
 
-    async def _async_connect_websocket_if_disconnected(self, *_):
+    async def _async_watchdog_check(self, *_):
         """Reconnect the websocket if it fails."""
         if not self.bridge.ws_connected:
-            _LOGGER.info(f"check websocket: ws reconnect required")
+            _LOGGER.info(f"Watchdog: websocket connect required")
             self._config_entry.async_create_background_task(self.hass, self.bridge.connect_ws(), "ws_connection")
         else:
-            _LOGGER.debug(f"check websocket: is connected...")
+            if self.bridge.request_tariff_endpoints:
+                _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'tariffs' updates")
+                await self.bridge.ws_update_tariffs_if_required()
+            else:
+                _LOGGER.debug(f"Watchdog: websocket is connected")
 
     def clear_data(self):
         _LOGGER.debug(f"clear_data called...")
@@ -203,8 +216,13 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # b) vehicles
         # a) how many loadpoints
         # c) load point configuration (like 1/3 phase options)
+        if (len(self.bridge._data) == 0 or
+                Tag.VERSION.key not in self.bridge._data or
+                JSONKEY_LOADPOINTS not in self.bridge._data or
+                JSONKEY_VEHICLES not in self.bridge._data):
+            await self.bridge.read_all_data()
 
-        initdata = await self.bridge.read_all_data()
+        initdata = self.bridge._data
         if Tag.VERSION.key in initdata:
             self._version = initdata[Tag.VERSION.key]
         elif Tag.AVAILABLEVERSION.key in initdata:
@@ -283,7 +301,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         # enable the additional tariff endpoints...
         if _version_info is not None:
-            _LOGGER.debug(f"check for tariff endpoints... {_version_info} - {Version(_version_info) >= Version("0.200.0")} - {initdata[Tag.VERSION.key]}")
+            _LOGGER.debug(f"check for tariff endpoints... {_version_info}")
             if Version(_version_info) >= Version("0.200.0"):
                 request_tariff_keys = []
 
@@ -305,26 +323,23 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
                 if len(request_tariff_keys) > 0:
                     self.bridge.enable_tariff_endpoints(request_tariff_keys)
+                    # make sure, that the tariff data is up-to-date...
+                    await self.bridge.read_all_data(only_tariffs=True)
         # else:
         #     _LOGGER.debug(f"no version available... {initdata}")
         #     for a_key in initdata:
         #         _LOGGER.error(f"key: {a_key}")
 
         _LOGGER.debug(
-            f"read_evcc_config: Using WebSocket: {self.bridge.ws_connected} LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
+            f"read_evcc_config: Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
 
     async def _async_update_data(self) -> dict:
         """Update data via library."""
         try:
             if self.bridge.ws_connected:
-                # we can use a much higher update interval for our data...
-                if self.update_interval != WS_SCAN_INTERVAL:
-                    self.update_interval = WS_SCAN_INTERVAL
-
-                return await self.bridge.read_all()
+                _LOGGER.info("_async_update_data called (but websocket is active - no data will be requested!)")
+                return self.bridge._data
             else:
-                if self.update_interval != SCAN_INTERVAL:
-                    self.update_interval = SCAN_INTERVAL
                 _LOGGER.debug(f"_async_update_data called")
                 # if self.data is not None:
                 #    _LOGGER.debug(f"number of fields before query: {len(self.data)} ")
@@ -468,7 +483,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         result = await self.bridge.press_tag(tag, value, idx)
         _LOGGER.debug(f"press result: {result}")
 
-        if entity is not None:
+        if entity is not None and not self.bridge.ws_connected:
             entity.async_schedule_update_ha_state(force_refresh=True)
 
         return result
@@ -498,7 +513,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 _LOGGER.debug(f"{tag} no data update!")
                 pass
 
-        if entity is not None:
+        if entity is not None and not self.bridge.ws_connected:
             _LOGGER.debug(f"schedule update...")
             entity.async_schedule_update_ha_state(force_refresh=True)
 

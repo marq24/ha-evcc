@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from datetime import datetime, timezone
 from json import JSONDecodeError
@@ -15,7 +16,9 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     STATES,
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
 )
+
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -53,7 +56,7 @@ async def _do_request(method: Callable) -> dict:
 
 
 class EvccApiBridge:
-    def __init__(self, host: str, web_session, lang: str = "en") -> None:
+    def __init__(self, host: str, web_session, coordinator: DataUpdateCoordinator = None, lang: str = "en") -> None:
         # make sure we are compliant with old configurations (that does not include the schema in the host variable)
         if not host.startswith(("http://", "https://")):
             host = f"http://{host}"
@@ -64,6 +67,8 @@ class EvccApiBridge:
         else:
             self.web_socket_url = f"ws://{host[7:]}/ws"
         self.ws_connected = False
+        self.coordinator = coordinator
+        self._debounced_update_task = None
 
         self.host = host
         self.web_session = web_session
@@ -95,6 +100,21 @@ class EvccApiBridge:
         self._LAST_FULL_STATE_UPDATE_TS = 0
         self._LAST_UPDATE_HOUR = -1
         self._data = {}
+
+    def tariffs_need_update(self) -> bool:
+        if self.request_tariff_endpoints and self._LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
+            return True
+        else:
+            return False
+
+
+    async def ws_update_tariffs_if_required(self):
+        """if we are in websocket mode, then we must (at least once each hour) update the tariff-data - we call
+        this method in the watchdog to make sure that we have the latest data available!
+        """
+        if self.tariffs_need_update():
+            await self.read_all_data()
+
 
     async def connect_ws(self):
         try:
@@ -142,7 +162,11 @@ class EvccApiBridge:
                                         if key != "releaseNotes":
                                             _LOGGER.info(f"'{key}' is missing in self._data - so ignoring: {value}")
 
-                                #_LOGGER.debug(f"key: {key} value: {value}")
+                            #END of for loop
+                            #_LOGGER.debug(f"key: {key} value: {value}")
+                            if self._debounced_update_task is not None:
+                                self._debounced_update_task.cancel()
+                            self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
 
                         except Exception as e:
                             _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
@@ -158,42 +182,40 @@ class EvccApiBridge:
 
         self.ws_connected = False
 
-    def tarrifs_need_update(self) -> bool:
-        if self.request_tariff_endpoints and self._LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
-            return True
-        else:
-            return False
+    async def _debounce_coordinator_update(self):
+        await asyncio.sleep(0.3)
+        if self.coordinator is not None:
+            self.coordinator.async_set_updated_data(self._data)
 
     async def read_all(self) -> dict:
-        if len(self._data) == 0 or not self.ws_connected or self.tarrifs_need_update():
-            # 1 day = 24h * 60min * 60sec = 86400 sec
-            # 1 hour = 60min * 60sec = 3600 sec
-            # 5 min = 300 sec
-            if self._LAST_FULL_STATE_UPDATE_TS + 300 < time():
-                await self.read_all_data()
-            else:
-                new_data = await self.read_frequent_data()
-                if new_data is not None:
-                    for key in STATES:
-                        if key in new_data:
-                            self._data[key] = new_data[key]
-                        else:
-                            _LOGGER.info(f"missing '{key}' in response {new_data}")
+        # 1 day = 24h * 60min * 60sec = 86400 sec
+        # 1 hour = 60min * 60sec = 3600 sec
+        # 5 min = 300 sec
+        if self._LAST_FULL_STATE_UPDATE_TS + 300 < time():
+            await self.read_all_data()
         else:
-            _LOGGER.debug("skip request - since we use the websocket feed")
-
+            new_data = await self.read_frequent_data()
+            if new_data is not None:
+                for key in STATES:
+                    if key in new_data:
+                        self._data[key] = new_data[key]
+                    else:
+                        _LOGGER.info(f"missing '{key}' in response {new_data}")
         return self._data
 
-    async def read_all_data(self) -> dict:
-        _LOGGER.info(f"going to read all data from evcc@{self.host}")
-        req = f"{self.host}/api/state"
-        _LOGGER.debug(f"GET request: {req}")
-        json_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
-        if len(json_resp) is not None:
-            self._LAST_FULL_STATE_UPDATE_TS = time()
+    async def read_all_data(self, only_tariffs : bool = False) -> dict:
+        if not only_tariffs:
+            _LOGGER.info(f"going to read all data from evcc@{self.host}")
+            req = f"{self.host}/api/state"
+            _LOGGER.debug(f"GET request: {req}")
+            json_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
+            if len(json_resp) is not None:
+                self._LAST_FULL_STATE_UPDATE_TS = time()
 
-        if "result" in json_resp:
-            json_resp = json_resp["result"]
+            if "result" in json_resp:
+                json_resp = json_resp["result"]
+        else:
+            json_resp = self._data
 
         if self.request_tariff_endpoints:
             # we only update the tariff data once per hour...

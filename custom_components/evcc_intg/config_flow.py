@@ -75,7 +75,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     async def _test_host(self, host):
         try:
             session = async_create_clientsession(self.hass)
-            client = EvccApiBridge(host=host, web_session=session, lang=self.hass.config.language.lower())
+            client = EvccApiBridge(host=host, web_session=session, coordinator=None, lang=self.hass.config.language.lower())
 
             ret = await client.read_all_data()
             if ret is not None and len(ret) > 0:
