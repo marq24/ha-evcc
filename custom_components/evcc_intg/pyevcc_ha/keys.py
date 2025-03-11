@@ -48,6 +48,10 @@ class PV_CONTENT(Enum):
     ENERGY = "energy"
     POWER = "power"
 
+class FORECAST_CONTENT(Enum):
+    GRID = "grid"
+    SOLAR = "solar"
+
 class ApiKey(NamedTuple):
     key: str
     type: str
@@ -66,10 +70,16 @@ class ApiKey(NamedTuple):
 class Tag(ApiKey, Enum):
 
     def __hash__(self) -> int:
-        return hash(self.key)
+        if self.entity_key is not None:
+            return hash(f"{self.key}.{self.entity_key}")
+        else:
+            return hash(self.key)
 
     def __str__(self):
-        return self.key
+        if self.entity_key is not None:
+            return f"{self.key}.{self.entity_key}"
+        else:
+            return self.key
 
     ###################################
     # SITE STUFF
@@ -159,6 +169,9 @@ class Tag(ApiKey, Enum):
 
     # batteryGridChargeLimit: ??
     BATTERYGRIDCHARGELIMIT = ApiKey(key="batteryGridChargeLimit", type=EP_TYPE.SITE, write_key="batterygridchargelimit")
+
+    FORECAST_GRID = ApiKey(entity_key="forecast_grid", key="forecast", type=EP_TYPE.SITE)
+    FORECAST_SOLAR = ApiKey(entity_key="forecast_solar", key="forecast", type=EP_TYPE.SITE)
 
     ###################################
     # LOADPOINT-DATA

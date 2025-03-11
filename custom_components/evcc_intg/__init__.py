@@ -377,6 +377,16 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             elif tag.type == EP_TYPE.SITE:
                 if tag.key in self.data:
                     ret = self.data[tag.key]
+
+                    # checking for possible existing subtypes (so key is just a 'container' for the real value)
+                    # (elsewhere we solve this right now via entity_description.array_idx) -> we must check, if
+                    # this can't be also used here ?!
+                    #if tag.subtype is not None and isinstance(ret, dict):
+                    #    if tag.subtype in ret:
+                    #        ret = ret[tag.subtype]
+                    #    else:
+                    #        ret = None
+
             elif tag.type == EP_TYPE.STATISTICS:
                 ret = self.read_tag_statistics(tag=tag)
             elif tag.type == EP_TYPE.TARIFF:

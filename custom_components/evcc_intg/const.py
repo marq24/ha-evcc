@@ -1,7 +1,7 @@
 from dataclasses import dataclass
 from typing import Final
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
@@ -869,6 +869,30 @@ SENSOR_SENSORS = [
     ExtSensorEntityDescription(
         tag=Tag.TARIF_SOLAR,
         key=Tag.TARIF_SOLAR.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=None,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+
+    # the new forecast endpoints... [GRID & SOLAR]
+    ExtSensorEntityDescription(
+        tag=Tag.FORECAST_GRID,
+        key=Tag.FORECAST_GRID.entity_key,
+        array_idx=FORECAST_CONTENT.GRID.value,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@",
+        device_class=None,
+        suggested_display_precision=3,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.FORECAST_SOLAR,
+        key=Tag.FORECAST_SOLAR.entity_key,
+        array_idx=FORECAST_CONTENT.SOLAR.value,
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,

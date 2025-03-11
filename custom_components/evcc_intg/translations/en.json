@@ -358,8 +358,10 @@
       "stat30avgprice": {"name": "Statistics: Last 30 days Ø Price"},
       "stat30avgco2": {"name": "Statistics: Last 30 days Ø CO₂"},
 
-      "tariff_api_solar": {"name": "Solar Prognoses"},
-      "tariff_api_grid": {"name": "Grid Tariffs"},
+      "tariff_api_solar": {"name": "Solar Prognoses [Tariff-API]"},
+      "tariff_api_grid": {"name": "Grid Tariffs [Tariff-API]"},
+      "forecast_solar": {"name": "Solar Prognoses"},
+      "forecast_grid": {"name": "Grid Tariffs"},
 
       "pvaction": {"name": "PV Action [CODE]"},
       "pvaction_value": {"name": "PV Action"},

@@ -1,7 +1,7 @@
 import logging
 from datetime import datetime, timezone
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
@@ -83,7 +83,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
         super().__init__(coordinator=coordinator, description=description)
         self._previous_float_value: float | None = None
-        if self.tag.type == EP_TYPE.TARIFF:
+        if self.tag.type == EP_TYPE.TARIFF or self.tag == Tag.FORECAST_GRID or self.tag == Tag.FORECAST_SOLAR:
             self._last_calculated_hour = -1
             self._last_calculated_value = None
 
@@ -92,8 +92,46 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         """Return sensor attributes"""
         if self.tag.type == EP_TYPE.TARIFF:
             return self.coordinator.read_tag_tariff(self.tag)
-
+        elif self.tag == Tag.FORECAST_GRID or self.tag == Tag.FORECAST_SOLAR:
+            data = self.coordinator.read_tag(self.tag)
+            if self.tag == Tag.FORECAST_GRID and FORECAST_CONTENT.GRID.value in data:
+                return {"rates": data[FORECAST_CONTENT.GRID.value]}
+            elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
+                return data[FORECAST_CONTENT.SOLAR.value]
+            #if self.tag == Tag.FORCAST_SOLAR and "timeseries" in data:
+            #    data = data["timeseries"]
+            #_LOGGER.error(f"ATTR: {self.tag} - {data}")
+            #return data
         return None
+
+    def get_current_value_from_timeseries(self, data_list):
+        current_time = datetime.now(timezone.utc)
+        if self._last_calculated_hour != current_time.hour:
+            self._last_calculated_hour = current_time.hour
+            for a_entry in data_list:
+                if "start" in a_entry and "end" in a_entry:
+                    start_dt = datetime.fromisoformat(a_entry["start"]).astimezone(timezone.utc)
+                    end_dt = datetime.fromisoformat(a_entry["end"]).astimezone(timezone.utc)
+                    if start_dt < current_time < end_dt:
+                        if "value" in a_entry:
+                            self._last_calculated_value = a_entry["value"]
+                            break
+                        elif "price" in a_entry:
+                            self._last_calculated_value = a_entry["price"]
+                            break
+                elif "ts" in a_entry:
+                    timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
+                    if timestamp_dt.day == current_time.day and timestamp_dt.hour == current_time.hour:
+                        if "val" in a_entry:
+                            self._last_calculated_value = a_entry["val"]
+                            break
+                        elif "value" in a_entry:
+                            self._last_calculated_value = a_entry["value"]
+                            break
+                        elif "price" in a_entry:
+                            self._last_calculated_value = a_entry["price"]
+
+        return self._last_calculated_value
 
     @property
     def native_value(self):
@@ -101,38 +139,39 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         if self.tag.type == EP_TYPE.TARIFF:
             attr_data = self.coordinator.read_tag_tariff(self.tag)
             if attr_data is not None and "rates" in attr_data:
-                rates = attr_data["rates"]
-                current_time = datetime.now(timezone.utc)
-                if self._last_calculated_hour != current_time.hour:
-                    self._last_calculated_hour = current_time.hour
-                    for a_rate in rates:
-                        start_dt = datetime.fromisoformat(a_rate["start"]).astimezone(timezone.utc)
-                        end_dt = datetime.fromisoformat(a_rate["end"]).astimezone(timezone.utc)
-                        if start_dt < current_time < end_dt:
-                            if "value" in a_rate:
-                                self._last_calculated_value = a_rate["value"]
-                                break
-                            elif "price" in a_rate:
-                                self._last_calculated_value = a_rate["price"]
-                                break
-
-                return self._last_calculated_value
-
+                data_list = attr_data["rates"]
+                return self.get_current_value_from_timeseries(data_list)
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
             if hasattr(self.entity_description, "tuple_idx") and self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
                 array_idx1 = self.entity_description.tuple_idx[0]
                 array_idx2 = self.entity_description.tuple_idx[1]
-                value = value[array_idx1][array_idx2]
+                if array_idx1 in value and array_idx2 in value[array_idx1]:
+                    value = value[array_idx1][array_idx2]
+                else:
+                    value = None
 
             elif hasattr(self.entity_description, "array_idx") and self.entity_description.array_idx is not None:
                 array_idx = self.entity_description.array_idx
-                value = value[array_idx]
+                if array_idx in value:
+                    value = value[array_idx]
+                else:
+                    value = None
 
             if isinstance(value, (dict, list)):
-                # if the value is a list (or dict), but could not be extracted (cause of none matching indices) we need
-                # to purge the value to None!
-                value = None
+                if self.tag == Tag.FORECAST_GRID:
+                    value = self.get_current_value_from_timeseries(value)
+                elif self.tag == Tag.FORECAST_SOLAR:
+                    if "timeseries" in value:
+                        value = self.get_current_value_from_timeseries(value["timeseries"])
+                    elif "today" in value and "energy" in value["today"]:
+                        value = value["today"]["energy"]
+                    else:
+                        value = None
+                else:
+                    # if the value is a list (or dict), but could not be extracted (cause of none matching indices) we need
+                    # to purge the value to None!
+                    value = None
 
             if value is None or len(str(value)) == 0:
                 value = None
