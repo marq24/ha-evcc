@@ -47,8 +47,8 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 
 [![Open your Home Assistant instance and adding repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=marq24&repository=ha-evcc&category=integration)
 
-1. Add a custom **integration** repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)<br/>**Let me repeat**: This is an **HACS _integration_**, not an **HASS-IO _AddOn_**, so you need to have HACS installed, and you need to add this as custom **integration repository** to HACS.
-2. Once the repository is added, use the search bar and type `evcc☀️🚘- Solar Charging`
+1. ~~Add a custom **integration** repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)<br/>**Let me repeat**: This is an **HACS _integration_**, not an **HASS-IO _AddOn_**, so you need to have HACS installed, and you need to add this as custom **integration repository** to HACS.~~
+2. ~~Once the repository is added,~~ use the search bar and type `evcc☀️🚘- Solar Charging`
 3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration - the latest release version is automatically selected. Only select a different version if you have specific reasons.
 4. After you presses download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
 5. Setup the evcc custom integration as described below (see _Step II: Adding or enabling the integration_)
@@ -133,7 +133,7 @@ Please consider [using my personal Tibber invitation link to join Tibber today](
 
 
 [hacs]: https://hacs.xyz
-[hacsbadge]: https://img.shields.io/badge/HACS-Custom-orange.svg?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=ccc
+[hacsbadge]: https://img.shields.io/badge/HACS-Default-blue?style=for-the-badge&logo=homeassistantcommunitystore&logoColor=ccc
 
 [ghs]: https://github.com/sponsors/marq24
 [ghsbadge]: https://img.shields.io/github/sponsors/marq24?style=for-the-badge&logo=github&logoColor=ccc&link=https%3A%2F%2Fgithub.com%2Fsponsors%2Fmarq24&label=Sponsors
