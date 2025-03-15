@@ -20,7 +20,7 @@ from homeassistant.const import (
 from homeassistant.util.frozen_dataclass_compat import FrozenOrThawed
 
 # Base component constants
-MANUFACTURER: Final = "marq24 [not connected with the evcc.io team]"
+MANUFACTURER: Final = "marq24"
 NAME: Final = "evcc☀️🚘- Solar Charging"
 DOMAIN: Final = "evcc_intg"
 ISSUE_URL: Final = "https://github.com/marq24/ha-evcc/issues"

@@ -25,7 +25,7 @@ from homeassistant.config_entries import ConfigEntry, ConfigEntryState
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import config_validation as config_val, entity_registry
+from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval
@@ -51,6 +51,8 @@ SCAN_INTERVAL = timedelta(seconds=10)
 WEBSOCKET_WATCHDOG_INTERVAL: Final = timedelta(seconds=60)
 
 CONFIG_SCHEMA = config_val.removed(DOMAIN, raise_if_present=False)
+
+DEVICE_REG_CLEANUP_RUNNING = False
 
 async def async_setup(hass: HomeAssistant, config: dict):  # pylint: disable=unused-argument
     """Set up this integration using YAML is not supported."""
@@ -100,6 +102,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # if coordinator.check_for_max_of_16a:
     #     asyncio.create_task(coordinator.check_for_16a_limit(hass, config_entry.entry_id))
 
+    # yes - hurray! we can now cleanup the device registry...
+    asyncio.create_task(check_device_registry(hass))
+
     # ok we are done...
     return True
 
@@ -127,9 +132,39 @@ async def async_reload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         await async_setup_entry(hass, config_entry)
 
 
+@staticmethod
+async def check_device_registry(hass: HomeAssistant):
+    global DEVICE_REG_CLEANUP_RUNNING
+    if not DEVICE_REG_CLEANUP_RUNNING:
+        DEVICE_REG_CLEANUP_RUNNING = True
+        completed = False
+        _LOGGER.debug(f"check device registry for outdated {DOMAIN} devices...")
+        if hass is not None:
+            a_device_reg = device_reg.async_get(hass)
+            if a_device_reg is not None:
+                key_list = []
+                for a_device_entry in list(a_device_reg.devices.values()):
+                    if hasattr(a_device_entry, "identifiers"):
+                        ident_value = a_device_entry.identifiers
+                        if f"{ident_value}".__contains__(DOMAIN):
+                            if hasattr(a_device_entry, "manufacturer"):
+                                manufacturer_value = a_device_entry.manufacturer
+                                if not f"{manufacturer_value}".__eq__(MANUFACTURER):
+                                    _LOGGER.info(f"found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
+                                    key_list.append(a_device_entry.id)
+
+                if len(key_list) > 0:
+                    _LOGGER.info(f"NEED TO DELETE old {DOMAIN} DeviceEntries: {key_list}")
+                    for a_device_entry_id in key_list:
+                        a_device_reg.async_remove_device(device_id=a_device_entry_id)
+
+                completed = True
+
+        DEVICE_REG_CLEANUP_RUNNING = completed
+
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, config_entry):
-        _LOGGER.debug(f"starting evcc_intg for: {config_entry.options}\n{config_entry.data}")
+        _LOGGER.debug(f"starting evcc_intg for: options: {config_entry.options}\n data:{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
         self.use_ws = config_entry.options.get(CONF_USE_WS, config_entry.data.get(CONF_USE_WS, False))
@@ -156,7 +191,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             self.lang_map = TRANSLATIONS["en"]
 
-        # config_entry only need for providing the '_device_info_dict'...
+        # config_entry required to be able to launch watchdog in config_entry context
         self._config_entry = config_entry
 
         # attribute creation
@@ -228,13 +263,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         elif Tag.AVAILABLEVERSION.key in initdata:
             self._version = initdata[Tag.AVAILABLEVERSION.key]
 
+        # something I just learned - the 'identifiers' is a LIST of keys which are used to identify one device...
+        # e.g. if the identifiers contains just the 'domain', then all instance (config_entries) will be shown
+        # together in the device registry... [which just sucks!]
+        # Please note, that the identifiers object must be a (...)
+        unique_device_id = slugify(f"did_{self._config_entry.options.get(CONF_HOST, self._config_entry.data.get(CONF_HOST))}")
         self._device_info_dict = {
-            "identifiers": {
-                ("DOMAIN", DOMAIN),
-                ("IP", self._config_entry.options.get(CONF_HOST, self._config_entry.data.get(CONF_HOST))),
-            },
+            "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
-            "name": NAME,
+            "name": f"{NAME} [{self._system_id}]",
             "sw_version": self._version
         }
 
@@ -575,6 +612,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     @property
     def grid_data_as_object(self) -> bool:
         return self._grid_data_as_object
+
 
 class EvccBaseEntity(Entity):
     _attr_should_poll = False

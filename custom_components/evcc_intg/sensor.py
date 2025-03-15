@@ -105,33 +105,35 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         return None
 
     def get_current_value_from_timeseries(self, data_list):
-        current_time = datetime.now(timezone.utc)
-        if self._last_calculated_hour != current_time.hour:
-            self._last_calculated_hour = current_time.hour
-            for a_entry in data_list:
-                if "start" in a_entry and "end" in a_entry:
-                    start_dt = datetime.fromisoformat(a_entry["start"]).astimezone(timezone.utc)
-                    end_dt = datetime.fromisoformat(a_entry["end"]).astimezone(timezone.utc)
-                    if start_dt < current_time < end_dt:
-                        if "value" in a_entry:
-                            self._last_calculated_value = a_entry["value"]
-                            break
-                        elif "price" in a_entry:
-                            self._last_calculated_value = a_entry["price"]
-                            break
-                elif "ts" in a_entry:
-                    timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
-                    if timestamp_dt.day == current_time.day and timestamp_dt.hour == current_time.hour:
-                        if "val" in a_entry:
-                            self._last_calculated_value = a_entry["val"]
-                            break
-                        elif "value" in a_entry:
-                            self._last_calculated_value = a_entry["value"]
-                            break
-                        elif "price" in a_entry:
-                            self._last_calculated_value = a_entry["price"]
+        if data_list is not None:
+            current_time = datetime.now(timezone.utc)
+            if self._last_calculated_hour != current_time.hour:
+                self._last_calculated_hour = current_time.hour
+                for a_entry in data_list:
+                    if "start" in a_entry and "end" in a_entry:
+                        start_dt = datetime.fromisoformat(a_entry["start"]).astimezone(timezone.utc)
+                        end_dt = datetime.fromisoformat(a_entry["end"]).astimezone(timezone.utc)
+                        if start_dt < current_time < end_dt:
+                            if "value" in a_entry:
+                                self._last_calculated_value = a_entry["value"]
+                                break
+                            elif "price" in a_entry:
+                                self._last_calculated_value = a_entry["price"]
+                                break
+                    elif "ts" in a_entry:
+                        timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
+                        if timestamp_dt.day == current_time.day and timestamp_dt.hour == current_time.hour:
+                            if "val" in a_entry:
+                                self._last_calculated_value = a_entry["val"]
+                                break
+                            elif "value" in a_entry:
+                                self._last_calculated_value = a_entry["value"]
+                                break
+                            elif "price" in a_entry:
+                                self._last_calculated_value = a_entry["price"]
 
-        return self._last_calculated_value
+            return self._last_calculated_value
+        return None
 
     @property
     def native_value(self):
@@ -140,7 +142,13 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             attr_data = self.coordinator.read_tag_tariff(self.tag)
             if attr_data is not None and "rates" in attr_data:
                 data_list = attr_data["rates"]
-                return self.get_current_value_from_timeseries(data_list)
+                if data_list is not None:
+                    return self.get_current_value_from_timeseries(data_list)
+                else:
+                    return None
+            else:
+                _LOGGER.debug(f"no tariff data found for {self.tag}")
+                return None
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
             if hasattr(self.entity_description, "tuple_idx") and self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
