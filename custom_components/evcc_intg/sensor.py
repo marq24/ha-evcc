@@ -94,10 +94,11 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             return self.coordinator.read_tag_tariff(self.tag)
         elif self.tag == Tag.FORECAST_GRID or self.tag == Tag.FORECAST_SOLAR:
             data = self.coordinator.read_tag(self.tag)
-            if self.tag == Tag.FORECAST_GRID and FORECAST_CONTENT.GRID.value in data:
-                return {"rates": data[FORECAST_CONTENT.GRID.value]}
-            elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
-                return data[FORECAST_CONTENT.SOLAR.value]
+            if data is not None:
+                if self.tag == Tag.FORECAST_GRID and FORECAST_CONTENT.GRID.value in data:
+                    return {"rates": data[FORECAST_CONTENT.GRID.value]}
+                elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
+                    return data[FORECAST_CONTENT.SOLAR.value]
             #if self.tag == Tag.FORCAST_SOLAR and "timeseries" in data:
             #    data = data["timeseries"]
             #_LOGGER.error(f"ATTR: {self.tag} - {data}")

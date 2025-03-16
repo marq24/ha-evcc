@@ -248,6 +248,8 @@ class Tag(ApiKey, Enum):
     PHASESENABLED = ApiKey(key="phasesEnabled", type=EP_TYPE.LOADPOINTS)
 
     # "planOverrun": 0,
+    PLANOVERRUN = ApiKey(key="planOverrun", type=EP_TYPE.LOADPOINTS)
+    
     # "priority": 0,
 
     # "pvAction": "inactive", "activ", "disable"
