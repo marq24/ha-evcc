@@ -31,7 +31,7 @@ body:
           required: true
         - label: I confirm it's really an issue | In the case that you want to understand the functionality of a certain feature/sensor Please be so kind and make use if the discussion feature of this repo (and do not create an issue) - TIA
         - label: |
-            I confirm, that I did not read any of the previous bulletin-points and just checked them all. | I don't wanted to waste my time with details, I don't read or follow any existing instructions. | Instead, I want that the maintainers of this repro will spend time explaining the world to me - that's their job!. | I live by the motto: Better to ask than to think about it once. | It's the maintainers' own fault that they provide open-source software and are willing to offer free support.
+            I confirm, that I did not read any of the previous bulletin-points and just checked them all. | I don't wanted to waste my time with details, I don't read or follow any existing instructions. | Instead, I want that the maintainers of this repo will spend time explaining the world to me - that's their job!. | I live by the motto: Better to ask than to think about it once. | It's the maintainers' own fault that they provide open-source software and are willing to offer free support.
   - type: textarea
     id: content
     attributes:
