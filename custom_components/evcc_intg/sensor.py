@@ -154,16 +154,18 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             if hasattr(self.entity_description, "tuple_idx") and self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
                 array_idx1 = self.entity_description.tuple_idx[0]
                 array_idx2 = self.entity_description.tuple_idx[1]
-                if array_idx1 in value and array_idx2 in value[array_idx1]:
+                try:
                     value = value[array_idx1][array_idx2]
-                else:
+                except (IndexError, KeyError):
+                    _LOGGER.debug(f"index {array_idx1} or {array_idx2} not found in {value}")
                     value = None
 
             elif hasattr(self.entity_description, "array_idx") and self.entity_description.array_idx is not None:
                 array_idx = self.entity_description.array_idx
-                if array_idx in value:
+                try:
                     value = value[array_idx]
-                else:
+                except (IndexError, KeyError):
+                    _LOGGER.debug(f"index {array_idx} not found in {value}")
                     value = None
 
             if isinstance(value, (dict, list)):
