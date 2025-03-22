@@ -5,9 +5,9 @@
         "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
           "host": "Your local EVCC-Server URL (including the port)",
+          "use_websocket": "Use Websocket - The Polling Interval will be ignored",
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
-          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
-          "use_websocket": "Use Websocket (experimental) - Polling Interval will be ignored"
+          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
         }
       }
     },
@@ -21,9 +21,9 @@
         "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
           "host": "Your local EVCC-Server (including the port)",
+          "use_websocket": "Use Websocket - The Polling Interval will be ignored",
           "scan_interval": "Polling Interval in seconds",
-          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
-          "use_websocket": "Use Websocket (experimental) - Polling Interval will be ignored"
+          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
         }
       }
     }

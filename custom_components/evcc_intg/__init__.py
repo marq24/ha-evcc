@@ -167,7 +167,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         _LOGGER.debug(f"starting evcc_intg for: options: {config_entry.options}\n data:{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
-        self.use_ws = config_entry.options.get(CONF_USE_WS, config_entry.data.get(CONF_USE_WS, False))
+        self.use_ws = config_entry.options.get(CONF_USE_WS, config_entry.data.get(CONF_USE_WS, True))
 
         self.bridge = EvccApiBridge(host=config_entry.options.get(CONF_HOST, config_entry.data.get(CONF_HOST)),
                                     web_session=async_get_clientsession(hass),

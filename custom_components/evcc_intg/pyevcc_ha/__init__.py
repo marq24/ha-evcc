@@ -16,7 +16,6 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     STATES,
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
 )
-
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -160,7 +159,8 @@ class EvccApiBridge:
                                         self._data[key] = value
                                     else:
                                         if key != "releaseNotes":
-                                            _LOGGER.info(f"'{key}' is missing in self._data - so ignoring: {value}")
+                                            self._data[key] = value
+                                            _LOGGER.info(f"'added {key}' to self._data and assign: {value}")
 
                             #END of for loop
                             #_LOGGER.debug(f"key: {key} value: {value}")
@@ -174,11 +174,11 @@ class EvccApiBridge:
                         _LOGGER.debug(f"received: {msg}")
                         break
                     else:
-                        _LOGGER.error(f"xxx: {msg}")
+                        _LOGGER.info(f"Other Websocket Message: {msg}")
         except ClientConnectorError as con:
             _LOGGER.error(f"Could not connect to websocket: {con}")
         except BaseException as x:
-            _LOGGER.error(f"!!!: {x}")
+            _LOGGER.error(f"BaseException@websocket: {x}")
 
         self.ws_connected = False
 
