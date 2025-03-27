@@ -50,7 +50,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 user_input[CONF_SCAN_INTERVAL] = max(5, user_input[CONF_SCAN_INTERVAL])
                 return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
             else:
-                self._errors["base"] = "auth"
+                self._errors[CONF_HOST] = "auth"
         else:
             user_input = {}
             user_input[CONF_NAME] = "evcc"
@@ -117,19 +117,65 @@ class EvccOptionsFlowHandler(config_entries.OptionsFlow):
 
     async def async_step_user(self, user_input=None):
         """Handle a flow initialized by the user."""
+        self._errors = {}
         if user_input is not None:
-            user_input[CONF_SCAN_INTERVAL] = max(5, user_input[CONF_SCAN_INTERVAL])
-            self.options.update(user_input)
-            return await self._update_options()
+            # check if host has changed...
+            if user_input[CONF_HOST] != self.options.get(CONF_HOST):
+                if not user_input[CONF_HOST].startswith(("http://", "https://")):
+                    if ":" in user_input[CONF_HOST]:
+                        # we have NO schema but a colon, so assume http
+                        user_input[CONF_HOST] = "http://" + user_input[CONF_HOST]
+                    else:
+                        # https otherwise
+                        user_input[CONF_HOST] = "https://" + user_input[CONF_HOST]
+
+                while user_input[CONF_HOST].endswith(("/", " ")):
+                    user_input[CONF_HOST] = user_input[CONF_HOST][:-1]
+
+                valid = await self._test_host(host=user_input[CONF_HOST])
+            else:
+                # remove host from the user_input (since it did not change)
+                user_input.pop(CONF_HOST)
+                valid = True
+
+            if valid:
+                user_input[CONF_SCAN_INTERVAL] = max(5, user_input[CONF_SCAN_INTERVAL])
+
+                self.options.update(user_input)
+                return await self._update_options()
+            else:
+                self._errors[CONF_HOST] = "auth"
+        else:
+            user_input = {}
+            user_input[CONF_HOST] = self.options.get(CONF_HOST, "http://your-evcc-ip:7070")
+            user_input[CONF_SCAN_INTERVAL] = self.options.get(CONF_SCAN_INTERVAL, 15)
+            user_input[CONF_USE_WS] = self.options.get(CONF_USE_WS, True)
+            user_input[CONF_INCLUDE_EVCC] = self.options.get(CONF_INCLUDE_EVCC, False)
 
         return self.async_show_form(
             step_id="user",
             data_schema=vol.Schema({
-                vol.Required(CONF_USE_WS, default=self.options.get(CONF_USE_WS)): bool,
-                vol.Required(CONF_SCAN_INTERVAL, default=self.options.get(CONF_SCAN_INTERVAL, 15)): int,
-                vol.Required(CONF_INCLUDE_EVCC, default=self.options.get(CONF_INCLUDE_EVCC)): bool,
-            })
+                vol.Required(CONF_HOST, default=user_input.get(CONF_HOST)): str,
+                vol.Required(CONF_USE_WS, default=user_input.get(CONF_USE_WS)): bool,
+                vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
+                vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
+            }),
+            errors=self._errors
         )
+
+    async def _test_host(self, host):
+        try:
+            session = async_create_clientsession(self.hass)
+            client = EvccApiBridge(host=host, web_session=session, coordinator=None, lang=self.hass.config.language.lower())
+
+            ret = await client.read_all_data()
+            if ret is not None and len(ret) > 0:
+                _LOGGER.info(f"successfully validated host -> result: {ret}")
+                return True
+
+        except Exception as exc:
+            _LOGGER.error(f"Exception while test credentials: {exc}")
+        return False
 
     async def _update_options(self):
         return self.async_create_entry(title=self._title, data=self.options)

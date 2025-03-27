@@ -123,6 +123,11 @@ class EvccApiBridge:
                 async for msg in ws:
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         try:
+                            if self._data is None or len(self._data) == 0:
+                                self._LAST_FULL_STATE_UPDATE_TS = 0
+                                self._LAST_UPDATE_HOUR = -1
+                                await self.read_all()
+
                             ws_data = msg.json()
                             for key, value in ws_data.items():
                                 if "." in key:
@@ -147,13 +152,13 @@ class EvccApiBridge:
                                                 self._data[domain][idx] = {sub_key: value}
                                                 _LOGGER.debug(f"adding index {idx} to '{domain}' -> {self._data[domain][idx]}")
                                         else:
-                                            _LOGGER.info(f"unhandledB {key} - ignoring: {value}")
+                                            _LOGGER.info(f"unhandled [{domain} not in data] {key} - ignoring: {value} data: {self._data}")
                                         # if domain == "loadpoints":
                                         #     pass
                                         # elif domain == "vehicles":
                                         #     pass
                                     else:
-                                        _LOGGER.info(f"unhandledC {key} - ignoring: {value}")
+                                        _LOGGER.info(f"unhandled [not parsable key] {key} - ignoring: {value}")
                                 else:
                                     if key in self._data:
                                         self._data[key] = value

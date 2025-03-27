@@ -22,10 +22,13 @@
         "data": {
           "host": "Deine lokale EVCC-Server Addresse (einschließlich des Ports)",
           "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
-          "scan_interval": "Aktualisierungsintervall in Sekunden",
+          "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
           "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
         }
       }
+    },
+    "error": {
+      "auth": "Unter dieser URL konnte keine EVCC-Server erreicht werden."
     }
   },
   "services": {

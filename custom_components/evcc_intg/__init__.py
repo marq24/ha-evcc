@@ -267,7 +267,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # e.g. if the identifiers contains just the 'domain', then all instance (config_entries) will be shown
         # together in the device registry... [which just sucks!]
         # Please note, that the identifiers object must be a (...)
-        unique_device_id = slugify(f"did_{self._config_entry.options.get(CONF_HOST, self._config_entry.data.get(CONF_HOST))}")
+        # for the 'unique_device_id' we will use the initial specified HOST/IP (if it will be later overwritten with
+        # a changed host, we're going still use the initial one)
+        unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}")
         self._device_info_dict = {
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,

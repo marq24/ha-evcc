@@ -22,10 +22,13 @@
         "data": {
           "host": "Your local EVCC-Server (including the port)",
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",
-          "scan_interval": "Polling Interval in seconds",
+          "scan_interval": "Polling Interval in seconds [min: 5sec]",
           "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
         }
       }
+    },
+    "error": {
+      "auth": "URL is wrong - could not reach EVCC-Server"
     }
   },
   "services": {
