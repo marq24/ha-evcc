@@ -55,6 +55,7 @@ class FORECAST_CONTENT(Enum):
 class ApiKey(NamedTuple):
     key: str
     type: str
+    key_alias: str = None
     subtype: str = None
     entity_key: str = None
     write_key: str = None
@@ -178,7 +179,9 @@ class Tag(ApiKey, Enum):
     ###################################
 
     # "chargeCurrent": 0,
-    CHARGECURRENT = ApiKey(key="chargeCurrent", type=EP_TYPE.LOADPOINTS)
+    # key_alias is a new property of a tag, that allows to specify a second json key
+    # -> that is useful, when an attribute will be renamed in the source API
+    CHARGECURRENT = ApiKey(key="chargeCurrent", key_alias="offeredCurrent", type=EP_TYPE.LOADPOINTS)
 
     # "chargeCurrents": [0, 0, 0],
     CHARGECURRENTS = ApiKey(key="chargeCurrents", type=EP_TYPE.LOADPOINTS)

@@ -425,7 +425,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     #        ret = ret[tag.subtype]
                     #    else:
                     #        ret = None
-
+                elif tag.key_alias is not None and tag.key_alias in self.data:
+                    ret = self.data[tag.key_alias]
             elif tag.type == EP_TYPE.STATISTICS:
                 ret = self.read_tag_statistics(tag=tag)
             elif tag.type == EP_TYPE.TARIFF:
@@ -437,21 +438,30 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self.data:
             if tag.key in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key]
+            elif tag.key_alias is not None and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
+                return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key_alias]
 
     def read_tag_statistics(self, tag: Tag):
         if JSONKEY_STATISTICS in self.data:
             if tag.subtype in self.data[JSONKEY_STATISTICS]:
                 if tag.key in self.data[JSONKEY_STATISTICS][tag.subtype]:
                     return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key]
+                elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_STATISTICS]:
+                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key_alias]
 
     def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
         if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
             # if tag == Tag.CHARGECURRENTS:
             #    _LOGGER.error(f"valA? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]}")
             #    _LOGGER.error(f"valB? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]}")
+
+            value = None
             if tag.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
                 value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]
+            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key_alias]
 
+            if value is not None:
                 if tag == Tag.PLANTIME or tag == Tag.EFFECTIVEPLANTIME:
                     value = self._convert_time(value)
 
@@ -519,6 +529,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             if tag.key in self.data[JSONKEY_VEHICLES][vehicle_id]:
                 return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key]
+            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]:
+                return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key_alias]
             else:
                 return "0"
 
