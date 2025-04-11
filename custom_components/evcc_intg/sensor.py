@@ -48,12 +48,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         for a_stub in SENSOR_SENSORS_PER_LOADPOINT:
             # well - a hack to show any heating related loadpoints with temperature units...
             force_celsius = lp_is_heating  and (
-                             a_stub.Tag == Tag.EFFECTIVEPLANSOC or
-                             a_stub.Tag == Tag.EFFECTIVELIMITSOC or
-                             a_stub.Tag == Tag.VEHICLESOC or
-                             a_stub.Tag == Tag.VEHICLEMINSOC or
-                             a_stub.Tag == Tag.VEHICLELIMITSOC or
-                             a_stub.Tag == Tag.VEHICLEPLANSSOC)
+                             a_stub.tag == Tag.EFFECTIVEPLANSOC or
+                             a_stub.tag == Tag.EFFECTIVELIMITSOC or
+                             a_stub.tag == Tag.VEHICLESOC or
+                             a_stub.tag == Tag.VEHICLEMINSOC or
+                             a_stub.tag == Tag.VEHICLELIMITSOC or
+                             a_stub.tag == Tag.VEHICLEPLANSSOC)
 
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
