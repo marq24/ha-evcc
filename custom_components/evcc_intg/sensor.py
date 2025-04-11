@@ -47,6 +47,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in SENSOR_SENSORS_PER_LOADPOINT:
             # well - a hack to show any heating related loadpoints with temperature units...
+            # note: this will not change the label (that still show 'SOC')
             force_celsius = lp_is_heating  and (
                              a_stub.tag == Tag.EFFECTIVEPLANSOC or
                              a_stub.tag == Tag.EFFECTIVELIMITSOC or
@@ -69,7 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
                 # the entity type specific values...
                 state_class=a_stub.state_class,
-                native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
                 suggested_display_precision=a_stub.suggested_display_precision,
                 array_idx=a_stub.array_idx,
                 tuple_idx=a_stub.tuple_idx,
