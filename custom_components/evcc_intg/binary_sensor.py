@@ -1,14 +1,13 @@
 import logging
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, BINARY_SENSORS, BINARY_SENSORS_PER_LOADPOINT, ExtBinarySensorEntityDescription
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -28,6 +27,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_id_addon = load_point_config["id"]
         lp_name_addon = load_point_config["name"]
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
+        lp_is_heating = load_point_config["is_heating"]
 
         for a_stub in BINARY_SENSORS_PER_LOADPOINT:
             description = ExtBinarySensorEntityDescription(

@@ -297,13 +297,19 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 phase_switching_supported = a_loadpoint["chargerPhases1p3p"]
             elif "chargerPhaseSwitching" in a_loadpoint:
                 phase_switching_supported = a_loadpoint["chargerPhaseSwitching"]
-            else:
-                phase_switching_supported = False
+
+            # we need to check if the charger is a heater or not...
+            # effective_limit_soc, vehicle_soc, effective_plan_soc and others
+            # currently only used in sensor.py
+            is_heating = False
+            if "chargerFeatureHeating" in a_loadpoint:
+                is_heating = a_loadpoint["chargerFeatureHeating"]
 
             self._loadpoint[f"{api_index}"] = {
                 "name": a_loadpoint["title"],
                 "id": slugify(a_loadpoint["title"]),
                 "has_phase_auto_option": phase_switching_supported,
+                "is_heating": is_heating,
                 "vehicle_key": a_loadpoint["vehicleName"],
                 "obj": a_loadpoint
             }

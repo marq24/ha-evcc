@@ -2,8 +2,9 @@ import logging
 from datetime import datetime, timezone
 
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
-from homeassistant.components.sensor import SensorEntity
+from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
@@ -42,8 +43,18 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_id_addon = load_point_config["id"]
         lp_name_addon = load_point_config["name"]
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
+        lp_is_heating = load_point_config["is_heating"]
 
         for a_stub in SENSOR_SENSORS_PER_LOADPOINT:
+            # well - a hack to show any heating related loadpoints with temperature units...
+            force_celsius = lp_is_heating  and (
+                             a_stub.Tag == Tag.EFFECTIVEPLANSOC or
+                             a_stub.Tag == Tag.EFFECTIVELIMITSOC or
+                             a_stub.Tag == Tag.VEHICLESOC or
+                             a_stub.Tag == Tag.VEHICLEMINSOC or
+                             a_stub.Tag == Tag.VEHICLELIMITSOC or
+                             a_stub.Tag == Tag.VEHICLEPLANSSOC)
+
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
                 idx=lp_api_index,
@@ -51,8 +62,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
                 name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
-                device_class=a_stub.device_class,
-                unit_of_measurement=a_stub.unit_of_measurement,
+                device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
+                unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
                 entity_category=a_stub.entity_category,
                 entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 

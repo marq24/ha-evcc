@@ -4,7 +4,6 @@ from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, BUTTONS, BUTTONS_PER_LOADPOINT, ExtButtonEntityDescription
 
@@ -26,6 +25,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_id_addon = load_point_config["id"]
         lp_name_addon = load_point_config["name"]
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
+        lp_is_heating = load_point_config["is_heating"]
 
         for a_stub in BUTTONS_PER_LOADPOINT:
             description = ExtButtonEntityDescription(
