@@ -100,11 +100,108 @@ Please see the separate document where you can find examples [how to provide you
 
 Do you know, that as owners of a go-eCharger (V3+) there is no need to use evcc for solar surplus charging? Even without any additional hardware! Home Assistant and the __go-eCharger APIv2 Connect__ Integration is all you need. Get all details from [https://github.com/marq24/ha-goecharger-api2](https://github.com/marq24/ha-goecharger-api2).
 
+
+
+## Accessing your vehicle SOC & Range when the vehicle is not connected to a loadpoint
+
+By default, evcc and this integration focus on vehicles connected to a loadpoint, this implies that data like SOC or range are _only available when the vehicle is actually connected_.
+
+Nevertheless, evcc provides this data in the configuration section (no matter of the connection state). If you want to access your vehicle SOC and range, when the vehicle is not connected to a loadpoint, you can do this by adding a command_line sensor to your Home Assistant configuration.yaml file.
+
+> [!IMPORTANT]
+> You need to know the technical `vehicle_id`. Depending on from your configuration this is either the value you have specified in the `evcc.yaml` file or it had been automatically generated.
+>
+> In any case you can request: `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle` and check the value of the `name` attribute to get your `vehicle_id`.
+
+> [!NOTE]
+> You must authorize your request(s) with the evcc password.
+> 
+
+### Command-Line in your HA configuration.yaml
+
+requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_ID]/status` will return a json like this one here
+
+```json
+{
+  "result": {
+    "capacity": {
+      "value": 84.68,
+      "error": ""
+    },
+    "chargeStatus": {
+      "value": "B",
+      "error": ""
+    },
+    "range": {
+      "value": 167,
+      "error": ""
+    },
+    "soc": {
+      "value": 39.5,
+      "error": ""
+    }
+  }
+}
+```
+
+Check if you have already a `command_line` section in your `configuration.yaml` file - if there is none - create one on as top level entry like this (the line '  - sensor: ...' must (obviously) be replaced with the complete sections shown further below):
+
+```yaml
+command_line:
+  - sensor: ...
+```
+
+Add in the `command_line` section of your `configuration.yaml` file the following content: sections with `[CHANGE_ME:xxx]` have to be modified to your requirements. E.g. assuming your assuming `vehicle_id` is __ford_mach_e__, then you have to replace `[CHANGE_ME:YourVehicleId]` with just `ford_mach_e`
+
+```yaml
+  - sensor:
+      name: '[CHANGE_ME:Your Vehicle SOC & Range]'
+      unique_id: [CHANGE_ME:evcc_vehicle_soc_and_range]
+      command: |-
+        data='{"password":"[CHANGE_ME:YourEVCCPassword]"}'; ip='http://[CHANGE_ME:YourEVCCServerIP]:7070';\
+        c=$(curl -H 'Content-Type: application/json' -d $data -ksc - $ip/api/auth/login -o /dev/null);\
+        echo "${c}" | curl -ksb - $ip/api/config/devices/vehicle/[CHANGE_ME:YourVehicleId]/status
+      json_attributes_path: '$.result.range'
+      json_attributes:
+        - value
+      value_template: '{{ value_json.result.soc.value | float }}'
+      unit_of_measurement: '%'
+      # the scan_interval will be specified in seconds...
+      # for update every 5min use 300 (60sec * 5min = 300sec)
+      # for update every 15min use 900 (60sec * 15min = 900sec)
+      # for update every 1h use 3600 (60sec * 60min = 3600sec)
+      # for update every 24h use 86400 (60sec * 60min * 24h = 86400sec)
+      scan_interval: 900
+```
+
+Here is a complete example assuming:
+- that your `vehicle_id` is: __ford_mach_e__
+- the IP of your evcc server is: __192.168.2.213__
+- the EVCC password is: __myEvCCPwd__
+and you want to capture the __soc__ as main entity information and the `range` as additional attribute of the entity that will be requested every 5 minutes:
+
+```yaml
+  - sensor:
+      name: 'My Ford Mach-E SOC & Range'
+      unique_id: evcc_mach_e_soc_and_range
+      command: |-
+        data='{"password":"myEvCCPwd"}'; ip='http://192.168.2.213:7070';\
+        c=$(curl -H 'Content-Type: application/json' -d $data -ksc - $ip/api/auth/login -o /dev/null);\
+        echo "${c}" | curl -ksb - $ip/api/config/devices/vehicle/ford_mach_e/status
+      json_attributes_path: '$.result.range'
+      json_attributes:
+        - value
+      value_template: '{{ value_json.result.soc.value | float }}'
+      unit_of_measurement: '%'
+      scan_interval: 300
+```
+
+
 ## Want to report an issue?
 
 Please use the [GitHub Issues](https://github.com/marq24/ha-evcc/issues) for reporting any issues you encounter with this integration. Please be so kind before creating a new issues, check the closed ones, if your problem have been already reported (& solved).
 
-In order to speed up the support process you might like already prepare and provide DEBUG log output. In the case of a technical issue, I would need this DEBUG log output to be able to help/fix the issue. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md) - please take the time to quickly go through it.
+To speed up the support process you might like already prepare and provide DEBUG log output. In the case of a technical issue, I would need this DEBUG log output to be able to help/fix the issue. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md) - please take the time to quickly go through it.
 
 For this integration you need to add:
 ```
