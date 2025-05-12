@@ -369,7 +369,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if len(request_tariff_keys) > 0:
                     self.bridge.enable_tariff_endpoints(request_tariff_keys)
                     # make sure, that the tariff data is up-to-date...
-                    await self.bridge.read_all_data(only_tariffs=True)
+                    await self.bridge.read_all_data(request_only_tariffs=True)
         # else:
         #     _LOGGER.debug(f"no version available... {initdata}")
         #     for a_key in initdata:
@@ -382,7 +382,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         """Update data via library."""
         try:
             if self.bridge.ws_connected:
-                _LOGGER.info("_async_update_data called (but websocket is active - no data will be requested!)")
+                _LOGGER.debug("_async_update_data called (but websocket is active - no data will be requested!)")
                 return self.bridge._data
             else:
                 _LOGGER.debug(f"_async_update_data called")
@@ -392,7 +392,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 # _LOGGER.debug(f"number of fields after query: {len(result)}")
                 # return result
 
-                result = await self.bridge.read_all()
+                result = await self.bridge.read_all_data()
                 if result is not None:
                     _LOGGER.debug(f"number of fields after query: {len(result)}")
 

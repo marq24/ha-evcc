@@ -2,7 +2,6 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 from json import JSONDecodeError
-from time import time
 from typing import Callable
 
 import aiohttp
@@ -11,9 +10,7 @@ from aiohttp import ClientResponseError, ClientConnectorError
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
     JSONKEY_LOADPOINTS,
-    STATE_QUERY,
     JSONKEY_VEHICLES,
-    STATES,
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
@@ -77,7 +74,6 @@ class EvccApiBridge:
         else:
             self.lang_map = TRANSLATIONS["en"]
 
-        self._LAST_FULL_STATE_UPDATE_TS = 0
         self._LAST_UPDATE_HOUR = -1
         self._data = {}
 
@@ -86,7 +82,6 @@ class EvccApiBridge:
         self.request_tariff_keys = []
 
     def enable_tariff_endpoints(self, keys: list):
-        self._LAST_FULL_STATE_UPDATE_TS = 0
         self._LAST_UPDATE_HOUR = -1
         self.request_tariff_endpoints = True
         self.request_tariff_keys = keys
@@ -96,7 +91,6 @@ class EvccApiBridge:
         return len(self._data)
 
     def clear_data(self):
-        self._LAST_FULL_STATE_UPDATE_TS = 0
         self._LAST_UPDATE_HOUR = -1
         self._data = {}
 
@@ -106,14 +100,12 @@ class EvccApiBridge:
         else:
             return False
 
-
     async def ws_update_tariffs_if_required(self):
         """if we are in websocket mode, then we must (at least once each hour) update the tariff-data - we call
         this method in the watchdog to make sure that we have the latest data available!
         """
         if self.tariffs_need_update():
-            await self.read_all_data()
-
+            await self.read_all_data(request_only_tariffs=True)
 
     async def connect_ws(self):
         try:
@@ -124,10 +116,13 @@ class EvccApiBridge:
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         try:
                             if self._data is None or len(self._data) == 0:
-                                self._LAST_FULL_STATE_UPDATE_TS = 0
                                 self._LAST_UPDATE_HOUR = -1
-                                await self.read_all()
+                                await self.read_all_data(request_only_tariffs=False)
+                        except:
+                            _LOGGER.info(f"could not read initial data from evcc@{self.host} - ignoring")
+                            self._data = {}
 
+                        try:
                             ws_data = msg.json()
                             for key, value in ws_data.items():
                                 if "." in key:
@@ -192,37 +187,21 @@ class EvccApiBridge:
         if self.coordinator is not None:
             self.coordinator.async_set_updated_data(self._data)
 
-    async def read_all(self) -> dict:
-        # 1 day = 24h * 60min * 60sec = 86400 sec
-        # 1 hour = 60min * 60sec = 3600 sec
-        # 5 min = 300 sec
-        if self._LAST_FULL_STATE_UPDATE_TS + 300 < time():
-            await self.read_all_data()
+    async def read_all_data(self, request_only_tariffs : bool = False) -> dict:
+        if request_only_tariffs:
+            if self._data is None:
+                self._data = {}
+            json_resp = self._data
         else:
-            new_data = await self.read_frequent_data()
-            if new_data is not None:
-                for key in STATES:
-                    if key in new_data:
-                        self._data[key] = new_data[key]
-                    else:
-                        _LOGGER.info(f"missing '{key}' in response {new_data}")
-        return self._data
-
-    async def read_all_data(self, only_tariffs : bool = False) -> dict:
-        if not only_tariffs:
-            _LOGGER.info(f"going to read all data from evcc@{self.host}")
+            _LOGGER.debug(f"going to read all data from evcc@{self.host}")
             req = f"{self.host}/api/state"
             _LOGGER.debug(f"GET request: {req}")
             json_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
-            if len(json_resp) is not None:
-                self._LAST_FULL_STATE_UPDATE_TS = time()
-
-            if "result" in json_resp:
+            if json_resp is not None and "result" in json_resp:
                 json_resp = json_resp["result"]
-        else:
-            json_resp = self._data
 
         if self.request_tariff_endpoints:
+            _LOGGER.debug(f"going to request tariff data from evcc@{self.host}")
             # we only update the tariff data once per hour...
             current_hour = datetime.now(timezone.utc).hour
             if self._LAST_UPDATE_HOUR != current_hour:
@@ -235,13 +214,6 @@ class EvccApiBridge:
 
         self._data = json_resp
         return json_resp
-
-    async def read_frequent_data(self) -> dict:
-        # make sure that idx is really an int...
-        _LOGGER.info(f"going to read only frequent_data from evcc@{self.host}")
-        req = f"{self.host}/api/state{STATE_QUERY}"
-        _LOGGER.debug(f"GET request: {req}")
-        return await _do_request(method = self.web_session.get(url=req, ssl=False))
 
     async def read_tariff_data(self, json_resp: dict) -> dict:
         #_LOGGER.info(f"going to request additional tariff data from evcc@{self.host}")
@@ -309,7 +281,6 @@ class EvccApiBridge:
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
-                self._LAST_FULL_STATE_UPDATE_TS = 0
                 return r_json["result"]
             else:
                 return {"err": r_json}
@@ -336,7 +307,6 @@ class EvccApiBridge:
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
-                self._LAST_FULL_STATE_UPDATE_TS = 0
                 ret = r_json["result"]
                 if len(ret) == 0:
                     ret[write_key] = "OK"
@@ -391,7 +361,6 @@ class EvccApiBridge:
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
-                self._LAST_FULL_STATE_UPDATE_TS = 0
                 return r_json["result"]
             else:
                 return {"err": r_json}
@@ -416,7 +385,6 @@ class EvccApiBridge:
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
-                self._LAST_FULL_STATE_UPDATE_TS = 0
                 return r_json["result"]
             else:
                 return {"err": r_json}
@@ -434,7 +402,6 @@ class EvccApiBridge:
 
         if r_json is not None and len(r_json) > 0:
             if "result" in r_json:
-                self._LAST_FULL_STATE_UPDATE_TS = 0
                 return r_json["result"]
             else:
                 return {"err": r_json}
@@ -448,7 +415,6 @@ class EvccApiBridge:
                 r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
                 if r_json is not None and len(r_json) > 0:
                     if "result" in r_json:
-                        self._LAST_FULL_STATE_UPDATE_TS = 0
                         return r_json["result"]
                     else:
                         return {"err": r_json}
@@ -469,7 +435,6 @@ class EvccApiBridge:
                     r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
                     if r_json is not None and len(r_json) > 0:
                         if "result" in r_json:
-                            self._LAST_FULL_STATE_UPDATE_TS = 0
                             return r_json["result"]
                         else:
                             return {"err": r_json}

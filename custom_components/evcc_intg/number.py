@@ -2,7 +2,9 @@ import logging
 
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.number import NumberEntity
+from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
@@ -30,8 +32,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_api_index = int(a_lp_key)
         lp_id_addon = load_point_config["id"]
         lp_name_addon = load_point_config["name"]
+        lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
+        lp_is_heating = load_point_config["is_heating"]
 
         for a_stub in NUMBER_SENSORS_PER_LOADPOINT:
+            force_celsius = lp_is_heating  and a_stub.tag == Tag.LIMITSOC
+
             description = ExtNumberEntityDescription(
                 tag=a_stub.tag,
                 idx=lp_api_index,
@@ -39,8 +45,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 translation_key=a_stub.tag.key,
                 name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
-                device_class=a_stub.device_class,
-                unit_of_measurement=a_stub.unit_of_measurement,
+                device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
+                unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
                 entity_category=a_stub.entity_category,
                 entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
@@ -51,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 native_max_value=a_stub.native_max_value,
                 native_min_value=a_stub.native_min_value,
                 native_step=a_stub.native_step,
-                native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
                 step=a_stub.step,
             )
 
