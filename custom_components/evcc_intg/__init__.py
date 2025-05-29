@@ -34,6 +34,7 @@ from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, Upda
 from homeassistant.util import slugify
 from .const import (
     NAME,
+    NAME_SHORT,
     DOMAIN,
     MANUFACTURER,
     PLATFORMS,
@@ -247,7 +248,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self.data.clear()
 
     async def read_evcc_config_on_startup(self, hass: HomeAssistant):
-        # we will fetch th config from evcc:
+        # we will fetch the config from evcc:
         # b) vehicles
         # a) how many loadpoints
         # c) load point configuration (like 1/3 phase options)
@@ -263,11 +264,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         elif Tag.AVAILABLEVERSION.key in initdata:
             self._version = initdata[Tag.AVAILABLEVERSION.key]
 
-        # something I just learned - the 'identifiers' is a LIST of keys which are used to identify one device...
-        # e.g. if the identifiers contains just the 'domain', then all instance (config_entries) will be shown
+        # Something I just learned - the 'identifiers' is a LIST of keys which are used to identify one device...
+        # E.g., if the identifiers contain just the 'domain', then all instances (config_entries) will be shown
         # together in the device registry... [which just sucks!]
         # Please note, that the identifiers object must be a (...)
-        # for the 'unique_device_id' we will use the initial specified HOST/IP (if it will be later overwritten with
+        # for the 'unique_device_id' we will use the initial specified HOST/IP (if it is later overwritten with
         # a changed host, we're going still use the initial one)
         unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}")
         self._device_info_dict = {
@@ -629,6 +630,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def device_info_dict(self) -> dict:
         return self._device_info_dict
 
+    def device_info_dict_for_loadpoint(self, addon:str) -> dict:
+        # check also 'read_evcc_config_on_startup' where we create the default device_info_dict
+        unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}_{addon}")
+        a_device_info_dict = {
+            "identifiers": {(DOMAIN, unique_device_id)},
+            "manufacturer": MANUFACTURER,
+            "name": f"{NAME_SHORT} - Loadpoint {addon} [{self._system_id}]",
+            "sw_version": self._version
+        }
+        return a_device_info_dict
+
     @property
     def grid_data_as_object(self) -> bool:
         return self._grid_data_as_object
@@ -683,7 +695,10 @@ class EvccBaseEntity(Entity):
 
     @property
     def device_info(self) -> dict:
-        return self.coordinator.device_info_dict
+        if self._attr_name_addon is not None:
+            return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
+        else:
+            return self.coordinator.device_info_dict
 
     @property
     def available(self):
