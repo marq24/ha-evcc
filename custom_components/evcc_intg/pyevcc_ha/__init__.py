@@ -175,10 +175,12 @@ class EvccApiBridge:
                         break
                     else:
                         _LOGGER.info(f"Other Websocket Message: {msg}")
+        except asyncio.exceptions.CancelledError as cancel:
+            _LOGGER.info(f"CancelledError@websocket cause by: {cancel}")
         except ClientConnectorError as con:
             _LOGGER.error(f"Could not connect to websocket: {con}")
-        except BaseException as x:
-            _LOGGER.error(f"BaseException@websocket: {x}")
+        except BaseException as ex:
+            _LOGGER.error(f"BaseException@websocket: {type(ex)} {ex}")
 
         self.ws_connected = False
 

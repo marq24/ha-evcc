@@ -15,14 +15,19 @@ entities_min_max_dict = {}
 SOCS_TAG_LIST = [Tag.PRIORITYSOC, Tag.BUFFERSOC, Tag.BUFFERSTARTSOC]
 
 async def check_min_max():
-    await asyncio.sleep(15)
-    size = len(entities_min_max_dict)
-    count = 1
-    for a_entity in entities_min_max_dict.values():
-        a_entity.check_tag(size == count)
-        count += 1
+    _LOGGER.debug("SELECT scheduled min_max check")
+    try:
+        await asyncio.sleep(15)
+        if entities_min_max_dict is not None:
+            size = len(entities_min_max_dict)
+            count = 1
+            for a_entity in entities_min_max_dict.values():
+                a_entity.check_tag(size == count)
+                count += 1
 
-    _LOGGER.debug("SELECT init is COMPLETED")
+            _LOGGER.debug("SELECT init is COMPLETED")
+    except BaseException as err:
+        _LOGGER.warning(f"SELECT Error in check_min_max: {type(err)} {err}")
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_entity_cb: AddEntitiesCallback):
@@ -100,15 +105,21 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
         await super().add_to_platform_finish()
 
     def check_tag(self, is_last: bool = False):
-        if self.tag == Tag.MAXCURRENT:
-            self._check_min_options(self.current_option)
-        elif self.tag == Tag.MINCURRENT:
-            self._check_max_options(self.current_option)
-        elif self.tag in SOCS_TAG_LIST:
-            self._check_socs(self.current_option)
+        try:
+            if self.tag == Tag.MAXCURRENT:
+                self._check_min_options(self.current_option)
+            elif self.tag == Tag.MINCURRENT:
+                self._check_max_options(self.current_option)
+            elif self.tag in SOCS_TAG_LIST:
+                self._check_socs(self.current_option)
 
-        if is_last:
-            self.async_schedule_update_ha_state(force_refresh=True)
+            if is_last:
+                if self.hass is not None:
+                    self.async_schedule_update_ha_state(force_refresh=True)
+                else:
+                    _LOGGER.info("SELECT Skipping async_schedule_update_ha_state, since hass object is None?!")
+        except BaseException as err:
+            _LOGGER.debug(f"SELECT Error in check_tag for '{self.tag}' {self.entity_id} {type(err)} {err}")
 
     def _check_min_options(self, new_max_option: str):
         try:
@@ -120,8 +131,8 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 else:
                     entities_min_max_dict[min_key].options = MIN_CURRENT_LIST
 
-        except Exception as err:
-            _LOGGER.debug(f"Error _check_min_options for '{new_max_option}' {self.entity_id} {self.tag} {err}")
+        except BaseException as err:
+            _LOGGER.debug(f"SELECT Error _check_min_options for '{new_max_option}' {self.entity_id} {self.tag} {err}")
 
     def _check_max_options(self, new_min_option: str):
         try:
@@ -133,8 +144,8 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 else:
                     entities_min_max_dict[max_key].options = MAX_CURRENT_LIST
 
-        except Exception as err:
-            _LOGGER.debug(f"Error _check_max_options for '{new_min_option}' {self.entity_id} {self.tag} {err}")
+        except BaseException as err:
+            _LOGGER.debug(f"SELECT Error _check_max_options for '{new_min_option}' {self.entity_id} {self.tag} {err}")
 
     def _check_socs(self, option: str):
         try:
@@ -184,8 +195,8 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                     else:
                         select.options = Tag.BUFFERSOC.options
 
-        except Exception as err:
-            _LOGGER.debug(f"Error _check_socs for '{option}' {self.entity_id} {self.tag} {err}")
+        except BaseException as err:
+            _LOGGER.debug(f"SELECT Error _check_socs for '{option}' {self.entity_id} {self.tag} {err}")
 
     # def _on_vehicle_change(self, sel_vehicle_id: str):
     #     if JSONKEY_VEHICLES in self.coordinator.data and sel_vehicle_id in self.coordinator.data[JSONKEY_VEHICLES]:
@@ -212,10 +223,10 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 value = str(value)
 
         except KeyError as kerr:
-            _LOGGER.debug(f"KeyError: '{self.tag}' '{self.idx}' {kerr}")
+            _LOGGER.debug(f"SELECT KeyError: '{self.tag}' '{self.idx}' {kerr}")
             value = "unknown"
         except TypeError as terr:
-            _LOGGER.debug(f"TypeError: '{self.tag}' '{self.idx}' {terr}")
+            _LOGGER.debug(f"SELECT TypeError: '{self.tag}' '{self.idx}' {terr}")
             value = None
         return value
 
