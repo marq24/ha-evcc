@@ -195,7 +195,8 @@ and you want to capture the __soc__ as main entity information and the `range` a
       unit_of_measurement: '%'
       scan_interval: 300
 ```
-
+### Don't want to store your evcc password in the ha configuration.yaml?
+[@BDBAfH was so kind to post an alternative example here](https://github.com/marq24/ha-evcc/discussions/137), showing the way how to store and use the evcc password from a separate file.
 
 ## Want to report an issue?
 
