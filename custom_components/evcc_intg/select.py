@@ -218,7 +218,11 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             # _LOGGER.error(f"{self.tag.key} {self.idx} {value}")
 
             if value is None or value == "":
-                value = 'unknown'
+                # we must patch an empty vehicle_id to 'null' to avoid the select option being set to 'unknown'
+                if self.tag.key == Tag.VEHICLENAME.key:
+                    value = "null"
+                else:
+                    value = 'unknown'
             if isinstance(value, (int, float)):
                 value = str(value)
 
