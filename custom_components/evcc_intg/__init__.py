@@ -278,43 +278,49 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "sw_version": self._version
         }
 
-        for a_veh_name in initdata[JSONKEY_VEHICLES]:
-            a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
-            if "capacity" in a_veh:
-                self._vehicle[a_veh_name] = {
-                    "name": a_veh["title"],
-                    "capacity": a_veh["capacity"]
-                }
-            else:
-                self._vehicle[a_veh_name] = {
-                    "name": a_veh["title"],
-                    "capacity": None
-                }
+        if JSONKEY_VEHICLES in initdata:
+            for a_veh_name in initdata[JSONKEY_VEHICLES]:
+                a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
+                if "capacity" in a_veh:
+                    self._vehicle[a_veh_name] = {
+                        "name": a_veh["title"],
+                        "capacity": a_veh["capacity"]
+                    }
+                else:
+                    self._vehicle[a_veh_name] = {
+                        "name": a_veh["title"],
+                        "capacity": None
+                    }
+        else:
+            _LOGGER.warning(f"NO vehicles found [{JSONKEY_VEHICLES}] in the evcc data: {initdata}")
 
         api_index = 1
-        for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
-            phase_switching_supported = False
-            if "chargerPhases1p3p" in a_loadpoint:
-                phase_switching_supported = a_loadpoint["chargerPhases1p3p"]
-            elif "chargerPhaseSwitching" in a_loadpoint:
-                phase_switching_supported = a_loadpoint["chargerPhaseSwitching"]
+        if JSONKEY_LOADPOINTS in initdata:
+            for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
+                phase_switching_supported = False
+                if "chargerPhases1p3p" in a_loadpoint:
+                    phase_switching_supported = a_loadpoint["chargerPhases1p3p"]
+                elif "chargerPhaseSwitching" in a_loadpoint:
+                    phase_switching_supported = a_loadpoint["chargerPhaseSwitching"]
 
-            # we need to check if the charger is a heater or not...
-            # effective_limit_soc, vehicle_soc, effective_plan_soc and others
-            # currently only used in sensor.py
-            is_heating = False
-            if "chargerFeatureHeating" in a_loadpoint:
-                is_heating = a_loadpoint["chargerFeatureHeating"]
+                # we need to check if the charger is a heater or not...
+                # effective_limit_soc, vehicle_soc, effective_plan_soc and others
+                # currently only used in sensor.py
+                is_heating = False
+                if "chargerFeatureHeating" in a_loadpoint:
+                    is_heating = a_loadpoint["chargerFeatureHeating"]
 
-            self._loadpoint[f"{api_index}"] = {
-                "name": a_loadpoint["title"],
-                "id": slugify(a_loadpoint["title"]),
-                "has_phase_auto_option": phase_switching_supported,
-                "is_heating": is_heating,
-                "vehicle_key": a_loadpoint["vehicleName"],
-                "obj": a_loadpoint
-            }
-            api_index += 1
+                self._loadpoint[f"{api_index}"] = {
+                    "name": a_loadpoint["title"],
+                    "id": slugify(a_loadpoint["title"]),
+                    "has_phase_auto_option": phase_switching_supported,
+                    "is_heating": is_heating,
+                    "vehicle_key": a_loadpoint["vehicleName"],
+                    "obj": a_loadpoint
+                }
+                api_index += 1
+        else:
+            _LOGGER.warning(f"NO loadpoints found [{JSONKEY_LOADPOINTS}] in the evcc data: {initdata}")
 
         if "smartCostType" in initdata:
             self._cost_type = initdata["smartCostType"]
