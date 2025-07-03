@@ -10,11 +10,12 @@ __Please note__, _that this Home Assistant integration is not official and not s
 
 ## Disclaimer
 
-Please be aware, that we are developing this integration to best of our knowledge and belief, but cant give a guarantee. Therefore, use this integration **at your own risk**.
+Please be aware that we are developing this integration to the best of our knowledge and belief, but can't give a guarantee. Therefore, use this integration **at your own risk**.
 
 ## Requirements
 
 - A running & configured evcc instance in your network
+- A Home Assistant instance that can reach your evcc instance
 
 ## Main features
 
@@ -31,15 +32,19 @@ Please be aware, that we are developing this integration to best of our knowledg
 
 ### Example Dashboard
 
-Just take a look at this sample Dashboard (showing Sensors from one load point):
+Take a look at this sample Dashboard (showing Sensors from one load point):
 
 ![sampledashboard](https://github.com/marq24/ha-evcc/raw/main/sample-dashboard.png)
 
 ## Installation
 
-### Before you start - there is a 'tiny' requirement!
+### Before you start — there are two 'tiny' requirements!
 
-**You must have installed & configured an evcc instance in your network.** This can be either a stand-alone installation (e.g via Docker) or as a HASS-IO-AddOn. This __AddOn__ is available via the [official evcc hassio-addon repository](https://github.com/evcc-io/hassio-addon).
+1.  **You must have installed & configured an evcc instance in your network.** This can be either a stand-alone installation (e.g via Docker) or as a HASS-IO-AddOn. This __AddOn__ is available via the [official evcc hassio-addon repository](https://github.com/evcc-io/hassio-addon).
+2.  You **must know the URL** from which your HA-Instance can reach your evcc instance.
+    - This is usually the IP address of your evcc server and the port on which the evcc server is running (default is `7070`).
+    - If you are using a reverse proxy, you need to know the URL that your HA instance can use to reach your evcc instance.
+    - When you are using docker (or docker-compose), you must ensure that the containers can communicate with each other. This means that the network and the port must be configured & exposed correctly. It's not enough that you can reach your evcc instance via a browser — your HA container must be also able to reach it!
 
 ### Step I: Install the integration
 
@@ -49,15 +54,15 @@ Just take a look at this sample Dashboard (showing Sensors from one load point):
 
 1. ~~Add a custom **integration** repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)<br/>**Let me repeat**: This is an **HACS _integration_**, not an **HASS-IO _AddOn_**, so you need to have HACS installed, and you need to add this as custom **integration repository** to HACS.~~
 2. ~~Once the repository is added,~~ use the search bar and type `evcc☀️🚘- Solar Charging`
-3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration - the latest release version is automatically selected. Only select a different version if you have specific reasons.
-4. After you presses download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
+3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration — the latest release version is automatically selected. Only select a different version if you have specific reasons.
+4. After you press download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
 5. Setup the evcc custom integration as described below (see _Step II: Adding or enabling the integration_)
 
   <!--1. In HACS Store, search for [***marq24/ha-evcc***]-->
 
 #### Option 2: manual steps
 
-1. Using the tool of choice open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
+1. Using the tool of choice, open the directory (folder) for your HA configuration (where you find `configuration.yaml`).
 2. If you do not have a `custom_components` directory (folder) there, you need to create it.
 3. In the `custom_components` directory (folder) create a new folder called `evcc_intg`.
 4. Download _all_ the files from the `custom_components/evcc_intg/` directory (folder) in this repository.
@@ -76,7 +81,7 @@ Just click the following Button to start the configuration automatically (for th
 [![Open your Home Assistant instance and start setting up a new integration.](https://my.home-assistant.io/badges/config_flow_start.svg)](https://my.home-assistant.io/redirect/config_flow_start/?domain=evcc_intg)
 
 
-#### Option 2: Manually steps by step
+#### Option 2: Manually — step by step
 
 Use the following steps for a manual configuration by adding the custom integration using the web interface and follow instruction on screen:
 
@@ -85,12 +90,12 @@ Use the following steps for a manual configuration by adding the custom integrat
 #### Common further steps 
 
 - Provide a unique name for the integration installation (will be used in each sensor entity_id) created by the integration
-- Provide the URL of your __evcc web server__ (including the port) - e.g. `http://your-evcc-server-ip:7070`
+- Provide the URL of your __evcc web server__ (including the port) — e.g. `http://your-evcc-server-ip:7070`
 - [optional] Provide the area where the evcc installation is located
 
-After the integration was added you can use the 'config' button to adjust your settings, you can additionally modify the update interval
+After the integration was added, you can use the 'config' button to adjust your settings, you can additionally modify the update interval
 
-Please note, that some of the available sensors are __not__ enabled by default.
+Please note that some of the available sensors are __not__ enabled by default.
 
 ## Use evcc with your Home Assistant sensor data
 
@@ -119,7 +124,7 @@ Nevertheless, evcc provides this data in the configuration section (no matter of
 
 ### Command-Line in your HA configuration.yaml
 
-requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_ID]/status` will return a json like this one here
+requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_ID]/status` will return a JSON like this one here
 
 ```json
 {
@@ -151,7 +156,7 @@ command_line:
   - sensor: ...
 ```
 
-Add in the `command_line` section of your `configuration.yaml` file the following content: sections with `[CHANGE_ME:xxx]` have to be modified to your requirements. E.g. assuming your assuming `vehicle_id` is __ford_mach_e__, then you have to replace `[CHANGE_ME:YourVehicleId]` with just `ford_mach_e`
+Add in the `command_line` section of your `configuration.yaml` file the following content: sections with `[CHANGE_ME:xxx]` have to be modified to your requirements. E.g., assuming your assuming `vehicle_id` is __ford_mach_e__, then you have to replace `[CHANGE_ME:YourVehicleId]` with just `ford_mach_e`
 
 ```yaml
   - sensor:
@@ -200,11 +205,11 @@ and you want to capture the __soc__ as main entity information and the `range` a
 
 ## Want to report an issue?
 
-Please use the [GitHub Issues](https://github.com/marq24/ha-evcc/issues) for reporting any issues you encounter with this integration. Please be so kind before creating a new issues, check the closed ones, if your problem have been already reported (& solved).
+Please use the [GitHub Issues](https://github.com/marq24/ha-evcc/issues) for reporting any issues you encounter with this integration. Please be so kind before creating a new issues, check the closed ones if your problem has been already reported (& solved).
 
-To speed up the support process you might like already prepare and provide DEBUG log output. In the case of a technical issue, I would need this DEBUG log output to be able to help/fix the issue. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md) - please take the time to quickly go through it.
+To speed up the support process, you might like to already prepare and provide DEBUG log output. In the case of a technical issue, I would need this DEBUG log output to be able to help/fix the issue. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md) — please take the time to quickly go through it.
 
-For this integration you need to add:
+For this integration, you need to add:
 ```
 logger:
   default: warning
@@ -218,7 +223,7 @@ logger:
 
 ### Switch to Tibber!
 
-Be smart switch to Tibber - that's what I did in october 2023. If you want to join Tibber (become a customer), you might want to use my personal invitation link. When you use this link, Tibber will we grant you and me a bonus of 50,-€ for each of us. This bonus then can be used in the Tibber store (not for your power bill) - e.g. to buy a Tibber Bridge. If you are already a Tibber customer and have not used an invitation link yet, you can also enter one afterward in the Tibber App (up to 14 days). [[see official Tibber support article](https://support.tibber.com/en/articles/4601431-tibber-referral-bonus#h_ae8df266c0)]
+Be smart switch to Tibber - that's what I did in october 2023. If you want to join Tibber (become a customer), you might want to use my personal invitation link. When you use this link, Tibber will grant you and me a bonus of 50,-€ for each of us. This bonus then can be used in the Tibber store (not for your power bill) — e.g. to buy a Tibber Bridge. If you are already a Tibber customer and have not used an invitation link yet, you can also enter one afterward in the Tibber App (up to 14 days). [[see official Tibber support article](https://support.tibber.com/en/articles/4601431-tibber-referral-bonus#h_ae8df266c0)]
 
 Please consider [using my personal Tibber invitation link to join Tibber today](https://invite.tibber.com/6o0kqvzf) or Enter the following code: 6o0kqvzf (six, oscar, zero, kilo, quebec, victor, zulu, foxtrot) afterward in the Tibber App - TIA!
 

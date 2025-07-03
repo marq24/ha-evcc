@@ -12,7 +12,7 @@
       }
     },
     "error": {
-      "auth": "Unter dieser URL konnte keine EVCC-Server erreicht werden. **Bitte ließ doch noch einmal die Anleitung oben** Das Schwarze ist die Schrift!"
+      "auth": "Unter dieser URL konnte Deine HA Instanz keinen EVCC-Server erreichen. **Bitte ließ doch noch einmal die Anleitung oben** Das Schwarze ist die Schrift!"
     }
   },
   "options": {
@@ -28,7 +28,7 @@
       }
     },
     "error": {
-      "auth": "Unter dieser URL konnte keine EVCC-Server erreicht werden."
+      "auth": "Unter dieser URL konnte Deine HA Instanz keinen EVCC-Server erreichen."
     }
   },
   "services": {

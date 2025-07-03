@@ -12,7 +12,7 @@
       }
     },
     "error": {
-      "auth": "URL is wrong - could not reach EVCC-Server"
+      "auth": "You HA instance could not connect to an EVCC-Server under the specified URL."
     }
   },
   "options": {
@@ -28,7 +28,7 @@
       }
     },
     "error": {
-      "auth": "URL is wrong - could not reach EVCC-Server"
+      "auth": "You HA instance could not connect to an EVCC-Server under the specified URL."
     }
   },
   "services": {
