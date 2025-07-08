@@ -13,6 +13,11 @@
     },
     "error": {
       "auth": "Unter dieser URL konnte Deine HA Instanz keinen EVCC-Server erreichen. **Bitte ließ doch noch einmal die Anleitung oben** Das Schwarze ist die Schrift!"
+    },
+    "abort": {
+      "already_configured": "Ger\u00e4t ist bereits konfiguriert",
+      "reauth_successful": "Die erneute Authentifizierung war erfolgreich",
+      "reconfigure_successful": "Die Neukonfiguration war erfolgreich"
     }
   },
   "options": {

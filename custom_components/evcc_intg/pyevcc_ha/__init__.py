@@ -27,26 +27,26 @@ async def _do_request(method: Callable) -> dict:
                     return await res.json()
 
                 except JSONDecodeError as json_exc:
-                    _LOGGER.warning(f"APP-API: JSONDecodeError while 'await res.json(): {json_exc}")
+                    _LOGGER.warning(f"APP-API: JSONDecodeError while 'await res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
                 except ClientResponseError as io_exc:
-                    _LOGGER.warning(f"APP-API: ClientResponseError while 'await res.json(): {io_exc}")
+                    _LOGGER.warning(f"APP-API: ClientResponseError while 'await res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
             elif res.status == 500 and int(res.headers['Content-Length']) > 0:
                 try:
                     r_json = await res.json()
                     return {"err": r_json}
                 except JSONDecodeError as json_exc:
-                    _LOGGER.warning(f"APP-API: JSONDecodeError while 'res.status == 500 res.json(): {json_exc}")
+                    _LOGGER.warning(f"APP-API: JSONDecodeError while 'res.status == 500 res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
                 except ClientResponseError as io_exc:
-                    _LOGGER.warning(f"APP-API: ClientResponseError while 'res.status == 500 res.json(): {io_exc}")
+                    _LOGGER.warning(f"APP-API: ClientResponseError while 'res.status == 500 res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
             else:
-                _LOGGER.warning(f"APP-API: write_value failed with http-status {res.status}")
+                _LOGGER.warning(f"APP-API: write_value failed with http-status {res.status} [caused by {res.request_info.method} {res.request_info.url}]")
 
         except ClientResponseError as io_exc:
-            _LOGGER.warning(f"APP-API: write_value failed cause: {io_exc}")
+            _LOGGER.warning(f"APP-API: write_value failed cause: {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
     return {}
 

@@ -35,6 +35,9 @@ If you have any issues with this you need to open an issue here:
 -------------------------------------------------------------------
 """
 
+CONFIG_VERSION: Final = 2
+CONFIG_MINOR_VERSION: Final = 0
+
 CONF_INCLUDE_EVCC: Final = "include_evcc"
 CONF_USE_WS = "use_websocket"
 
