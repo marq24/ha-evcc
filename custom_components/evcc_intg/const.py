@@ -26,6 +26,9 @@ NAME_SHORT: Final = "evcc☀️🚘"
 DOMAIN: Final = "evcc_intg"
 ISSUE_URL: Final = "https://github.com/marq24/ha-evcc/issues"
 
+CONFIG_VERSION: Final = 2
+CONFIG_MINOR_VERSION: Final = 0
+
 STARTUP_MESSAGE: Final = f"""
 -------------------------------------------------------------------
 {NAME}
@@ -34,9 +37,6 @@ If you have any issues with this you need to open an issue here:
 {ISSUE_URL}
 -------------------------------------------------------------------
 """
-
-CONFIG_VERSION: Final = 2
-CONFIG_MINOR_VERSION: Final = 0
 
 CONF_INCLUDE_EVCC: Final = "include_evcc"
 CONF_USE_WS = "use_websocket"

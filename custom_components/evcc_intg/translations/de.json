@@ -1,5 +1,10 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Ger\u00e4t ist bereits konfiguriert",
+      "reauth_successful": "Die erneute Authentifizierung war erfolgreich",
+      "reconfigure_successful": "Die Neukonfiguration war erfolgreich"
+    },
     "step": {
       "user": {
         "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.\n-- --\n### Du musst die Addresse Deines EVCC-Servers angeben und nicht die von Deinem Home-Assistent Server!\n-- --\nJeder der seine Home-Assistent Addresse einträgt (weil er das vielleicht so auf YouTube gesehen hat) und sich dann bei mir wegen dem *Fehler* meldet, möge bitte wahlweise in die USA oder nach Russland auswandern (Nordkorea wäre auch noch 'ne Option)!\n-- --\nAn alle anderen: bitte entschuldigt diesen Rant \uD83E\uDD2E - Seit **Monaten** bekomme ich immer wieder die gleiche Support-Anfrage von der Generation TikTok.",
@@ -13,27 +18,6 @@
     },
     "error": {
       "auth": "Unter dieser URL konnte Deine HA Instanz keinen EVCC-Server erreichen. **Bitte ließ doch noch einmal die Anleitung oben** Das Schwarze ist die Schrift!"
-    },
-    "abort": {
-      "already_configured": "Ger\u00e4t ist bereits konfiguriert",
-      "reauth_successful": "Die erneute Authentifizierung war erfolgreich",
-      "reconfigure_successful": "Die Neukonfiguration war erfolgreich"
-    }
-  },
-  "options": {
-    "step": {
-      "user": {
-        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.",
-        "data": {
-          "host": "Deine lokale EVCC-Server Addresse (einschließlich des Ports)",
-          "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
-          "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
-          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
-        }
-      }
-    },
-    "error": {
-      "auth": "Unter dieser URL konnte Deine HA Instanz keinen EVCC-Server erreichen."
     }
   },
   "services": {

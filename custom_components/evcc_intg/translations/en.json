@@ -1,31 +1,15 @@
 {
   "config": {
+    "abort": {
+      "already_configured": "Device is already configured",
+      "reauth_successful": "Re-authentication was successful",
+      "reconfigure_successful": "Re-configuration was successful"
+    },
     "step": {
       "user": {
         "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
           "host": "Your local EVCC-Server URL (including the port)",
-          "use_websocket": "Use Websocket - The Polling Interval will be ignored",
-          "scan_interval": "Polling Interval in seconds [min: 5sec]",
-          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
-        }
-      }
-    },
-    "error": {
-      "auth": "You HA instance could not connect to an EVCC-Server under the specified URL."
-    },
-    "abort": {
-      "already_configured": "Device is already configured",
-      "reauth_successful": "Re-authentication was successful",
-      "reconfigure_successful": "Re-configuration was successful"
-    }
-  },
-  "options": {
-    "step": {
-      "user": {
-        "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
-        "data": {
-          "host": "Your local EVCC-Server (including the port)",
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
           "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"

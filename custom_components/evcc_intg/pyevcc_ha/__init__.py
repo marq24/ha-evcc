@@ -5,7 +5,7 @@ from json import JSONDecodeError
 from typing import Callable
 
 import aiohttp
-from aiohttp import ClientResponseError, ClientConnectorError
+from aiohttp import ClientResponseError, ClientConnectorError, ClientError
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
@@ -20,35 +20,46 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 
 async def _do_request(method: Callable) -> dict:
-    async with method as res:
-        try:
-            if res.status == 200:
-                try:
-                    return await res.json()
+    try:
+        async with method as res:
+            try:
+                if 199 < res.status < 300:
+                    try:
+                        if "application/json" in res.content_type.lower():
+                            try:
+                                data = await res.json()
+                                # check if the data is a dict with a single key "result" - this 'result' container
+                                # will be removed in the future [https://github.com/evcc-io/evcc/pull/22299]
+                                if isinstance(data, dict) and "result" in data and len(data) == 1:
+                                    data = data["result"]
+                                return data
+                            except JSONDecodeError as json_exc:
+                                _LOGGER.warning(f"APP-API: JSONDecodeError while 'await res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
-                except JSONDecodeError as json_exc:
-                    _LOGGER.warning(f"APP-API: JSONDecodeError while 'await res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                    except ClientResponseError as io_exc:
+                        _LOGGER.warning(f"APP-API: ClientResponseError while 'await res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
-                except ClientResponseError as io_exc:
-                    _LOGGER.warning(f"APP-API: ClientResponseError while 'await res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                elif int(res.headers['Content-Length']) > 0:
+                    try:
+                        content = await res.text()
+                        _LOGGER.warning(f"_do_request() - 'res.status == {res.status} content: {content} [caused by {res.request_info.method} {res.request_info.url}]")
 
-            elif res.status == 500 and int(res.headers['Content-Length']) > 0:
-                try:
-                    r_json = await res.json()
-                    return {"err": r_json}
-                except JSONDecodeError as json_exc:
-                    _LOGGER.warning(f"APP-API: JSONDecodeError while 'res.status == 500 res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                    except ClientResponseError as io_exc:
+                        _LOGGER.warning(f"_do_request() ClientResponseError while 'res.status == {res.status} res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
 
-                except ClientResponseError as io_exc:
-                    _LOGGER.warning(f"APP-API: ClientResponseError while 'res.status == 500 res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                else:
+                    _LOGGER.warning(f"_do_request() failed with http-status {res.status} [caused by {res.request_info.method} {res.request_info.url}]")
 
-            else:
-                _LOGGER.warning(f"APP-API: write_value failed with http-status {res.status} [caused by {res.request_info.method} {res.request_info.url}]")
+            except ClientError as io_exc:
+                _LOGGER.warning(f"_do_request() failed cause: {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+            except Exception as ex:
+                _LOGGER.warning(f"_do_request() failed cause: {type(ex)} - {ex} [caused by {res.request_info.method} {res.request_info.url}]")
+            return {}
 
-        except ClientResponseError as io_exc:
-            _LOGGER.warning(f"APP-API: write_value failed cause: {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
-
-    return {}
+    except ClientError as exception:
+        _LOGGER.warning(f"_do_request() cause of ClientConnectorError: {exception}")
+    except Exception as other:
+        _LOGGER.warning(f"_do_request() unexpected: {type(other)} - {other}")
 
 
 class EvccApiBridge:
@@ -199,8 +210,8 @@ class EvccApiBridge:
             req = f"{self.host}/api/state"
             _LOGGER.debug(f"GET request: {req}")
             json_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
-            if json_resp is not None and "result" in json_resp:
-                json_resp = json_resp["result"]
+            if json_resp is not None and len(json_resp) == 0:
+                _LOGGER.info(f"could not read data from evcc@{self.host} - using empty data")
 
         if self.request_tariff_endpoints:
             _LOGGER.debug(f"going to request tariff data from evcc@{self.host}")
@@ -227,8 +238,8 @@ class EvccApiBridge:
                 req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{a_key}"
                 _LOGGER.debug(f"GET request: {req}")
                 tariff_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
-                if "result" in tariff_resp:
-                    json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF][a_key] = tariff_resp["result"]
+                if tariff_resp is not None and len(tariff_resp) > 0:
+                    json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF][a_key] = tariff_resp
             except Exception as err:
                 _LOGGER.info(f"could not read tariff data for '{a_key}' -> '{err}'")
 
@@ -282,10 +293,9 @@ class EvccApiBridge:
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
-            if "result" in r_json:
-                return r_json["result"]
-            else:
-                return {"err": r_json}
+            return r_json
+        else:
+            return {"err": "no response from evcc"}
 
     async def press_vehicle_key(self, vehicle_id:str, write_key, value) -> dict:
         if isinstance(value, (bool, int, float)):
@@ -307,14 +317,12 @@ class EvccApiBridge:
             _LOGGER.debug(f"POST request: {req}")
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and len(r_json) > 0:
-            if "result" in r_json:
-                ret = r_json["result"]
-                if len(ret) == 0:
-                    ret[write_key] = "OK"
-                return ret
-            else:
-                return {"err": r_json}
+        if r_json is not None:
+            if len(r_json) == 0:
+                r_json[write_key] = "OK"
+            return r_json
+        else:
+            return {"err": "no response from evcc"}
 
     async def write_tag(self, tag: Tag, value, idx_str:str = None) -> dict:
         ret = {}
@@ -362,10 +370,9 @@ class EvccApiBridge:
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
-            if "result" in r_json:
-                return r_json["result"]
-            else:
-                return {"err": r_json}
+            return r_json
+        else:
+            return {"err": "no response from evcc"}
 
     async def write_loadpoint_key(self, lp_idx_str, write_key, value) -> dict:
         # idx will start with 1!
@@ -386,10 +393,9 @@ class EvccApiBridge:
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
-            if "result" in r_json:
-                return r_json["result"]
-            else:
-                return {"err": r_json}
+            return r_json
+        else:
+            return {"err": "no response from evcc"}
 
     async def write_vehicle_key(self, vehicle_id:str, write_key, value) -> dict:
         if isinstance(value, (bool, int, float)):
@@ -403,10 +409,9 @@ class EvccApiBridge:
         r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None and len(r_json) > 0:
-            if "result" in r_json:
-                return r_json["result"]
-            else:
-                return {"err": r_json}
+            return r_json
+        else:
+            return {"err": "no response from evcc"}
 
     async def write_loadpoint_plan(self, idx:str, energy:str, rfc_date:str):
         # before we can write something to the vehicle endpoints, we must know the vehicle_id!
@@ -416,10 +421,9 @@ class EvccApiBridge:
                 _LOGGER.debug(f"POST request: {req}")
                 r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
                 if r_json is not None and len(r_json) > 0:
-                    if "result" in r_json:
-                        return r_json["result"]
-                    else:
-                        return {"err": r_json}
+                    return r_json
+                else:
+                    return {"err": "no response from evcc"}
 
             except Exception as err:
                 _LOGGER.info(f"could not write to loadpoint: {idx}")
@@ -436,10 +440,9 @@ class EvccApiBridge:
                     _LOGGER.debug(f"POST request: {req}")
                     r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
                     if r_json is not None and len(r_json) > 0:
-                        if "result" in r_json:
-                            return r_json["result"]
-                        else:
-                            return {"err": r_json}
+                        return r_json
+                    else:
+                        return {"err": "no response from evcc"}
 
             except Exception as err:
                 _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx}")

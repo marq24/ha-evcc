@@ -3,6 +3,7 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Final
 
+from aiohttp import ClientConnectorError
 from packaging.version import Version
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
@@ -146,7 +147,6 @@ async def entry_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) 
     await hass.config_entries.async_reload(config_entry.entry_id)
 
 
-
 @staticmethod
 async def check_device_registry(hass: HomeAssistant):
     global DEVICE_REG_CLEANUP_RUNNING
@@ -183,19 +183,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         _LOGGER.debug(f"starting evcc_intg for: data:{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
-        self.use_ws = config_entry.options.get(CONF_USE_WS, config_entry.data.get(CONF_USE_WS, True))
+        self.use_ws = config_entry.data.get(CONF_USE_WS, True)
 
-        self.bridge = EvccApiBridge(host=config_entry.options.get(CONF_HOST, config_entry.data.get(CONF_HOST)),
+        self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST),
                                     web_session=async_get_clientsession(hass),
                                     coordinator=self,
                                     lang=lang)
 
         global SCAN_INTERVAL
-        SCAN_INTERVAL = timedelta(seconds=config_entry.options.get(CONF_SCAN_INTERVAL,
-                                                                   config_entry.data.get(CONF_SCAN_INTERVAL, 5)))
+        SCAN_INTERVAL = timedelta(seconds=config_entry.data.get(CONF_SCAN_INTERVAL, 5))
 
-        self.include_evcc_prefix = config_entry.options.get(CONF_INCLUDE_EVCC,
-                                                            config_entry.data.get(CONF_INCLUDE_EVCC, False))
+        self.include_evcc_prefix = config_entry.data.get(CONF_INCLUDE_EVCC, False)
 
         # we want a some sort of unique identifier that can be selected by the user
         # during the initial configuration phase
@@ -430,8 +428,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         except UpdateFailed as exception:
             _LOGGER.warning(f"UpdateFailed: {exception}")
             raise UpdateFailed() from exception
+        except ClientConnectorError as exception:
+            _LOGGER.warning(f"UpdateFailed cause of ClientConnectorError: {exception}")
+            raise UpdateFailed() from exception
         except Exception as other:
-            _LOGGER.warning(f"UpdateFailed unexpected: {other}")
+            _LOGGER.warning(f"UpdateFailed unexpected: {type(other)} - {other}")
             raise UpdateFailed() from other
 
     def read_tag(self, tag: Tag, idx: int = None):
