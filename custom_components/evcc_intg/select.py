@@ -52,36 +52,38 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_name_addon = load_point_config["name"]
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
+        lp_is_integrated = load_point_config["is_integrated"]
 
         for a_stub in SELECT_SENSORS_PER_LOADPOINT:
-            description = ExtSelectEntityDescription(
-                tag=a_stub.tag,
-                idx=lp_api_index,
-                key=f"{lp_id_addon}_{a_stub.tag.key}",
-                translation_key=a_stub.tag.key,
-                name_addon=lp_name_addon if multi_loadpoint_config else None,
-                icon=a_stub.icon,
-                device_class=a_stub.device_class,
-                unit_of_measurement=a_stub.unit_of_measurement,
-                entity_category=a_stub.entity_category,
-                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+            if not lp_is_integrated or a_stub.integrated_supported:
+                description = ExtSelectEntityDescription(
+                    tag=a_stub.tag,
+                    idx=lp_api_index,
+                    key=f"{lp_id_addon}_{a_stub.tag.key}",
+                    translation_key=a_stub.tag.key,
+                    name_addon=lp_name_addon if multi_loadpoint_config else None,
+                    icon=a_stub.icon,
+                    device_class=a_stub.device_class,
+                    unit_of_measurement=a_stub.unit_of_measurement,
+                    entity_category=a_stub.entity_category,
+                    entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
-                # the entity type specific values...
-                options=["null"] + list(
-                    coordinator._vehicle.keys()) if a_stub.tag == Tag.VEHICLENAME else a_stub.tag.options,
-            )
+                    # the entity type specific values...
+                    options=["null"] + list(
+                        coordinator._vehicle.keys()) if a_stub.tag == Tag.VEHICLENAME else a_stub.tag.options,
+                )
 
-            # we might need to patch(remove) the 'auto-mode' from the phases selector
-            if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:
-                description.options = description.options[1:]
-                description.translation_key = f"{description.translation_key}_fixed"
+                # we might need to patch(remove) the 'auto-mode' from the phases selector
+                if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:
+                    description.options = description.options[1:]
+                    description.translation_key = f"{description.translation_key}_fixed"
 
-            entity = EvccSelect(coordinator, description)
+                entity = EvccSelect(coordinator, description)
 
-            if entity.tag == Tag.MINCURRENT or entity.tag == Tag.MAXCURRENT:
-                entities_min_max_dict[entity.entity_id.split('.')[1].lower()] = entity
+                if entity.tag == Tag.MINCURRENT or entity.tag == Tag.MAXCURRENT:
+                    entities_min_max_dict[entity.entity_id.split('.')[1].lower()] = entity
 
-            entities.append(entity)
+                entities.append(entity)
 
     add_entity_cb(entities)
     asyncio.create_task(check_min_max())

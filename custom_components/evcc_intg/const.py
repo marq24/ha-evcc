@@ -52,6 +52,7 @@ class EntityDescriptionStub(metaclass=FrozenOrThawed, frozen_or_thawed=True):
     unit_of_measurement: str | None = None
     entity_category: EntityCategory | None = None
     entity_registry_enabled_default: bool = True
+    integrated_supported: bool = True
 
 
 @dataclass
@@ -92,7 +93,6 @@ class ExtNumberEntityDescriptionStub(EntityDescriptionStub):
     native_step: float | None = None
     native_unit_of_measurement: str | None = None
     step: None = None
-
 
 @dataclass
 class ExtNumberEntityDescription(NumberEntityDescription):
@@ -230,26 +230,30 @@ BUTTONS_PER_LOADPOINT = [
         tag=Tag.VEHICLEPLANSDELETE,
         entity_category=EntityCategory.CONFIG,
         device_class=None,
-        icon="mdi:restart"
+        icon="mdi:restart",
+        integrated_supported = False
     ),
     ExtButtonEntityDescriptionStub(
         tag=Tag.PLANDELETE,
         entity_category=EntityCategory.CONFIG,
         device_class=None,
         icon="mdi:restart",
-        entity_registry_enabled_default=False
+        entity_registry_enabled_default=False,
+        integrated_supported = False
     ),
     ExtButtonEntityDescriptionStub(
         tag=Tag.DETECTVEHICLE,
         device_class=None,
-        icon="mdi:car-search-outline"
+        icon="mdi:car-search-outline",
+        integrated_supported = False
     ),
     ExtButtonEntityDescriptionStub(
         tag=Tag.SMARTCOSTLIMIT,
         entity_category=EntityCategory.CONFIG,
         device_class=None,
         icon = "mdi:cash-off",
-        entity_registry_enabled_default=False
+        entity_registry_enabled_default=False,
+        integrated_supported = False
     )
 ]
 
@@ -400,7 +404,8 @@ SELECT_SENSORS_PER_LOADPOINT = [
     ExtSelectEntityDescriptionStub(
         tag=Tag.VEHICLENAME,
         #entity_category=EntityCategory.CONFIG,
-        icon="mdi:car-outline"
+        icon="mdi:car-outline",
+        integrated_supported=False
     ),
     ExtSelectEntityDescriptionStub(
         tag=Tag.MINCURRENT,
@@ -423,6 +428,7 @@ SELECT_SENSORS_PER_LOADPOINT = [
         # we render the states via translations - so we can render '0 %' as '---'
         #unit_of_measurement=PERCENTAGE,
         #device_class= NumberDeviceClass.BATTERY,
+        integrated_supported=False
     ),
     ExtSelectEntityDescriptionStub(
         tag=Tag.VEHICLEMINSOC,
@@ -431,6 +437,7 @@ SELECT_SENSORS_PER_LOADPOINT = [
         # we render the states via translations - so we can render '0 %' as '---'
         #unit_of_measurement=PERCENTAGE,
         #device_class= NumberDeviceClass.BATTERY,
+        integrated_supported=False
     )
 ]
 

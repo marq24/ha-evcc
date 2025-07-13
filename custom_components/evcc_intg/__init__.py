@@ -323,14 +323,20 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if "chargerFeatureHeating" in a_loadpoint:
                     is_heating = a_loadpoint["chargerFeatureHeating"]
 
+                is_integrated = False
+                if "chargerFeatureIntegratedDevice" in a_loadpoint:
+                    is_integrated = a_loadpoint["chargerFeatureIntegratedDevice"]
+
                 self._loadpoint[f"{api_index}"] = {
                     "name": a_loadpoint["title"],
                     "id": slugify(a_loadpoint["title"]),
                     "has_phase_auto_option": phase_switching_supported,
                     "is_heating": is_heating,
+                    "is_integrated": is_integrated,
                     "vehicle_key": a_loadpoint["vehicleName"],
                     "obj": a_loadpoint
                 }
+
                 api_index += 1
         else:
             _LOGGER.warning(f"NO loadpoints found [{JSONKEY_LOADPOINTS}] in the evcc data: {initdata}")

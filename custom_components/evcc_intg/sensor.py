@@ -44,49 +44,51 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_name_addon = load_point_config["name"]
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
+        lp_is_integrated = load_point_config["is_integrated"]
 
         for a_stub in SENSOR_SENSORS_PER_LOADPOINT:
-            # well - a hack to show any heating related loadpoints with temperature units...
-            # note: this will not change the label (that still show 'SOC')
-            force_celsius = lp_is_heating  and (
-                             a_stub.tag == Tag.EFFECTIVEPLANSOC or
-                             a_stub.tag == Tag.EFFECTIVELIMITSOC or
-                             a_stub.tag == Tag.VEHICLESOC or
-                             a_stub.tag == Tag.VEHICLEMINSOC or
-                             a_stub.tag == Tag.VEHICLELIMITSOC or
-                             a_stub.tag == Tag.VEHICLEPLANSSOC)
+            if not lp_is_integrated or a_stub.integrated_supported:
+                # well - a hack to show any heating related loadpoints with temperature units...
+                # note: this will not change the label (that still show 'SOC')
+                force_celsius = lp_is_heating  and (
+                                 a_stub.tag == Tag.EFFECTIVEPLANSOC or
+                                 a_stub.tag == Tag.EFFECTIVELIMITSOC or
+                                 a_stub.tag == Tag.VEHICLESOC or
+                                 a_stub.tag == Tag.VEHICLEMINSOC or
+                                 a_stub.tag == Tag.VEHICLELIMITSOC or
+                                 a_stub.tag == Tag.VEHICLEPLANSSOC)
 
-            description = ExtSensorEntityDescription(
-                tag=a_stub.tag,
-                idx=lp_api_index,
-                key=f"{lp_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{lp_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",
-                translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
-                name_addon=lp_name_addon if multi_loadpoint_config else None,
-                icon=a_stub.icon,
-                device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
-                unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
-                entity_category=a_stub.entity_category,
-                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                description = ExtSensorEntityDescription(
+                    tag=a_stub.tag,
+                    idx=lp_api_index,
+                    key=f"{lp_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{lp_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",
+                    translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
+                    name_addon=lp_name_addon if multi_loadpoint_config else None,
+                    icon=a_stub.icon,
+                    device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
+                    unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
+                    entity_category=a_stub.entity_category,
+                    entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
-                # the entity type specific values...
-                state_class=a_stub.state_class,
-                native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
-                suggested_display_precision=a_stub.suggested_display_precision,
-                array_idx=a_stub.array_idx,
-                tuple_idx=a_stub.tuple_idx,
-                factor=a_stub.factor,
-                lookup=a_stub.lookup,
-                ignore_zero=a_stub.ignore_zero
-            )
+                    # the entity type specific values...
+                    state_class=a_stub.state_class,
+                    native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
+                    suggested_display_precision=a_stub.suggested_display_precision,
+                    array_idx=a_stub.array_idx,
+                    tuple_idx=a_stub.tuple_idx,
+                    factor=a_stub.factor,
+                    lookup=a_stub.lookup,
+                    ignore_zero=a_stub.ignore_zero
+                )
 
-            # if it's a lookup value, we just patch the translation key...
-            if a_stub.lookup is not None:
-                description.key = f"{description.key}_value"
-                description.translation_key = f"{description.translation_key}_value"
+                # if it's a lookup value, we just patch the translation key...
+                if a_stub.lookup is not None:
+                    description.key = f"{description.key}_value"
+                    description.translation_key = f"{description.translation_key}_value"
 
 
-            entity = EvccSensor(coordinator, description)
-            entities.append(entity)
+                entity = EvccSensor(coordinator, description)
+                entities.append(entity)
 
     add_entity_cb(entities)
 

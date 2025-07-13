@@ -26,26 +26,28 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_name_addon = load_point_config["name"]
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
+        lp_is_integrated = load_point_config["is_integrated"]
 
         for a_stub in BUTTONS_PER_LOADPOINT:
-            description = ExtButtonEntityDescription(
-                tag=a_stub.tag,
-                idx=lp_api_index,
-                key=f"{lp_id_addon}_{a_stub.tag.key}",
-                translation_key=a_stub.tag.key,
-                name_addon=lp_name_addon if multi_loadpoint_config else None,
-                icon=a_stub.icon,
-                device_class=a_stub.device_class,
-                unit_of_measurement=a_stub.unit_of_measurement,
-                entity_category=a_stub.entity_category,
-                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+            if not lp_is_integrated or a_stub.integrated_supported:
+                description = ExtButtonEntityDescription(
+                    tag=a_stub.tag,
+                    idx=lp_api_index,
+                    key=f"{lp_id_addon}_{a_stub.tag.key}",
+                    translation_key=a_stub.tag.key,
+                    name_addon=lp_name_addon if multi_loadpoint_config else None,
+                    icon=a_stub.icon,
+                    device_class=a_stub.device_class,
+                    unit_of_measurement=a_stub.unit_of_measurement,
+                    entity_category=a_stub.entity_category,
+                    entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
-                # the entity type specific values...
-                payload=a_stub.payload
-            )
+                    # the entity type specific values...
+                    payload=a_stub.payload
+                )
 
-            entity = EvccButton(coordinator, description)
-            entities.append(entity)
+                entity = EvccButton(coordinator, description)
+                entities.append(entity)
 
     add_entity_cb(entities)
 
