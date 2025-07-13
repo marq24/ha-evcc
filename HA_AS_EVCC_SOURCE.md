@@ -69,12 +69,12 @@ This step is only required, if you want to use alternative HA sensors. In order 
 Below you will find a valid evcc meters configuration — __but you have to make two replacements__:
 1. The text '__[YOUR-HA-INSTANCE]__' has to be replaced with the IP/host name of your Home Assistant installation.
     
-    E.g., when your HA is reachable via: http://192.168.10.20:8123, then you need to replaced `[YOUR-HA-INSTANCE]` with `192.168.10.20`
+    E.g., when your HA is reachable via: http://192.168.10.20:8123, then you need to replace `[YOUR-HA-INSTANCE]` with `192.168.10.20`
 
 
 2. The text '__[YOUR-TOKEN-HERE]__' has to be replaced with the _Long-lived access token_ you have just created in HA.
 
-   E.g. when your token is: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNWVjNzg5M2Y0ZjQ0MzBmYjUwOGEwMmU4N2Q0MzFmNyIsImlhdCI6MTcxNTUwNzYxMCwiZXhwIjoyMDMwODY3NjEwfQ.GMWO8saHpawkjNzk-uokxYeaP0GFKPQSeDoP3lCO488`, then you need to replaced `[YOUR-TOKEN-HERE]` with this (long) token text.
+   E.g. when your token is: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNWVjNzg5M2Y0ZjQ0MzBmYjUwOGEwMmU4N2Q0MzFmNyIsImlhdCI6MTcxNTUwNzYxMCwiZXhwIjoyMDMwODY3NjEwfQ.GMWO8saHpawkjNzk-uokxYeaP0GFKPQSeDoP3lCO488`, then you need to replace `[YOUR-TOKEN-HERE]` with this (long) token text.
 
 So as a short example (with all replacements) would look like:
 
