@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime, timezone
 from json import JSONDecodeError
+from numbers import Number
 from typing import Callable
 
 import aiohttp
@@ -292,7 +293,7 @@ class EvccApiBridge:
             _LOGGER.debug(f"POST request: {req}")
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and len(r_json) > 0:
+        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -318,7 +319,7 @@ class EvccApiBridge:
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
         if r_json is not None:
-            if len(r_json) == 0:
+            if (hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str)):
                 r_json[write_key] = "OK"
             return r_json
         else:
@@ -369,7 +370,7 @@ class EvccApiBridge:
             _LOGGER.debug(f"POST request: {req}")
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and len(r_json) > 0:
+        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -392,7 +393,7 @@ class EvccApiBridge:
             _LOGGER.debug(f"POST request: {req}")
             r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and len(r_json) > 0:
+        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -408,7 +409,7 @@ class EvccApiBridge:
         _LOGGER.debug(f"POST request: {req}")
         r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and len(r_json) > 0:
+        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -420,7 +421,7 @@ class EvccApiBridge:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
                 _LOGGER.debug(f"POST request: {req}")
                 r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
-                if r_json is not None and len(r_json) > 0:
+                if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
                     return r_json
                 else:
                     return {"err": "no response from evcc"}
@@ -439,7 +440,7 @@ class EvccApiBridge:
                     req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
                     _LOGGER.debug(f"POST request: {req}")
                     r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
-                    if r_json is not None and len(r_json) > 0:
+                    if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
                         return r_json
                     else:
                         return {"err": "no response from evcc"}

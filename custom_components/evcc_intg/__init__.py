@@ -310,6 +310,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         api_index = 1
         if JSONKEY_LOADPOINTS in initdata:
             for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
+                single_phase_only = False
+                if "chargerSinglePhase" in a_loadpoint:
+                    single_phase_only = a_loadpoint["chargerSinglePhase"]
+
                 phase_switching_supported = False
                 if "chargerPhases1p3p" in a_loadpoint:
                     phase_switching_supported = a_loadpoint["chargerPhases1p3p"]
@@ -331,6 +335,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "name": a_loadpoint["title"],
                     "id": slugify(a_loadpoint["title"]),
                     "has_phase_auto_option": phase_switching_supported,
+                    "only_single_phase": single_phase_only,
                     "is_heating": is_heating,
                     "is_integrated": is_integrated,
                     "vehicle_key": a_loadpoint["vehicleName"],

@@ -175,7 +175,8 @@ BINARY_SENSORS_PER_LOADPOINT = [
         tag=Tag.CONNECTED,
         icon=None,
         icon_off=None,
-        device_class=BinarySensorDeviceClass.CONNECTIVITY
+        device_class=BinarySensorDeviceClass.CONNECTIVITY,
+        integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.ENABLED,
@@ -193,19 +194,22 @@ BINARY_SENSORS_PER_LOADPOINT = [
         tag=Tag.VEHICLEDETECTIONACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:car-search",
-        icon_off="mdi:car-search-outline"
+        icon_off="mdi:car-search-outline",
+        integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.VEHICLECLIMATERACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:snowflake-thermometer",
-        icon_off="mdi:snowflake-off"
+        icon_off="mdi:snowflake-off",
+        integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.VEHICLEWELCOMEACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:gift-outline",
         icon_off="mdi:gift-off-outline",
+        integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.PLANACTIVE,
@@ -292,6 +296,7 @@ NUMBER_SENSORS_PER_LOADPOINT = [
         native_step=5,
         native_unit_of_measurement=PERCENTAGE,
         device_class= NumberDeviceClass.BATTERY,
+        #integrated_supported=False
     ),
     ExtNumberEntityDescriptionStub(
         tag=Tag.ENABLETHRESHOLD,
@@ -482,7 +487,6 @@ SENSOR_SENSORS_GRID_AS_PREFIX = [
         entity_registry_enabled_default=False
     )
 ]
-
 SENSOR_SENSORS_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
@@ -1016,7 +1020,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
-        suggested_display_precision=0
+        suggested_display_precision=0,
+        #integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PHASEACTION,
@@ -1105,7 +1110,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
         device_class=None,
         suggested_display_precision=0,
-        ignore_zero=True
+        ignore_zero=True,
+        integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.VEHICLERANGE,
@@ -1113,7 +1119,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
         device_class=None,
-        suggested_display_precision=0
+        suggested_display_precision=0,
+        integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.VEHICLESOC,
@@ -1121,7 +1128,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
-        suggested_display_precision=0
+        suggested_display_precision=0,
+        integrated_supported=False
     ),
 
     ExtSensorEntityDescriptionStub(
@@ -1130,6 +1138,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
+        integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.VEHICLEPLANSTIME,
@@ -1137,7 +1146,8 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,
         device_class=SensorDeviceClass.TIMESTAMP,
-        #device_class=None
+        #device_class=None,
+        integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.PLANENERGY,
@@ -1188,6 +1198,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
+        #integrated_supported=False
     ),
 
     ExtSensorEntityDescriptionStub(

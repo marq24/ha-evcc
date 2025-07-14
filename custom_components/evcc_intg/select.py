@@ -53,9 +53,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
+        lp_is_single_phase_only = load_point_config["only_single_phase"]
 
         for a_stub in SELECT_SENSORS_PER_LOADPOINT:
-            if not lp_is_integrated or a_stub.integrated_supported:
+            if (not lp_is_single_phase_only or a_stub.tag != Tag.PHASES) and (not lp_is_integrated or a_stub.integrated_supported):
                 description = ExtSelectEntityDescription(
                     tag=a_stub.tag,
                     idx=lp_api_index,
