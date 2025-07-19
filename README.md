@@ -97,9 +97,26 @@ After the integration was added, you can use the 'config' button to adjust your 
 
 Please note that some of the available sensors are __not__ enabled by default.
 
-## Use evcc with your Home Assistant sensor data
+## Using evcc with Home Assistant
+
+### Use Home Assistant sensor data as input for evcc
 
 Please see the separate document where you can find examples [how to provide your evcc instance with HA sensor data](https://github.com/marq24/ha-evcc/blob/main/HA_AS_EVCC_SOURCE.md).
+
+### Use evcc to control any of your Home Assistant devices
+
+This is IMHO a very powerful feature of evcc, that is not known to many users (yet). You can use evcc to control your Home Assistant devices or Automation, e.g., to switch on/off anything you like when you are actually feeding power into the grid.
+
+Using the maximum out of your solar panels to charge your EV is great, but what if you have more power available — or if your EV is already fully charged? I am facing this challenge for quite a long time now and used several helpers & Blueprints to control my home devices with larger energy consumption.
+
+You can use evcc to control any Home Assistant entity that has implemented the `turn_on` and `turn_off` services. This means you can control devices like smart plugs, or even Home Assistant automations (which is IMHO the door to PV surplus handling heaven).
+
+Since the setup & configuration of this evcc feature might not be straight forward, I have created a separate document where you can find examples [Master PV surplus handling with evcc & Home Assistent](https://github.com/marq24/ha-evcc/blob/main/HA_CONTROLLED_BY_EVCC.md).
+
+
+I use this feature to control the hot-water temperature of my waterkotte heat pump.
+
+
 
 ## Are you are go-eCharger V3 (or higher) User?
 
