@@ -1,7 +1,6 @@
 from dataclasses import dataclass
 from typing import Final
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
@@ -18,6 +17,8 @@ from homeassistant.const import (
     PERCENTAGE
 )
 from homeassistant.util.frozen_dataclass_compat import FrozenOrThawed
+
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 
 # Base component constants
 MANUFACTURER: Final = "marq24"
@@ -561,6 +562,46 @@ SENSOR_SENSORS = [
         device_class=SensorDeviceClass.POWER
     ),
     ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_0_power",
+        tuple_idx = [0, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_1_power",
+        tuple_idx = [1, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_2_power",
+        tuple_idx = [2, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_3_power",
+        tuple_idx = [3, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
         tag=Tag.BATTERYSOC,
         key=Tag.BATTERYSOC.key,
         icon="mdi:home-battery-outline",
@@ -569,6 +610,51 @@ SENSOR_SENSORS = [
         device_class=None,
         suggested_display_precision=0
     ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_0_soc",
+        tuple_idx = [0, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_1_soc",
+        tuple_idx = [1, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_2_soc",
+        tuple_idx = [2, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY,
+        key="battery_3_soc",
+        tuple_idx = [3, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+
     ExtSensorEntityDescription(
         tag=Tag.HOMEPOWER,
         key=Tag.HOMEPOWER.key,

@@ -40,6 +40,10 @@ class EP_TYPE(Enum):
     SITE = "site"
     TARIFF = "tariff"
 
+class BATTERY_CONTENT(Enum):
+    SOC = "soc"
+    POWER = "power"
+
 class GRID_CONTENT(Enum):
     CURRENTS = "currents"
     POWER = "power"
@@ -98,6 +102,21 @@ class Tag(ApiKey, Enum):
     # "batterySoc": 70,
     BATTERYSOC = ApiKey(key="batterySoc", type=EP_TYPE.SITE)
 
+    # "batteryCapacity": 7.5,
+    BATTERYCAPACITY = ApiKey(key="batteryCapacity", type=EP_TYPE.SITE)
+
+    # "battery":[{"power":0,"capacity":12,"soc":81,"controllable":false}], -> we must access this attribute via tuple_idx
+    BATTERY = ApiKey(key="battery", type=EP_TYPE.SITE)
+
+    # "pvPower": 8871.22,
+    PVPOWER = ApiKey(key="pvPower", type=EP_TYPE.SITE)
+
+    # "pvEnergy": 4235.825,
+    PVENERGY = ApiKey(key="pvEnergy", type=EP_TYPE.SITE)
+
+    # "pv": [{"power": 8871.22}], -> we must access this attribute via tuple_idx
+    PV = ApiKey(key="pv", type=EP_TYPE.SITE)
+
     # "gridCurrents": [17.95, 7.71, 1.99],
     GRIDCURRENTS = ApiKey(key="gridCurrents", type=EP_TYPE.SITE)
 
@@ -111,15 +130,6 @@ class Tag(ApiKey, Enum):
 
     # "homePower": 2594.19,
     HOMEPOWER = ApiKey(key="homePower", type=EP_TYPE.SITE)
-
-    # "pvPower": 8871.22,
-    PVPOWER = ApiKey(key="pvPower", type=EP_TYPE.SITE)
-
-    # "pvEnergy": 4235.825,
-    PVENERGY = ApiKey(key="pvEnergy", type=EP_TYPE.SITE)
-
-    # "pv": [{"power": 8871.22}], -> we must access this attribute via tuple_idx
-    PV = ApiKey(key="pv", type=EP_TYPE.SITE)
 
     # -> NONE FREQUENT
     # POST /api/batterydischargecontrol/<status>: enable/disable battery discharge control (true/false)
@@ -153,9 +163,6 @@ class Tag(ApiKey, Enum):
     AVAILABLEVERSION = ApiKey(key="availableVersion", type=EP_TYPE.SITE)
 
     VERSION = ApiKey(key="version", type=EP_TYPE.SITE)
-
-    # "batteryCapacity": 7.5,
-    BATTERYCAPACITY = ApiKey(key="batteryCapacity", type=EP_TYPE.SITE)
 
     # "tariffGrid": 0.233835,
     TARIFFGRID = ApiKey(key="tariffGrid", type=EP_TYPE.SITE)
