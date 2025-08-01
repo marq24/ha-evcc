@@ -294,16 +294,14 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if JSONKEY_VEHICLES in initdata:
             for a_veh_name in initdata[JSONKEY_VEHICLES]:
                 a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
-                if "capacity" in a_veh:
-                    self._vehicle[a_veh_name] = {
-                        "name": a_veh["title"],
-                        "capacity": a_veh["capacity"]
-                    }
-                else:
-                    self._vehicle[a_veh_name] = {
-                        "name": a_veh["title"],
-                        "capacity": None
-                    }
+                self._vehicle[a_veh_name] = {
+                    "name": a_veh["title"],
+                    #"id": slugify(f"vid_{a_veh_name}"),
+                    "id": slugify(a_veh["title"]),
+                    "capacity": a_veh["capacity"] if "capacity" in a_veh else None,
+                    "minSoc": a_veh["minSoc"] if "minSoc" in a_veh else None,
+                    "limitSoc": a_veh["limitSoc"] if "limitSoc" in a_veh else None
+                }
         else:
             _LOGGER.warning(f"NO vehicles found [{JSONKEY_VEHICLES}] in the evcc data: {initdata}")
 
