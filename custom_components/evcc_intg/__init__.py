@@ -4,6 +4,16 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Final
 
 from aiohttp import ClientConnectorError
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
+from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.entity import Entity, EntityDescription
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.typing import UNDEFINED, UndefinedType
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.util import slugify
 from packaging.version import Version
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
@@ -22,17 +32,6 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
-from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.entity import Entity, EntityDescription
-from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.helpers.typing import UNDEFINED, UndefinedType
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.util import slugify
 from .const import (
     NAME,
     NAME_SHORT,
@@ -83,12 +82,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass.data.setdefault(DOMAIN, {"manifest_version": value})
 
     coordinator = EvccDataUpdateCoordinator(hass, config_entry)
-    await coordinator.async_refresh()
-    if not coordinator.last_update_success:
-        raise ConfigEntryNotReady
-    else:
-        pass
-        # ok we could initially connect to the evcc...
+
+    # HA can check if we can make an initial data refresh and report the state
+    # back to HA (we don't have to code this by ourselves, HA will do this for us)
+    await coordinator.async_config_entry_first_refresh()
 
     # If Home Assistant is already in a running state, start the watchdog
     # immediately, else trigger it after Home Assistant has finished starting.
