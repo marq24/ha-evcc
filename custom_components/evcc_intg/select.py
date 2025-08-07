@@ -98,11 +98,10 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
         if self.tag == Tag.VEHICLENAME:
             # ok we're going to patch the display strings for the vehicle names... this is quite a HACK!
             for a_key in self.coordinator._vehicle.keys():
-                self.platform.platform_translations[
-                    f"component.{DOMAIN}.entity.select.{Tag.VEHICLENAME.key.lower()}.state.{a_key.lower()}"] = self.coordinator._vehicle[a_key]["name"]
-            #_LOGGER.error(f"-> {self.platform.platform_translations}")
+                self.platform.platform_data.platform_translations[f"component.{DOMAIN}.entity.select.{Tag.VEHICLENAME.key.lower()}.state.{a_key.lower()}"] = self.coordinator._vehicle[a_key]["name"]
+            #_LOGGER.error(f"-> {self.platform.platform_data.platform_translations}")
         elif self.tag == Tag.VEHICLEMINSOC:
-            #_LOGGER.error(f"{self.platform.platform_translations}")
+            #_LOGGER.error(f"{self.platform.platform_data.platform_translations}")
             pass
 
         await super().add_to_platform_finish()
