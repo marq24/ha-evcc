@@ -14,6 +14,7 @@ from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.loader import async_get_integration
 from homeassistant.util import slugify
 from packaging.version import Version
 
@@ -78,9 +79,11 @@ async def async_setup(hass: HomeAssistant, config: dict):  # pylint: disable=unu
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if DOMAIN not in hass.data:
-        value = "UNKOWN"
-        _LOGGER.info(STARTUP_MESSAGE)
-        hass.data.setdefault(DOMAIN, {"manifest_version": value})
+        the_integration = await async_get_integration(hass, DOMAIN)
+        intg_version = the_integration.version if the_integration is not None else "UNKNOWN"
+        _LOGGER.info(STARTUP_MESSAGE % intg_version)
+        hass.data.setdefault(DOMAIN, {"manifest_version": intg_version})
+
 
     coordinator = EvccDataUpdateCoordinator(hass, config_entry)
     await coordinator.async_refresh()

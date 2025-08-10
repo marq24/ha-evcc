@@ -32,7 +32,7 @@ CONFIG_MINOR_VERSION: Final = 0
 
 STARTUP_MESSAGE: Final = f"""
 -------------------------------------------------------------------
-{NAME}
+{NAME} - v%s
 This is a custom integration!
 If you have any issues with this you need to open an issue here:
 {ISSUE_URL}
