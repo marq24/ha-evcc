@@ -1215,7 +1215,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
         suggested_display_precision=0,
-        integrated_supported=False
+        #integrated_supported=False - requested in https://github.com/marq24/ha-evcc/issues/157
     ),
 
     ExtSensorEntityDescriptionStub(
@@ -1310,6 +1310,25 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         #device_class=None,
     )
 ]
+# SENSOR_SENSORS_PER_VEHICLE = [
+#
+#     ExtSensorEntityDescriptionStub(
+#         tag=Tag.VEHOBJ_LIMITSOC,
+#         icon="mdi:battery-charging",
+#         state_class=SensorStateClass.MEASUREMENT,
+#         native_unit_of_measurement=PERCENTAGE,
+#         device_class=None,
+#         suggested_display_precision=0,
+#     ),
+#     ExtSensorEntityDescriptionStub(
+#         tag=Tag.VEHOBJ_MINSOC,
+#         icon="mdi:car-electric-outline",
+#         state_class=SensorStateClass.MEASUREMENT,
+#         native_unit_of_measurement=PERCENTAGE,
+#         device_class=None,
+#         suggested_display_precision=0,
+#     ),
+# ]
 
 SWITCH_SENSORS = [
     ExtSwitchEntityDescription(

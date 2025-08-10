@@ -1,16 +1,24 @@
 import logging
 from datetime import datetime, timezone
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
+
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SENSOR_SENSORS, SENSOR_SENSORS_GRID_AS_PREFIX, SENSOR_SENSORS_GRID_AS_OBJECT, \
-    SENSOR_SENSORS_PER_LOADPOINT, ExtSensorEntityDescription
+from .const import (
+    DOMAIN,
+    SENSOR_SENSORS,
+    SENSOR_SENSORS_GRID_AS_PREFIX,
+    SENSOR_SENSORS_GRID_AS_OBJECT,
+    SENSOR_SENSORS_PER_LOADPOINT,
+    # SENSOR_SENSORS_PER_VEHICLE,
+    ExtSensorEntityDescription
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -36,7 +44,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             entity = EvccSensor(coordinator, description)
             entities.append(entity)
 
-    multi_loadpoint_config = len(coordinator._loadpoint) > 1
+    multi_loadpoint_config = len(coordinator._loadpoint) > 1 #or len(coordinator._vehicle) > 1
+
+    # loadpoint sensors...
     for a_lp_key in coordinator._loadpoint:
         load_point_config = coordinator._loadpoint[a_lp_key]
         lp_api_index = int(a_lp_key)
@@ -90,6 +100,42 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entity = EvccSensor(coordinator, description)
                 entities.append(entity)
 
+    # # vehicle sensors...
+    # for a_vehicle_key in coordinator._vehicle:
+    #     a_vehicle = coordinator._vehicle[a_vehicle_key]
+    #     veh_id_addon = a_vehicle["id"]
+    #     veh_name_addon = load_point_config["name"]
+    #     for a_stub in SENSOR_SENSORS_PER_VEHICLE:
+    #         description = ExtSensorEntityDescription(
+    #             tag=a_stub.tag,
+    #             key=f"{veh_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{veh_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",
+    #             translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
+    #             name_addon=veh_name_addon if multi_loadpoint_config else None,
+    #             icon=a_stub.icon,
+    #             device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
+    #             unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
+    #             entity_category=a_stub.entity_category,
+    #             entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+    #
+    #             # the entity type specific values...
+    #             state_class=a_stub.state_class,
+    #             native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
+    #             suggested_display_precision=a_stub.suggested_display_precision,
+    #             array_idx=a_stub.array_idx,
+    #             tuple_idx=a_stub.tuple_idx,
+    #             factor=a_stub.factor,
+    #             lookup=a_stub.lookup,
+    #             ignore_zero=a_stub.ignore_zero
+    #         )
+    #
+    #         # if it's a lookup value, we just patch the translation key...
+    #         if a_stub.lookup is not None:
+    #             description.key = f"{description.key}_value"
+    #             description.translation_key = f"{description.translation_key}_value"
+    #
+    #
+    #         entity = EvccSensor(coordinator, description)
+    #         entities.append(entity)
     add_entity_cb(entities)
 
 

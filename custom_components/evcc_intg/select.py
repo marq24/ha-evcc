@@ -1,12 +1,13 @@
 import asyncio
 import logging
 
-from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, ExtSelectEntityDescription
 
@@ -96,13 +97,21 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     async def add_to_platform_finish(self) -> None:
         if self.tag == Tag.VEHICLENAME:
+            is_new_ha_version = hasattr(self.platform, "platform_data")
+
             # ok we're going to patch the display strings for the vehicle names... this is quite a HACK!
             for a_key in self.coordinator._vehicle.keys():
-                self.platform.platform_translations[
-                    f"component.{DOMAIN}.entity.select.{Tag.VEHICLENAME.key.lower()}.state.{a_key.lower()}"] = self.coordinator._vehicle[a_key]["name"]
-            #_LOGGER.error(f"-> {self.platform.platform_translations}")
+                a_trans_key = f"component.{DOMAIN}.entity.select.{Tag.VEHICLENAME.key.lower()}.state.{a_key.lower()}"
+                a_value = self.coordinator._vehicle[a_key]["name"]
+                if is_new_ha_version:
+                    self.platform.platform_data.platform_translations[a_trans_key] = a_value
+                else:
+                    # old HA comparible version...
+                    self.platform.platform_translations[a_trans_key] = a_value
+
+            #_LOGGER.error(f"-> {self.platform.platform_data.platform_translations}")
         elif self.tag == Tag.VEHICLEMINSOC:
-            #_LOGGER.error(f"{self.platform.platform_translations}")
+            #_LOGGER.error(f"{self.platform.platform_data.platform_translations}")
             pass
 
         await super().add_to_platform_finish()

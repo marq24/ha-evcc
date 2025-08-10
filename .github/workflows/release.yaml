@@ -1,0 +1,45 @@
+name: Zip Release
+
+on:
+  release:
+    types:
+      - published
+
+jobs:
+  release:
+    name: Release ha-evcc
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      # Step 1: Check out the code
+      - name: ⤵️ Check out code from GitHub
+        uses: actions/checkout@v4
+
+      # Step 2: (Optional, but recommended) Install yq (in case it's not present)
+      #- name: Install yq
+      #  run: sudo apt-get update && sudo apt-get install -y yq
+
+      # Step 3: Update version in manifest.json to match the release tag
+      #- name: 🔢 Adjust version number
+      #  shell: bash
+      #  run: |
+      #    version="${{ github.event.release.tag_name }}"
+      #    version="${version,,}"            # convert to lowercase (e.g., V2024.10.1 -> v2024.10.1)
+      #    version="${version#v}"            # remove leading 'v' if present
+      #    yq e -P -o=json \
+      #      -i ".version = \"${version}\"" \
+      #      "${{ github.workspace }}/custom_components/evcc_intg/manifest.json"
+
+      # Step 4: Create a ZIP archive of the component directory
+      - name: 📦 Create zipped release package
+        shell: bash
+        run: |
+          cd "${{ github.workspace }}/custom_components/evcc_intg"
+          zip evcc_intg.zip -r ./
+
+      # Step 5: Upload ZIP as a release asset (for HACS)
+      - name: ⬆️ Upload zip to release
+        uses: softprops/action-gh-release@v2
+        with:
+          files: ${{ github.workspace }}/custom_components/evcc_intg/evcc_intg.zip
