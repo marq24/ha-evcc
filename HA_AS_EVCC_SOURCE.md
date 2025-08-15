@@ -242,3 +242,10 @@ When you have issues with the http requests to your HA instance, you might like 
 ```
 log: trace
 ```
+
+
+# Additional Resources:
+- [Create __Long-lived access Token__ in HA](https://github.com/marq24/ha-evcc/blob/main/HA_AS_EVCC_SOURCE.md#preparation-1st-make-home-assistant-sensor-data-accessible-via-api-calls)
+- [Provide HA PV/Grid Data to evcc](https://github.com/marq24/ha-evcc/blob/main/HA_AS_EVCC_SOURCE.md)
+- [Provide HA vehicle data to evcc](https://github.com/marq24/ha-fordpass/blob/main/doc/EVCC.md)
+- [Let evcc control your HA entities (PV surplus handling)](https://github.com/marq24/ha-evcc/blob/main/HA_CONTROLLED_BY_EVCC.md)
