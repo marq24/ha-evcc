@@ -14,7 +14,7 @@ Please be aware that we are developing this integration to the best of our knowl
 
 ## Requirements
 
-- A running & configured evcc instance in your network
+- A __running__ & configured evcc instance in your network
 - A Home Assistant instance that can reach your evcc instance
 
 ## Main features
@@ -40,11 +40,13 @@ Take a look at this sample Dashboard (showing Sensors from one load point):
 
 ### Before you start — there are two 'tiny' requirements!
 
-1.  **You must have installed & configured an evcc instance in your network.** This can be either a stand-alone installation (e.g via Docker) or as a HASS-IO-AddOn. This __AddOn__ is available via the [official evcc hassio-addon repository](https://github.com/evcc-io/hassio-addon).
+1.  **You must have installed & configured an evcc instance in your network.** This can be either a stand-alone installation (e.g via Docker) or as a HASS-IO-AddOn[^1]. This __AddOn__ is available via the [official evcc hassio-addon repository](https://github.com/evcc-io/hassio-addon).
 2.  You **must know the URL** from which your HA-Instance can reach your evcc instance.
     - This is usually the IP address of your evcc server and the port on which the evcc server is running (default is `7070`).
     - If you are using a reverse proxy, you need to know the URL that your HA instance can use to reach your evcc instance.
     - When you are using docker (or docker-compose), you must ensure that the containers can communicate with each other. This means that the network and the port must be configured & exposed correctly. It's not enough that you can reach your evcc instance via a browser — your HA container must be also able to reach it!
+
+[^1]: There is a known issue when using HASS-IO - For what ever reason it has been reported, that the startup sequence of the containers (the different installed AddOns) _might not match the requirements_ of this Integration: Your evcc-server __must be up and running before the Integration can be initialized__ in HA. This is because during the initial start of the Integration your evcc configuration (active loadpoints and configured vehicles) will be evaluated in order to create the corresponding HA entities.<br/><br/>So when you restart your HASS-IO server it _can happen_ that HA already starting to initialize this Integration before the HASS-OS have started the evcc-instance. __This will lead to the situation that the Integration is not started correctly__.<br/><br/>I am sorry that my HA developer skills are not sufficient to find a solution that work in this scenario - nor did I found other integrations with similar challenges (to find inspiration). If you know one (that's actively maintained), please let me know. Of course, I am also open to any PR solving this issue for AddOn users that will work in the different scenarios (deactivating/activating the integration, with WebSocket support and without).<br/><br/>As a personal note on this: IMHO restarts of HA Servers should only happen under observation, and should not be automated in any kind - but I might be alone with my opinion. 
 
 ### Step I: Install the integration
 
