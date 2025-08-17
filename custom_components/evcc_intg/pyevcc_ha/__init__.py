@@ -54,13 +54,13 @@ async def _do_request(method: Callable) -> dict:
             except ClientError as io_exc:
                 _LOGGER.warning(f"_do_request() failed cause: {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
             except Exception as ex:
-                _LOGGER.warning(f"_do_request() failed cause: {type(ex)} - {ex} [caused by {res.request_info.method} {res.request_info.url}]")
+                _LOGGER.warning(f"_do_request() failed cause: {type(ex).__name__} - {ex} [caused by {res.request_info.method} {res.request_info.url}]")
             return {}
 
     except ClientError as exception:
         _LOGGER.warning(f"_do_request() cause of ClientConnectorError: {exception}")
     except Exception as other:
-        _LOGGER.warning(f"_do_request() unexpected: {type(other)} - {other}")
+        _LOGGER.warning(f"_do_request() unexpected: {type(other).__name__} - {other}")
 
 
 class EvccApiBridge:
@@ -92,6 +92,23 @@ class EvccApiBridge:
         # by default, we do not request the tariff endpoints
         self.request_tariff_endpoints = False
         self.request_tariff_keys = []
+
+    async def is_evcc_available(self):
+        _LOGGER.debug(f"is_evcc_available(): '{self.host}' CHECKING...")
+        req = f"{self.host}/api/state"
+        try:
+            async with self.web_session.get(url=req, ssl=False) as res:
+                res.raise_for_status()
+                if res.status in [200, 201, 202, 204, 205]:
+                    data = await res.json()
+                    if data is not None and len(data) == 0:
+                        raise BaseException("NO DATA")
+
+        except BaseException as exc:
+            _LOGGER.debug(f"is_evcc_available(): check caused: {type(exc).__name__} - {exc} - Integration is not ready to be started.")
+            raise exc
+
+        _LOGGER.debug(f"is_evcc_available(): '{self.host}' is AVAILABLE")
 
     def enable_tariff_endpoints(self, keys: list):
         self._LAST_UPDATE_HOUR = -1
@@ -192,7 +209,7 @@ class EvccApiBridge:
         except ClientConnectorError as con:
             _LOGGER.error(f"Could not connect to websocket: {con}")
         except BaseException as ex:
-            _LOGGER.error(f"BaseException@websocket: {type(ex)} {ex}")
+            _LOGGER.error(f"BaseException@websocket: {type(ex).__name__} - {ex}")
 
         self.ws_connected = False
 

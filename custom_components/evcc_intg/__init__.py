@@ -3,19 +3,8 @@ import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Final
 
+import aiohttp
 from aiohttp import ClientConnectorError
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
-from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.entity import Entity, EntityDescription
-from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.helpers.typing import UNDEFINED, UndefinedType
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.loader import async_get_integration
-from homeassistant.util import slugify
 from packaging.version import Version
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
@@ -34,6 +23,18 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.entity import Entity, EntityDescription
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.typing import UNDEFINED, UndefinedType
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.loader import async_get_integration
+from homeassistant.util import slugify
 from .const import (
     NAME,
     NAME_SHORT,
@@ -78,31 +79,37 @@ async def async_setup(hass: HomeAssistant, config: dict):  # pylint: disable=unu
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
+    _LOGGER.debug(f"async_setup_entry(): called")
+
     if DOMAIN not in hass.data:
         the_integration = await async_get_integration(hass, DOMAIN)
         intg_version = the_integration.version if the_integration is not None else "UNKNOWN"
         _LOGGER.info(STARTUP_MESSAGE % intg_version)
         hass.data.setdefault(DOMAIN, {"manifest_version": intg_version})
 
+    # using the same http client for test and final integration...
+    http_session = async_get_clientsession(hass)
 
-    coordinator = EvccDataUpdateCoordinator(hass, config_entry)
+    # simple check, IF the evcc serve is up and running ... raise an 'ConfigEntryNotReady' if
+    # the configured backend could not be reached - then let HA deal with an optional retry
+    await check_evcc_is_available(http_session, config_entry)
+
+    coordinator = EvccDataUpdateCoordinator(hass, http_session, config_entry)
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
     else:
         # If Home Assistant is already in a running state, start the watchdog
         # immediately, else trigger it after Home Assistant has finished starting.
-        if(coordinator.use_ws):
+        if coordinator.use_ws:
             if hass.state is CoreState.running:
                 await coordinator.start_watchdog()
             else:
                 hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
 
         # now we can attempt to initialize our coordinator with the data already read...
-        success = await coordinator.read_evcc_config_on_startup(hass)
-        # Signal HA to retry initializing if no connection to evcc can be made
-        if not success:
-            raise ConfigEntryNotReady("evcc not reachable during startup")
+        if not await coordinator.read_evcc_config_on_startup(hass):
+            _LOGGER.warning(f"coordinator.read_evcc_config_on_startup() was not completed successfully - please enable debug-log option in order to find a posiible root cause.")
 
         # then we can start the entity registrations...
         hass.data[DOMAIN][config_entry.entry_id] = coordinator
@@ -147,6 +154,18 @@ async def entry_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) 
 
 
 @staticmethod
+async def check_evcc_is_available(http_session: aiohttp.ClientSession, config_entry: ConfigEntry) -> None:
+    a_host = config_entry.data.get(CONF_HOST, "NOT-CONFIGURED")
+    try:
+        bridge = EvccApiBridge(host=a_host, web_session = http_session)
+        await bridge.is_evcc_available()
+        return True
+
+    except Exception as err:
+        raise ConfigEntryNotReady(f"evcc instance '{a_host}' not available (yet) - HA will keep trying") from err
+
+
+@staticmethod
 async def check_device_registry(hass: HomeAssistant):
     global DEVICE_REG_CLEANUP_RUNNING
     if not DEVICE_REG_CLEANUP_RUNNING:
@@ -178,14 +197,14 @@ async def check_device_registry(hass: HomeAssistant):
 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass: HomeAssistant, config_entry):
+    def __init__(self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry):
         _LOGGER.debug(f"starting evcc_intg for: data:{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
         self.use_ws = config_entry.data.get(CONF_USE_WS, True)
 
-        self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST),
-                                    web_session=async_get_clientsession(hass),
+        self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
+                                    web_session=http_session,
                                     coordinator=self,
                                     lang=lang)
 
@@ -415,6 +434,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         #         _LOGGER.error(f"key: {a_key}")
 
         _LOGGER.debug(f"read_evcc_config_on_startup(): Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
+        return True
 
         # Return True if we made it.
         return True
