@@ -98,8 +98,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             else:
                 hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
 
-        # now we can initialize our coordinator with the data already read...
-        await coordinator.read_evcc_config_on_startup(hass)
+        # now we can attempt to initialize our coordinator with the data already read...
+        success = await coordinator.read_evcc_config_on_startup(hass)
+        # Signal HA to retry initializing if no connection to evcc can be made
+        if not success:
+            raise ConfigEntryNotReady("evcc not reachable during startup")
 
         # then we can start the entity registrations...
         hass.data[DOMAIN][config_entry.entry_id] = coordinator
@@ -412,6 +415,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         #         _LOGGER.error(f"key: {a_key}")
 
         _LOGGER.debug(f"read_evcc_config_on_startup(): Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
+
+        # Return True if we made it.
+        return True
 
     async def _async_update_data(self) -> dict:
         """Update data via library."""
