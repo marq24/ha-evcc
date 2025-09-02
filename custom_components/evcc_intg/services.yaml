@@ -2,14 +2,12 @@ set_vehicle_plan:
   name: Set a departure plan for a vehicle connected to a loadpoint [SOC (%)]
   description: Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.
   fields:
-    # Key of the field
     startdate:
       name: Departure
       description: Please select a date in the future (seconds will be ignored)
       required: true
       selector:
         datetime:
-      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
     loadpoint:
       name: Loadpoint ID
       description: A number starting from 1...n (where 1'st your first configured loadpoint)
@@ -32,19 +30,29 @@ set_vehicle_plan:
           step: 5
           unit_of_measurement: "%"
           mode: slider
+    precondition:
+      name: Vorkonditionierung (Sekunden)
+      description: Optional: Zeitdauer für die Vorkonditionierung in Sekunden (z.B. 3600 für 1 Stunde)
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 14400
+          step: 600
+          unit_of_measurement: "s"
+          mode: slider
 
 set_loadpoint_plan:
   name: Set a departure plan for a loadpoint [Energy (kWh)]
   description: Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.
   fields:
-    # Key of the field
     startdate:
       name: Departure
       description: Please select a date in the future (seconds will be ignored)
       required: true
       selector:
         datetime:
-      # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
     loadpoint:
       name: Loadpoint ID
       description: A number starting from 1...n (where 1'st your first configured loadpoint)
