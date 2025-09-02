@@ -24,10 +24,18 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.const import (
+    CONF_HOST,
+    CONF_SCAN_INTERVAL,
+    EVENT_HOMEASSISTANT_STARTED,
+)
 from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
+from homeassistant.helpers import (
+    entity_registry,
+    config_validation as config_val,
+    device_registry as device_reg,
+)
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval
@@ -46,7 +54,8 @@ from .const import (
     SERVICE_SET_VEHICLE_PLAN,
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
-    CONFIG_VERSION, CONFIG_MINOR_VERSION
+    CONFIG_VERSION,
+    CONFIG_MINOR_VERSION,
 )
 from .service import EvccService
 
@@ -63,13 +72,23 @@ DEVICE_REG_CLEANUP_RUNNING = False
 async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if config_entry.version < CONFIG_VERSION:
         if config_entry.data is not None and len(config_entry.data) > 0:
-            _LOGGER.debug(f"Migrating configuration from version {config_entry.version}.{config_entry.minor_version}")
+            _LOGGER.debug(
+                f"Migrating configuration from version {config_entry.version}.{config_entry.minor_version}"
+            )
             if config_entry.options is not None and len(config_entry.options):
                 new_data = {**config_entry.data, **config_entry.options}
             else:
                 new_data = config_entry.data
-            hass.config_entries.async_update_entry(config_entry, data=new_data, options={}, version=CONFIG_VERSION, minor_version=CONFIG_MINOR_VERSION)
-            _LOGGER.debug(f"Migration to configuration version {config_entry.version}.{config_entry.minor_version} successful")
+            hass.config_entries.async_update_entry(
+                config_entry,
+                data=new_data,
+                options={},
+                version=CONFIG_VERSION,
+                minor_version=CONFIG_MINOR_VERSION,
+            )
+            _LOGGER.debug(
+                f"Migration to configuration version {config_entry.version}.{config_entry.minor_version} successful"
+            )
     return True
 
 
@@ -83,7 +102,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     if DOMAIN not in hass.data:
         the_integration = await async_get_integration(hass, DOMAIN)
-        intg_version = the_integration.version if the_integration is not None else "UNKNOWN"
+        intg_version = (
+            the_integration.version if the_integration is not None else "UNKNOWN"
+        )
         _LOGGER.info(STARTUP_MESSAGE % intg_version)
         hass.data.setdefault(DOMAIN, {"manifest_version": intg_version})
 
@@ -105,11 +126,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
             if hass.state is CoreState.running:
                 await coordinator.start_watchdog()
             else:
-                hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
+                hass.bus.async_listen_once(
+                    EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog
+                )
 
         # now we can attempt to initialize our coordinator with the data already read...
         if not await coordinator.read_evcc_config_on_startup(hass):
-            _LOGGER.warning(f"coordinator.read_evcc_config_on_startup() was not completed successfully - please enable debug-log option in order to find a posiible root cause.")
+            _LOGGER.warning(
+                f"coordinator.read_evcc_config_on_startup() was not completed successfully - please enable debug-log option in order to find a posiible root cause."
+            )
 
         # then we can start the entity registrations...
         hass.data[DOMAIN][config_entry.entry_id] = coordinator
@@ -117,22 +142,34 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
         # initialize our service...
         evcc_services = EvccService(hass, config_entry, coordinator)
-        hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, evcc_services.set_loadpoint_plan,
-                                     supports_response=SupportsResponse.OPTIONAL)
-        hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, evcc_services.set_vehicle_plan,
-                                     supports_response=SupportsResponse.OPTIONAL)
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_LOADPOINT_PLAN,
+            evcc_services.set_loadpoint_plan,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
+        hass.services.async_register(
+            DOMAIN,
+            SERVICE_SET_VEHICLE_PLAN,
+            evcc_services.set_vehicle_plan,
+            supports_response=SupportsResponse.OPTIONAL,
+        )
 
         # yes - hurray! we can now cleanup the device registry...
         asyncio.create_task(check_device_registry(hass))
 
-        config_entry.async_on_unload(config_entry.add_update_listener(entry_update_listener))
+        config_entry.async_on_unload(
+            config_entry.add_update_listener(entry_update_listener)
+        )
         # ok we are done...
         return True
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     _LOGGER.debug(f"async_unload_entry() called for entry: {config_entry.entry_id}")
-    unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
+    unload_ok = await hass.config_entries.async_unload_platforms(
+        config_entry, PLATFORMS
+    )
 
     if unload_ok:
         if DOMAIN in hass.data and config_entry.entry_id in hass.data[DOMAIN]:
@@ -154,15 +191,19 @@ async def entry_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) 
 
 
 @staticmethod
-async def check_evcc_is_available(http_session: aiohttp.ClientSession, config_entry: ConfigEntry) -> None:
+async def check_evcc_is_available(
+    http_session: aiohttp.ClientSession, config_entry: ConfigEntry
+) -> None:
     a_host = config_entry.data.get(CONF_HOST, "NOT-CONFIGURED")
     try:
-        bridge = EvccApiBridge(host=a_host, web_session = http_session)
+        bridge = EvccApiBridge(host=a_host, web_session=http_session)
         await bridge.is_evcc_available()
         return True
 
     except Exception as err:
-        raise ConfigEntryNotReady(f"evcc instance '{a_host}' not available (yet) - HA will keep trying") from err
+        raise ConfigEntryNotReady(
+            f"evcc instance '{a_host}' not available (yet) - HA will keep trying"
+        ) from err
 
 
 @staticmethod
@@ -183,11 +224,15 @@ async def check_device_registry(hass: HomeAssistant):
                             if hasattr(a_device_entry, "manufacturer"):
                                 manufacturer_value = a_device_entry.manufacturer
                                 if not f"{manufacturer_value}".__eq__(MANUFACTURER):
-                                    _LOGGER.info(f"found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
+                                    _LOGGER.info(
+                                        f"found a OLD {DOMAIN} DeviceEntry: {a_device_entry}"
+                                    )
                                     key_list.append(a_device_entry.id)
 
                 if len(key_list) > 0:
-                    _LOGGER.info(f"NEED TO DELETE old {DOMAIN} DeviceEntries: {key_list}")
+                    _LOGGER.info(
+                        f"NEED TO DELETE old {DOMAIN} DeviceEntries: {key_list}"
+                    )
                     for a_device_entry_id in key_list:
                         a_device_reg.async_remove_device(device_id=a_device_entry_id)
 
@@ -197,16 +242,20 @@ async def check_device_registry(hass: HomeAssistant):
 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
-    def __init__(self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry):
+    def __init__(
+        self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry
+    ):
         _LOGGER.debug(f"starting evcc_intg for: data:{config_entry.data}")
         lang = hass.config.language.lower()
         self.name = config_entry.title
         self.use_ws = config_entry.data.get(CONF_USE_WS, True)
 
-        self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
-                                    web_session=http_session,
-                                    coordinator=self,
-                                    lang=lang)
+        self.bridge = EvccApiBridge(
+            host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
+            web_session=http_session,
+            coordinator=self,
+            lang=lang,
+        )
 
         global SCAN_INTERVAL
         SCAN_INTERVAL = timedelta(seconds=config_entry.data.get(CONF_SCAN_INTERVAL, 5))
@@ -267,14 +316,20 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             # when 'self._device_info_dict' is still {}, then the integration was started, but the
             # evcc server was not yet available and the read_evcc_config_on_startup function was
             # not called yet...
-            _LOGGER.info(f"Watchdog: Integration not READY - no device info available yet")
+            _LOGGER.info(
+                f"Watchdog: Integration not READY - no device info available yet"
+            )
         else:
             if not self.bridge.ws_connected:
                 _LOGGER.info(f"Watchdog: websocket connect required")
-                self._config_entry.async_create_background_task(self.hass, self.bridge.connect_ws(), "ws_connection")
+                self._config_entry.async_create_background_task(
+                    self.hass, self.bridge.connect_ws(), "ws_connection"
+                )
             else:
                 if self.bridge.request_tariff_endpoints:
-                    _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'tariffs' updates")
+                    _LOGGER.debug(
+                        f"Watchdog: websocket is connected - check for optional required 'tariffs' updates"
+                    )
                     await self.bridge.ws_update_tariffs_if_required()
                 else:
                     _LOGGER.debug(f"Watchdog: websocket is connected")
@@ -289,16 +344,20 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # b) vehicles
         # a) how many loadpoints
         # c) load point configuration (like 1/3 phase options)
-        if self.bridge._data is None or (len(self.bridge._data) == 0 or
-                Tag.VERSION.key not in self.bridge._data or
-                JSONKEY_LOADPOINTS not in self.bridge._data or
-                JSONKEY_VEHICLES not in self.bridge._data):
+        if self.bridge._data is None or (
+            len(self.bridge._data) == 0
+            or Tag.VERSION.key not in self.bridge._data
+            or JSONKEY_LOADPOINTS not in self.bridge._data
+            or JSONKEY_VEHICLES not in self.bridge._data
+        ):
             await self.bridge.read_all_data()
 
         initdata = self.bridge._data
 
         if initdata is None or len(initdata) == 0:
-            _LOGGER.warning("read_evcc_config_on_startup(): could not init evcc_intg - no data available from evcc!")
+            _LOGGER.warning(
+                "read_evcc_config_on_startup(): could not init evcc_intg - no data available from evcc!"
+            )
             return False
 
         if Tag.VERSION.key in initdata:
@@ -317,7 +376,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": self._version,
         }
 
         if JSONKEY_VEHICLES in initdata:
@@ -325,14 +384,16 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
                 self._vehicle[a_veh_name] = {
                     "name": a_veh["title"],
-                    #"id": slugify(f"vid_{a_veh_name}"),
+                    # "id": slugify(f"vid_{a_veh_name}"),
                     "id": slugify(a_veh["title"]),
                     "capacity": a_veh["capacity"] if "capacity" in a_veh else None,
                     "minSoc": a_veh["minSoc"] if "minSoc" in a_veh else None,
-                    "limitSoc": a_veh["limitSoc"] if "limitSoc" in a_veh else None
+                    "limitSoc": a_veh["limitSoc"] if "limitSoc" in a_veh else None,
                 }
         else:
-            _LOGGER.warning(f"NO vehicles found [{JSONKEY_VEHICLES}] in the evcc data: {initdata}")
+            _LOGGER.warning(
+                f"NO vehicles found [{JSONKEY_VEHICLES}] in the evcc data: {initdata}"
+            )
 
         api_index = 1
         if JSONKEY_LOADPOINTS in initdata:
@@ -366,12 +427,14 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "is_heating": is_heating,
                     "is_integrated": is_integrated,
                     "vehicle_key": a_loadpoint["vehicleName"],
-                    "obj": a_loadpoint
+                    "obj": a_loadpoint,
                 }
 
                 api_index += 1
         else:
-            _LOGGER.warning(f"read_evcc_config_on_startup(): NO loadpoints found [{JSONKEY_LOADPOINTS}] in the evcc data: {initdata}")
+            _LOGGER.warning(
+                f"read_evcc_config_on_startup(): NO loadpoints found [{JSONKEY_LOADPOINTS}] in the evcc data: {initdata}"
+            )
 
         if "smartCostType" in initdata:
             self._cost_type = initdata["smartCostType"]
@@ -392,11 +455,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         # here we have an issue, when there is no grid data
         # available (or is no object) at system start....
-        if "grid" in initdata and initdata["grid"] is not None and isinstance(initdata["grid"], (dict, list)):
-            if ("power" in initdata["grid"] or
-                "currents" in initdata["grid"] or
-                "energy" in initdata["grid"] or
-                "powers" in initdata["grid"] ):
+        if (
+            "grid" in initdata
+            and initdata["grid"] is not None
+            and isinstance(initdata["grid"], (dict, list))
+        ):
+            if (
+                "power" in initdata["grid"]
+                or "currents" in initdata["grid"]
+                or "energy" in initdata["grid"]
+                or "powers" in initdata["grid"]
+            ):
                 self._grid_data_as_object = True
         elif _version_info is not None:
             if Version(_version_info) >= Version("0.133.0"):
@@ -433,7 +502,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         #     for a_key in initdata:
         #         _LOGGER.error(f"key: {a_key}")
 
-        _LOGGER.debug(f"read_evcc_config_on_startup(): Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
+        _LOGGER.debug(
+            f"read_evcc_config_on_startup(): Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}"
+        )
         return True
 
         # Return True if we made it.
@@ -443,7 +514,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         """Update data via library."""
         try:
             if self.bridge.ws_connected:
-                _LOGGER.debug("_async_update_data called (but websocket is active - no data will be requested!)")
+                _LOGGER.debug(
+                    "_async_update_data called (but websocket is active - no data will be requested!)"
+                )
                 return self.bridge._data
             else:
                 _LOGGER.debug(f"_async_update_data called")
@@ -490,7 +563,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     # checking for possible existing subtypes (so key is just a 'container' for the real value)
                     # (elsewhere we solve this right now via entity_description.array_idx) -> we must check, if
                     # this can't be also used here ?!
-                    #if tag.subtype is not None and isinstance(ret, dict):
+                    # if tag.subtype is not None and isinstance(ret, dict):
                     #    if tag.subtype in ret:
                     #        ret = ret[tag.subtype]
                     #    else:
@@ -508,7 +581,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self.data:
             if tag.key in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key]
-            elif tag.key_alias is not None and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
+            elif (
+                tag.key_alias is not None
+                and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
+            ):
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key_alias]
 
     def read_tag_statistics(self, tag: Tag):
@@ -516,11 +592,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if tag.subtype in self.data[JSONKEY_STATISTICS]:
                 if tag.key in self.data[JSONKEY_STATISTICS][tag.subtype]:
                     return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key]
-                elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_STATISTICS]:
+                elif (
+                    tag.key_alias is not None
+                    and tag.key_alias in self.data[JSONKEY_STATISTICS]
+                ):
                     return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key_alias]
 
     def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
-        if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
+        if (
+            loadpoint_idx is not None
+            and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1
+        ):
             # if tag == Tag.CHARGECURRENTS:
             #    _LOGGER.error(f"valA? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]}")
             #    _LOGGER.error(f"valB? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]}")
@@ -528,7 +610,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             value = None
             if tag.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
                 value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]
-            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+            elif (
+                tag.key_alias is not None
+                and tag.key_alias in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]
+            ):
                 value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key_alias]
 
             if value is not None:
@@ -551,29 +636,46 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 return value
 
     def read_tag_vehicle_int(self, tag: Tag, loadpoint_idx: int = None):
-        if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data and loadpoint_idx is not None:
+        if (
+            len(self.data) > 0
+            and JSONKEY_LOADPOINTS in self.data
+            and loadpoint_idx is not None
+        ):
             try:
                 if len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
-                    if Tag.VEHICLENAME.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
-                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.VEHICLENAME.key]
+                    if (
+                        Tag.VEHICLENAME.key
+                        in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]
+                    ):
+                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][
+                            Tag.VEHICLENAME.key
+                        ]
                         if vehicle_id is not None:
                             if len(vehicle_id) > 0:
-                                return self.read_tag_vehicle_str(tag=tag, vehicle_id=vehicle_id)
+                                return self.read_tag_vehicle_str(
+                                    tag=tag, vehicle_id=vehicle_id
+                                )
                             else:
                                 # NO logging of empty vehicleName's -> since this just means no vehicle connected to
                                 # the loadpoint...
                                 pass
                         else:
-                            _LOGGER.debug(f"read_tag_vehicle_int: vehicle_id is None for: {loadpoint_idx}")
+                            _LOGGER.debug(
+                                f"read_tag_vehicle_int: vehicle_id is None for: {loadpoint_idx}"
+                            )
                     else:
                         _LOGGER.debug(
-                            f"read_tag_vehicle_int: {Tag.VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
+                            f"read_tag_vehicle_int: {Tag.VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}"
+                        )
                 else:
                     _LOGGER.debug(
-                        f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
+                        f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}"
+                    )
 
             except Exception as err:
-                _LOGGER.info(f"read_tag_vehicle_int: could not find a connected vehicle at loadpoint: {loadpoint_idx}")
+                _LOGGER.info(
+                    f"read_tag_vehicle_int: could not find a connected vehicle at loadpoint: {loadpoint_idx}"
+                )
 
         return None
 
@@ -582,35 +684,67 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         is_veh_PLANSTIME = tag == Tag.VEHICLEPLANSTIME
         if is_veh_PLANSSOC or is_veh_PLANSTIME:
             # yes this is really a hack! [at a certain point the API just returned 'plan' and 'plans' have been removed] ?!
-            if JSONKEY_PLAN in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN]) > 0:
+            if (
+                JSONKEY_PLAN in self.data[JSONKEY_VEHICLES][vehicle_id]
+                and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN]) > 0
+            ):
                 if is_veh_PLANSSOC:
-                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLANS_SOC]
+                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][
+                        JSONKEY_PLANS_SOC
+                    ]
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLANS_TIME])
-            elif JSONKEY_PLANS in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0:
+                    return self._convert_time(
+                        self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][
+                            JSONKEY_PLANS_TIME
+                        ]
+                    )
+            elif (
+                JSONKEY_PLANS in self.data[JSONKEY_VEHICLES][vehicle_id]
+                and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0
+            ):
                 if is_veh_PLANSSOC:
-                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_SOC]
+                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][
+                        JSONKEY_PLANS_SOC
+                    ]
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_TIME])
+                    return self._convert_time(
+                        self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][
+                            JSONKEY_PLANS_TIME
+                        ]
+                    )
             else:
                 return None
         else:
             if tag.key in self.data[JSONKEY_VEHICLES][vehicle_id]:
                 return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key]
-            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]:
+            elif (
+                tag.key_alias is not None
+                and tag.key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]
+            ):
                 return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key_alias]
             else:
                 return "0"
 
-    async def async_write_plan(self, write_to_vehicle: bool, loadpoint_idx: str, soc: str, rfcdate: str):
+    async def async_write_plan(
+        self,
+        write_to_vehicle: bool,
+        loadpoint_idx: str,
+        soc: str,
+        rfcdate: str,
+        precondition: int | None = None,
+    ):
         if write_to_vehicle:
-            return await self.bridge.write_vehicle_plan_for_loadpoint_index(loadpoint_idx, soc, rfcdate)
+            return await self.bridge.write_vehicle_plan_for_loadpoint_index(
+                loadpoint_idx, soc, rfcdate, precondition
+            )
         else:
             return await self.bridge.write_loadpoint_plan(loadpoint_idx, soc, rfcdate)
 
-    async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
+    async def async_press_tag(
+        self, tag: Tag, value, idx: str = None, entity: Entity = None
+    ) -> dict:
         result = await self.bridge.press_tag(tag, value, idx)
         _LOGGER.debug(f"press result: {result}")
 
@@ -619,13 +753,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         return result
 
-    async def async_write_tag(self, tag: Tag, value, idx_str: str = None, entity: Entity = None) -> dict:
+    async def async_write_tag(
+        self, tag: Tag, value, idx_str: str = None, entity: Entity = None
+    ) -> dict:
         """Update single data"""
         result = await self.bridge.write_tag(tag, value, idx_str)
         _LOGGER.debug(f"write result: {result}")
 
         if tag.key not in result or result[tag.key] is None:
-            _LOGGER.info(f"could not write value: '{value}' to: {tag} result was: {result}")
+            _LOGGER.info(
+                f"could not write value: '{value}' to: {tag} result was: {result}"
+            )
         else:
             # IMH0 it's quite tricky to patch the self.data object here... but we try!
             if tag.type == EP_TYPE.SITE:
@@ -693,14 +831,16 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def device_info_dict(self) -> dict:
         return self._device_info_dict
 
-    def device_info_dict_for_loadpoint(self, addon:str) -> dict:
+    def device_info_dict_for_loadpoint(self, addon: str) -> dict:
         # check also 'read_evcc_config_on_startup' where we create the default device_info_dict
-        unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}_{addon}")
+        unique_device_id = slugify(
+            f"did_{self._config_entry.data.get(CONF_HOST)}_{addon}"
+        )
         a_device_info_dict = {
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - Loadpoint {addon} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": self._version,
         }
         return a_device_info_dict
 
@@ -714,7 +854,9 @@ class EvccBaseEntity(Entity):
     _attr_has_entity_name = True
     _attr_name_addon = None
 
-    def __init__(self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
+    def __init__(
+        self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription
+    ) -> None:
         if hasattr(description, "tag"):
             self.tag = description.tag
         else:
@@ -726,7 +868,10 @@ class EvccBaseEntity(Entity):
         else:
             self.idx = None
 
-        if hasattr(description, "translation_key") and description.translation_key is not None:
+        if (
+            hasattr(description, "translation_key")
+            and description.translation_key is not None
+        ):
             self._attr_translation_key = description.translation_key.lower()
         else:
             self._attr_translation_key = description.key.lower()
@@ -736,17 +881,28 @@ class EvccBaseEntity(Entity):
         else:
             self._attr_name_addon = None
 
-        if hasattr(description, "native_unit_of_measurement") and description.native_unit_of_measurement is not None:
+        if (
+            hasattr(description, "native_unit_of_measurement")
+            and description.native_unit_of_measurement is not None
+        ):
             if "@@@" in description.native_unit_of_measurement:
-                description.native_unit_of_measurement = description.native_unit_of_measurement.replace("@@@", coordinator.currency)
+                description.native_unit_of_measurement = (
+                    description.native_unit_of_measurement.replace(
+                        "@@@", coordinator.currency
+                    )
+                )
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
+        self.entity_id = (
+            f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
+        )
 
-    def _name_internal(self, device_class_name: str | None,
-                       platform_translations: dict[str, Any], ) -> str | UndefinedType | None:
-
+    def _name_internal(
+        self,
+        device_class_name: str | None,
+        platform_translations: dict[str, Any],
+    ) -> str | UndefinedType | None:
         tmp = super()._name_internal(device_class_name, platform_translations)
         if tmp is not None and "@@@" in tmp:
             tmp = tmp.replace("@@@", self.coordinator.currency)
@@ -758,7 +914,9 @@ class EvccBaseEntity(Entity):
     @property
     def device_info(self) -> dict:
         if self._attr_name_addon is not None:
-            return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
+            return self.coordinator.device_info_dict_for_loadpoint(
+                self._attr_name_addon
+            )
         else:
             return self.coordinator.device_info_dict
 
@@ -774,7 +932,9 @@ class EvccBaseEntity(Entity):
 
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""
-        self.async_on_remove(self.coordinator.async_add_listener(self.async_write_ha_state))
+        self.async_on_remove(
+            self.coordinator.async_add_listener(self.async_write_ha_state)
+        )
 
     async def async_update(self):
         """Update entity."""

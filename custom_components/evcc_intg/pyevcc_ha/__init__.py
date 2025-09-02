@@ -31,30 +31,48 @@ async def _do_request(method: Callable) -> dict:
                                 data = await res.json()
                                 # check if the data is a dict with a single key "result" - this 'result' container
                                 # will be removed in the future [https://github.com/evcc-io/evcc/pull/22299]
-                                if isinstance(data, dict) and "result" in data and len(data) == 1:
+                                if (
+                                    isinstance(data, dict)
+                                    and "result" in data
+                                    and len(data) == 1
+                                ):
                                     data = data["result"]
                                 return data
                             except JSONDecodeError as json_exc:
-                                _LOGGER.warning(f"APP-API: JSONDecodeError while 'await res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                                _LOGGER.warning(
+                                    f"APP-API: JSONDecodeError while 'await res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]"
+                                )
 
                     except ClientResponseError as io_exc:
-                        _LOGGER.warning(f"APP-API: ClientResponseError while 'await res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                        _LOGGER.warning(
+                            f"APP-API: ClientResponseError while 'await res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]"
+                        )
 
-                elif int(res.headers['Content-Length']) > 0:
+                elif int(res.headers["Content-Length"]) > 0:
                     try:
                         content = await res.text()
-                        _LOGGER.warning(f"_do_request() - 'res.status == {res.status} content: {content} [caused by {res.request_info.method} {res.request_info.url}]")
+                        _LOGGER.warning(
+                            f"_do_request() - 'res.status == {res.status} content: {content} [caused by {res.request_info.method} {res.request_info.url}]"
+                        )
 
                     except ClientResponseError as io_exc:
-                        _LOGGER.warning(f"_do_request() ClientResponseError while 'res.status == {res.status} res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                        _LOGGER.warning(
+                            f"_do_request() ClientResponseError while 'res.status == {res.status} res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]"
+                        )
 
                 else:
-                    _LOGGER.warning(f"_do_request() failed with http-status {res.status} [caused by {res.request_info.method} {res.request_info.url}]")
+                    _LOGGER.warning(
+                        f"_do_request() failed with http-status {res.status} [caused by {res.request_info.method} {res.request_info.url}]"
+                    )
 
             except ClientError as io_exc:
-                _LOGGER.warning(f"_do_request() failed cause: {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
+                _LOGGER.warning(
+                    f"_do_request() failed cause: {io_exc} [caused by {res.request_info.method} {res.request_info.url}]"
+                )
             except Exception as ex:
-                _LOGGER.warning(f"_do_request() failed cause: {type(ex).__name__} - {ex} [caused by {res.request_info.method} {res.request_info.url}]")
+                _LOGGER.warning(
+                    f"_do_request() failed cause: {type(ex).__name__} - {ex} [caused by {res.request_info.method} {res.request_info.url}]"
+                )
             return {}
 
     except ClientError as exception:
@@ -64,7 +82,13 @@ async def _do_request(method: Callable) -> dict:
 
 
 class EvccApiBridge:
-    def __init__(self, host: str, web_session, coordinator: DataUpdateCoordinator = None, lang: str = "en") -> None:
+    def __init__(
+        self,
+        host: str,
+        web_session,
+        coordinator: DataUpdateCoordinator = None,
+        lang: str = "en",
+    ) -> None:
         # make sure we are compliant with old configurations (that does not include the schema in the host variable)
         if not host.startswith(("http://", "https://")):
             host = f"http://{host}"
@@ -105,7 +129,9 @@ class EvccApiBridge:
                         raise BaseException("NO DATA")
 
         except BaseException as exc:
-            _LOGGER.debug(f"is_evcc_available(): check caused: {type(exc).__name__} - {exc} - Integration is not ready to be started.")
+            _LOGGER.debug(
+                f"is_evcc_available(): check caused: {type(exc).__name__} - {exc} - Integration is not ready to be started."
+            )
             raise exc
 
         _LOGGER.debug(f"is_evcc_available(): '{self.host}' is AVAILABLE")
@@ -124,7 +150,10 @@ class EvccApiBridge:
         self._data = {}
 
     def tariffs_need_update(self) -> bool:
-        if self.request_tariff_endpoints and self._LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
+        if (
+            self.request_tariff_endpoints
+            and self._LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour
+        ):
             return True
         else:
             return False
@@ -148,7 +177,9 @@ class EvccApiBridge:
                                 self._LAST_UPDATE_HOUR = -1
                                 await self.read_all_data(request_only_tariffs=False)
                         except:
-                            _LOGGER.info(f"could not read initial data from evcc@{self.host} - ignoring")
+                            _LOGGER.info(
+                                f"could not read initial data from evcc@{self.host} - ignoring"
+                            )
                             self._data = {}
 
                         try:
@@ -163,43 +194,66 @@ class EvccApiBridge:
                                         if domain in self._data:
                                             if len(self._data[domain]) > idx:
                                                 if sub_key in self._data[domain][idx]:
-                                                    self._data[domain][idx][sub_key] = value
+                                                    self._data[domain][idx][sub_key] = (
+                                                        value
+                                                    )
                                                 else:
-                                                    self._data[domain][idx][sub_key] = value
-                                                    _LOGGER.debug(f"adding '{sub_key}' to {domain}[{idx}]")
+                                                    self._data[domain][idx][sub_key] = (
+                                                        value
+                                                    )
+                                                    _LOGGER.debug(
+                                                        f"adding '{sub_key}' to {domain}[{idx}]"
+                                                    )
                                             else:
                                                 # we need to add a new entry to the list... - well
                                                 # if we get index 4 but length is only 2 we must add multiple
                                                 # empty entries to the list...
-                                                while(len(self._data[domain]) <= idx):
+                                                while len(self._data[domain]) <= idx:
                                                     self._data[domain].append({})
-                                                self._data[domain][idx] = {sub_key: value}
-                                                _LOGGER.debug(f"adding index {idx} to '{domain}' -> {self._data[domain][idx]}")
+                                                self._data[domain][idx] = {
+                                                    sub_key: value
+                                                }
+                                                _LOGGER.debug(
+                                                    f"adding index {idx} to '{domain}' -> {self._data[domain][idx]}"
+                                                )
                                         else:
-                                            _LOGGER.info(f"unhandled [{domain} not in data] {key} - ignoring: {value} data: {self._data}")
+                                            _LOGGER.info(
+                                                f"unhandled [{domain} not in data] {key} - ignoring: {value} data: {self._data}"
+                                            )
                                         # if domain == "loadpoints":
                                         #     pass
                                         # elif domain == "vehicles":
                                         #     pass
                                     else:
-                                        _LOGGER.info(f"unhandled [not parsable key] {key} - ignoring: {value}")
+                                        _LOGGER.info(
+                                            f"unhandled [not parsable key] {key} - ignoring: {value}"
+                                        )
                                 else:
                                     if key in self._data:
                                         self._data[key] = value
                                     else:
                                         if key != "releaseNotes":
                                             self._data[key] = value
-                                            _LOGGER.info(f"'added {key}' to self._data and assign: {value}")
+                                            _LOGGER.info(
+                                                f"'added {key}' to self._data and assign: {value}"
+                                            )
 
-                            #END of for loop
-                            #_LOGGER.debug(f"key: {key} value: {value}")
+                            # END of for loop
+                            # _LOGGER.debug(f"key: {key} value: {value}")
                             if self._debounced_update_task is not None:
                                 self._debounced_update_task.cancel()
-                            self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
+                            self._debounced_update_task = asyncio.create_task(
+                                self._debounce_coordinator_update()
+                            )
 
                         except Exception as e:
-                            _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
-                    elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
+                            _LOGGER.info(
+                                f"Could not read JSON from: {msg} - caused {e}"
+                            )
+                    elif msg.type in (
+                        aiohttp.WSMsgType.CLOSED,
+                        aiohttp.WSMsgType.ERROR,
+                    ):
                         _LOGGER.debug(f"received: {msg}")
                         break
                     else:
@@ -218,7 +272,7 @@ class EvccApiBridge:
         if self.coordinator is not None:
             self.coordinator.async_set_updated_data(self._data)
 
-    async def read_all_data(self, request_only_tariffs : bool = False) -> dict:
+    async def read_all_data(self, request_only_tariffs: bool = False) -> dict:
         if request_only_tariffs:
             if self._data is None:
                 self._data = {}
@@ -227,9 +281,13 @@ class EvccApiBridge:
             _LOGGER.debug(f"going to read all data from evcc@{self.host}")
             req = f"{self.host}/api/state"
             _LOGGER.debug(f"GET request: {req}")
-            json_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
+            json_resp = await _do_request(
+                method=self.web_session.get(url=req, ssl=False)
+            )
             if json_resp is not None and len(json_resp) == 0:
-                _LOGGER.info(f"could not read data from evcc@{self.host} - using empty data")
+                _LOGGER.info(
+                    f"could not read data from evcc@{self.host} - using empty data"
+                )
 
         if self.request_tariff_endpoints:
             _LOGGER.debug(f"going to request tariff data from evcc@{self.host}")
@@ -241,13 +299,15 @@ class EvccApiBridge:
             else:
                 # we must copy the previous existing data to the new json_resp!
                 if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
-                    json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
+                    json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = self._data[
+                        ADDITIONAL_ENDPOINTS_DATA_TARIFF
+                    ]
 
         self._data = json_resp
         return json_resp
 
     async def read_tariff_data(self, json_resp: dict) -> dict:
-        #_LOGGER.info(f"going to request additional tariff data from evcc@{self.host}")
+        # _LOGGER.info(f"going to request additional tariff data from evcc@{self.host}")
         if ADDITIONAL_ENDPOINTS_DATA_TARIFF not in json_resp:
             json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = {}
 
@@ -255,7 +315,9 @@ class EvccApiBridge:
             try:
                 req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{a_key}"
                 _LOGGER.debug(f"GET request: {req}")
-                tariff_resp = await _do_request(method = self.web_session.get(url=req, ssl=False))
+                tariff_resp = await _do_request(
+                    method=self.web_session.get(url=req, ssl=False)
+                )
                 if tariff_resp is not None and len(tariff_resp) > 0:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF][a_key] = tariff_resp
             except Exception as err:
@@ -263,7 +325,7 @@ class EvccApiBridge:
 
         return json_resp
 
-    async def press_tag(self, tag: Tag, value, idx:str = None) -> dict:
+    async def press_tag(self, tag: Tag, value, idx: str = None) -> dict:
         ret = {}
         if hasattr(tag, "write_type") and tag.write_type is not None:
             final_type = tag.write_type
@@ -279,12 +341,18 @@ class EvccApiBridge:
             if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx) - 1
-                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
+                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][
+                        Tag.VEHICLENAME.key
+                    ]
                     if vehicle_id is not None:
-                        ret[tag.key] = await self.press_vehicle_key(vehicle_id, tag.write_key, value)
+                        ret[tag.key] = await self.press_vehicle_key(
+                            vehicle_id, tag.write_key, value
+                        )
 
                 except Exception as err:
-                    _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx}")
+                    _LOGGER.info(
+                        f"could not find a connected vehicle at loadpoint: {idx}"
+                    )
 
         return ret
 
@@ -295,54 +363,71 @@ class EvccApiBridge:
         elif value is not None:
             value = str(value)
 
-        _LOGGER.info(f"going to press a button with payload '{value}' for key '{write_key}' to evcc-loadpoint{lp_idx}@{self.host}")
+        _LOGGER.info(
+            f"going to press a button with payload '{value}' for key '{write_key}' to evcc-loadpoint{lp_idx}@{self.host}"
+        )
         if value is None:
             if write_key == Tag.DETECTVEHICLE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/vehicle"
                 _LOGGER.debug(f"PATCH request: {req}")
-                r_json = await _do_request(method = self.web_session.patch(url=req, ssl=False))
+                r_json = await _do_request(
+                    method=self.web_session.patch(url=req, ssl=False)
+                )
             else:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
+                r_json = await _do_request(
+                    method=self.web_session.delete(url=req, ssl=False)
+                )
         else:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+        if r_json is not None and (
+            (hasattr(r_json, "len") and len(r_json) > 0)
+            or isinstance(r_json, (Number, str))
+        ):
             return r_json
         else:
             return {"err": "no response from evcc"}
 
-    async def press_vehicle_key(self, vehicle_id:str, write_key, value) -> dict:
+    async def press_vehicle_key(self, vehicle_id: str, write_key, value) -> dict:
         if isinstance(value, (bool, int, float)):
             value = str(value).lower()
         elif value is not None:
             value = str(value)
 
-        _LOGGER.info(f"going to press a button with payload '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
+        _LOGGER.info(
+            f"going to press a button with payload '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}"
+        )
         r_json = None
         if value is None:
             if write_key == Tag.VEHICLEPLANSDELETE.write_key:
-                req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
+                req = (
+                    f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
+                )
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
+                r_json = await _do_request(
+                    method=self.web_session.delete(url=req, ssl=False)
+                )
             else:
                 pass
         else:
             req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
 
         if r_json is not None:
-            if (hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str)):
+            if (hasattr(r_json, "len") and len(r_json) > 0) or isinstance(
+                r_json, (Number, str)
+            ):
                 r_json[write_key] = "OK"
             return r_json
         else:
             return {"err": "no response from evcc"}
 
-    async def write_tag(self, tag: Tag, value, idx_str:str = None) -> dict:
+    async def write_tag(self, tag: Tag, value, idx_str: str = None) -> dict:
         ret = {}
         if hasattr(tag, "write_type") and tag.write_type is not None:
             final_type = tag.write_type
@@ -361,12 +446,18 @@ class EvccApiBridge:
             if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx_str) - 1
-                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
+                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][
+                        Tag.VEHICLENAME.key
+                    ]
                     if vehicle_id is not None:
-                        ret[tag.key] = await self.write_vehicle_key(vehicle_id, tag.write_key, value)
+                        ret[tag.key] = await self.write_vehicle_key(
+                            vehicle_id, tag.write_key, value
+                        )
 
                 except Exception as err:
-                    _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx_str}")
+                    _LOGGER.info(
+                        f"could not find a connected vehicle at loadpoint: {idx_str}"
+                    )
 
         return ret
 
@@ -376,18 +467,25 @@ class EvccApiBridge:
         elif value is not None:
             value = str(value)
 
-        _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-site@{self.host}")
+        _LOGGER.info(
+            f"going to write '{value}' for key '{write_key}' to evcc-site@{self.host}"
+        )
         r_json = None
         if value is None:
             req = f"{self.host}/api/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
+            r_json = await _do_request(
+                method=self.web_session.delete(url=req, ssl=False)
+            )
         else:
             req = f"{self.host}/api/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+        if r_json is not None and (
+            (hasattr(r_json, "len") and len(r_json) > 0)
+            or isinstance(r_json, (Number, str))
+        ):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -399,65 +497,93 @@ class EvccApiBridge:
         elif value is not None:
             value = str(value)
 
-        _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-loadpoint{lp_idx_str}@{self.host}")
+        _LOGGER.info(
+            f"going to write '{value}' for key '{write_key}' to evcc-loadpoint{lp_idx_str}@{self.host}"
+        )
         r_json = None
         if value is None:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await _do_request(method = self.web_session.delete(url=req, ssl=False))
+            r_json = await _do_request(
+                method=self.web_session.delete(url=req, ssl=False)
+            )
         else:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+        if r_json is not None and (
+            (hasattr(r_json, "len") and len(r_json) > 0)
+            or isinstance(r_json, (Number, str))
+        ):
             return r_json
         else:
             return {"err": "no response from evcc"}
 
-    async def write_vehicle_key(self, vehicle_id:str, write_key, value) -> dict:
+    async def write_vehicle_key(self, vehicle_id: str, write_key, value) -> dict:
         if isinstance(value, (bool, int, float)):
             value = str(value).lower()
         else:
             value = str(value)
 
-        _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
-        req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
+        _LOGGER.info(
+            f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}"
+        )
+        req = (
+            f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
+        )
         _LOGGER.debug(f"POST request: {req}")
-        r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
+        r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+        if r_json is not None and (
+            (hasattr(r_json, "len") and len(r_json) > 0)
+            or isinstance(r_json, (Number, str))
+        ):
             return r_json
         else:
             return {"err": "no response from evcc"}
 
-    async def write_loadpoint_plan(self, idx:str, energy:str, rfc_date:str):
+    async def write_loadpoint_plan(self, idx: str, energy: str, rfc_date: str):
         # before we can write something to the vehicle endpoints, we must know the vehicle_id!
         # -> so we have to grab from the loadpoint the current vehicle!
-            try:
-                req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
-                _LOGGER.debug(f"POST request: {req}")
-                r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
-                if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
-                    return r_json
-                else:
-                    return {"err": "no response from evcc"}
+        try:
+            req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
+            _LOGGER.debug(f"POST request: {req}")
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
+            if r_json is not None and (
+                (hasattr(r_json, "len") and len(r_json) > 0)
+                or isinstance(r_json, (Number, str))
+            ):
+                return r_json
+            else:
+                return {"err": "no response from evcc"}
 
-            except Exception as err:
-                _LOGGER.info(f"could not write to loadpoint: {idx}")
+        except Exception as err:
+            _LOGGER.info(f"could not write to loadpoint: {idx}")
 
-    async def write_vehicle_plan_for_loadpoint_index(self, idx:str, soc:str, rfc_date:str):
+    async def write_vehicle_plan_for_loadpoint_index(
+        self, idx: str, soc: str, rfc_date: str, precondition: int | None = None
+    ):
         # before we can write something to the vehicle endpoints, we must know the vehicle_id!
         # -> so we have to grab from the loadpoint the current vehicle!
         if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
             try:
                 int_idx = int(idx) - 1
-                vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
+                vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][
+                    Tag.VEHICLENAME.key
+                ]
                 if vehicle_id is not None:
                     req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
+                    if precondition is not None and precondition > 0:
+                        req += f"?precondition={precondition}"
                     _LOGGER.debug(f"POST request: {req}")
-                    r_json = await _do_request(method = self.web_session.post(url=req, ssl=False))
-                    if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+                    r_json = await _do_request(
+                        method=self.web_session.post(url=req, ssl=False)
+                    )
+                    if r_json is not None and (
+                        (hasattr(r_json, "len") and len(r_json) > 0)
+                        or isinstance(r_json, (Number, str))
+                    ):
                         return r_json
                     else:
                         return {"err": "no response from evcc"}

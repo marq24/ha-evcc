@@ -32,6 +32,18 @@ set_vehicle_plan:
           step: 5
           unit_of_measurement: "%"
           mode: slider
+    precondition:
+      name: Preconditioning in Seconds
+      description: Duration for preconditioning in seconds (e.g., 3600 for 1 hour)
+      required: false
+      default: 0
+      selector:
+        number:
+          min: 0
+          max: 14400
+          step: 600
+          unit_of_measurement: "s"
+          mode: slider
 
 set_loadpoint_plan:
   name: Set a departure plan for a loadpoint [Energy (kWh)]
