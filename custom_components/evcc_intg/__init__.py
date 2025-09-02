@@ -24,18 +24,10 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import (
-    CONF_HOST,
-    CONF_SCAN_INTERVAL,
-    EVENT_HOMEASSISTANT_STARTED,
-)
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
 from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import (
-    entity_registry,
-    config_validation as config_val,
-    device_registry as device_reg,
-)
+from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval
@@ -79,16 +71,9 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                 new_data = {**config_entry.data, **config_entry.options}
             else:
                 new_data = config_entry.data
-            hass.config_entries.async_update_entry(
-                config_entry,
-                data=new_data,
-                options={},
-                version=CONFIG_VERSION,
-                minor_version=CONFIG_MINOR_VERSION,
-            )
-            _LOGGER.debug(
-                f"Migration to configuration version {config_entry.version}.{config_entry.minor_version} successful"
-            )
+
+            hass.config_entries.async_update_entry(config_entry, data=new_data, options={}, version=CONFIG_VERSION, minor_version=CONFIG_MINOR_VERSION)
+            _LOGGER.debug(f"Migration to configuration version {config_entry.version}.{config_entry.minor_version} successful")
     return True
 
 
@@ -102,9 +87,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     if DOMAIN not in hass.data:
         the_integration = await async_get_integration(hass, DOMAIN)
-        intg_version = (
-            the_integration.version if the_integration is not None else "UNKNOWN"
-        )
+        intg_version = the_integration.version if the_integration is not None else "UNKNOWN"
         _LOGGER.info(STARTUP_MESSAGE % intg_version)
         hass.data.setdefault(DOMAIN, {"manifest_version": intg_version})
 
@@ -142,18 +125,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
         # initialize our service...
         evcc_services = EvccService(hass, config_entry, coordinator)
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_SET_LOADPOINT_PLAN,
-            evcc_services.set_loadpoint_plan,
-            supports_response=SupportsResponse.OPTIONAL,
-        )
-        hass.services.async_register(
-            DOMAIN,
-            SERVICE_SET_VEHICLE_PLAN,
-            evcc_services.set_vehicle_plan,
-            supports_response=SupportsResponse.OPTIONAL,
-        )
+        hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, evcc_services.set_loadpoint_plan,
+                                     supports_response=SupportsResponse.OPTIONAL)
+        hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, evcc_services.set_vehicle_plan,
+                                     supports_response=SupportsResponse.OPTIONAL)
 
         # yes - hurray! we can now cleanup the device registry...
         asyncio.create_task(check_device_registry(hass))
@@ -254,8 +229,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
             web_session=http_session,
             coordinator=self,
-            lang=lang,
-        )
+            lang=lang)
 
         global SCAN_INTERVAL
         SCAN_INTERVAL = timedelta(seconds=config_entry.data.get(CONF_SCAN_INTERVAL, 5))
@@ -376,7 +350,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME} [{self._system_id}]",
-            "sw_version": self._version,
+            "sw_version": self._version
         }
 
         if JSONKEY_VEHICLES in initdata:
@@ -388,7 +362,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "id": slugify(a_veh["title"]),
                     "capacity": a_veh["capacity"] if "capacity" in a_veh else None,
                     "minSoc": a_veh["minSoc"] if "minSoc" in a_veh else None,
-                    "limitSoc": a_veh["limitSoc"] if "limitSoc" in a_veh else None,
+                    "limitSoc": a_veh["limitSoc"] if "limitSoc" in a_veh else None
                 }
         else:
             _LOGGER.warning(
@@ -427,7 +401,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "is_heating": is_heating,
                     "is_integrated": is_integrated,
                     "vehicle_key": a_loadpoint["vehicleName"],
-                    "obj": a_loadpoint,
+                    "obj": a_loadpoint
                 }
 
                 api_index += 1
@@ -455,17 +429,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         # here we have an issue, when there is no grid data
         # available (or is no object) at system start....
-        if (
-            "grid" in initdata
-            and initdata["grid"] is not None
-            and isinstance(initdata["grid"], (dict, list))
-        ):
-            if (
-                "power" in initdata["grid"]
-                or "currents" in initdata["grid"]
-                or "energy" in initdata["grid"]
-                or "powers" in initdata["grid"]
-            ):
+        if "grid" in initdata and initdata["grid"] is not None and isinstance(initdata["grid"], (dict, list)):
+            if ("power" in initdata["grid"] or
+                "currents" in initdata["grid"] or
+                "energy" in initdata["grid"] or
+                "powers" in initdata["grid"] ):
                 self._grid_data_as_object = True
         elif _version_info is not None:
             if Version(_version_info) >= Version("0.133.0"):
@@ -581,10 +549,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self.data:
             if tag.key in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key]
-            elif (
-                tag.key_alias is not None
-                and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
-            ):
+            elif tag.key_alias is not None and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key_alias]
 
     def read_tag_statistics(self, tag: Tag):
@@ -592,17 +557,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if tag.subtype in self.data[JSONKEY_STATISTICS]:
                 if tag.key in self.data[JSONKEY_STATISTICS][tag.subtype]:
                     return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key]
-                elif (
-                    tag.key_alias is not None
-                    and tag.key_alias in self.data[JSONKEY_STATISTICS]
-                ):
+                elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_STATISTICS]:
                     return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key_alias]
 
     def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
-        if (
-            loadpoint_idx is not None
-            and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1
-        ):
+        if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
             # if tag == Tag.CHARGECURRENTS:
             #    _LOGGER.error(f"valA? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]}")
             #    _LOGGER.error(f"valB? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]}")
@@ -610,10 +569,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             value = None
             if tag.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
                 value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]
-            elif (
-                tag.key_alias is not None
-                and tag.key_alias in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]
-            ):
+            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
                 value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key_alias]
 
             if value is not None:
@@ -636,20 +592,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 return value
 
     def read_tag_vehicle_int(self, tag: Tag, loadpoint_idx: int = None):
-        if (
-            len(self.data) > 0
-            and JSONKEY_LOADPOINTS in self.data
-            and loadpoint_idx is not None
-        ):
+        if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data and loadpoint_idx is not None:
             try:
                 if len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
-                    if (
-                        Tag.VEHICLENAME.key
-                        in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]
-                    ):
-                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][
-                            Tag.VEHICLENAME.key
-                        ]
+                    if Tag.VEHICLENAME.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.VEHICLENAME.key]
                         if vehicle_id is not None:
                             if len(vehicle_id) > 0:
                                 return self.read_tag_vehicle_str(
@@ -684,25 +631,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         is_veh_PLANSTIME = tag == Tag.VEHICLEPLANSTIME
         if is_veh_PLANSSOC or is_veh_PLANSTIME:
             # yes this is really a hack! [at a certain point the API just returned 'plan' and 'plans' have been removed] ?!
-            if (
-                JSONKEY_PLAN in self.data[JSONKEY_VEHICLES][vehicle_id]
-                and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN]) > 0
-            ):
+            if JSONKEY_PLAN in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN]) > 0:
                 if is_veh_PLANSSOC:
                     value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][
                         JSONKEY_PLANS_SOC
                     ]
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(
-                        self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][
-                            JSONKEY_PLANS_TIME
-                        ]
-                    )
-            elif (
-                JSONKEY_PLANS in self.data[JSONKEY_VEHICLES][vehicle_id]
-                and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0
-            ):
+                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLANS_TIME])
+            elif JSONKEY_PLANS in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0:
                 if is_veh_PLANSSOC:
                     value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][
                         JSONKEY_PLANS_SOC
@@ -719,26 +656,14 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             if tag.key in self.data[JSONKEY_VEHICLES][vehicle_id]:
                 return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key]
-            elif (
-                tag.key_alias is not None
-                and tag.key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]
-            ):
+            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]:
                 return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key_alias]
             else:
                 return "0"
 
-    async def async_write_plan(
-        self,
-        write_to_vehicle: bool,
-        loadpoint_idx: str,
-        soc: str,
-        rfcdate: str,
-        precondition: int | None = None,
-    ):
+    async def async_write_plan(self, write_to_vehicle: bool, loadpoint_idx: str, soc: str, rfcdate: str, precondition: int | None = None):
         if write_to_vehicle:
-            return await self.bridge.write_vehicle_plan_for_loadpoint_index(
-                loadpoint_idx, soc, rfcdate, precondition
-            )
+            return await self.bridge.write_vehicle_plan_for_loadpoint_index(loadpoint_idx, soc, rfcdate, precondition)
         else:
             return await self.bridge.write_loadpoint_plan(loadpoint_idx, soc, rfcdate)
 
@@ -840,7 +765,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - Loadpoint {addon} [{self._system_id}]",
-            "sw_version": self._version,
+            "sw_version": self._version
         }
         return a_device_info_dict
 
@@ -868,10 +793,7 @@ class EvccBaseEntity(Entity):
         else:
             self.idx = None
 
-        if (
-            hasattr(description, "translation_key")
-            and description.translation_key is not None
-        ):
+        if hasattr(description, "translation_key") and description.translation_key is not None:
             self._attr_translation_key = description.translation_key.lower()
         else:
             self._attr_translation_key = description.key.lower()
@@ -881,22 +803,13 @@ class EvccBaseEntity(Entity):
         else:
             self._attr_name_addon = None
 
-        if (
-            hasattr(description, "native_unit_of_measurement")
-            and description.native_unit_of_measurement is not None
-        ):
+        if hasattr(description, "native_unit_of_measurement") and description.native_unit_of_measurement is not None:
             if "@@@" in description.native_unit_of_measurement:
-                description.native_unit_of_measurement = (
-                    description.native_unit_of_measurement.replace(
-                        "@@@", coordinator.currency
-                    )
-                )
+                description.native_unit_of_measurement = description.native_unit_of_measurement.replace("@@@", coordinator.currency)
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = (
-            f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
-        )
+        self.entity_id = f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
 
     def _name_internal(
         self,

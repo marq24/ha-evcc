@@ -25,18 +25,19 @@
       "name": "Abfahrt Ladeplanung für einen Ladepunkt erstellen [Energie (kWh)]",
       "description": "Ladeplanung ist nur im PV-Modus aktiv. Die eingestellte CO₂-Grenze von NaN g wird in diesem Zeitraum ignoriert.",
       "fields": {
-        "startdate":  {"name": "Abfahrt", "description": "Bitte gib das Datum und die Uhrzeit Deiner geplanten Abreise an (die Sekunden werden ignoriert)"},
-        "loadpoint":    {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"},
-        "energy":  {"name": "Ladeziel", "description": "Ziel Energiemenge"}
+        "startdate": {"name": "Abfahrt", "description": "Bitte gib das Datum und die Uhrzeit Deiner geplanten Abreise an (die Sekunden werden ignoriert)"},
+        "loadpoint": {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"},
+        "energy": {"name": "Ladeziel", "description": "Ziel Energiemenge"}
       }
     },
     "set_vehicle_plan": {
       "name": "Abfahrt Ladeplanung für einen am Ladepunkt verbundens Fahrzeug erstellen [SOC (%)]",
       "description": "Ladeplanung ist nur im PV-Modus aktiv. Die eingestellte CO₂-Grenze von NaN g wird in diesem Zeitraum ignoriert.",
       "fields": {
-        "startdate":  {"name": "Abfahrt", "description": "Bitte gib das Datum und die Uhrzeit Deiner geplanten Abreise an (die Sekunden werden ignoriert)"},
-        "loadpoint":    {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"},
-        "soc":  {"name": "Ladeziel", "description": "Ziel Ladezustand (SOC)"}
+        "startdate": {"name": "Abfahrt", "description": "Bitte gib das Datum und die Uhrzeit Deiner geplanten Abreise an (die Sekunden werden ignoriert)"},
+        "loadpoint": {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"},
+        "soc": {"name": "Ladeziel", "description": "Ziel Ladezustand (SOC)"},
+        "precondition": {"name": "Batterie Vorkonditionierung", "description": "Dauer der Batterie Vorkonditionierung in Sekunden (z.b: 3600 Sekunden für eine Stunden)"}
       }
     }
   },
@@ -68,8 +69,8 @@
       "smartcostlimit_co2": {"name": "CO₂ Limit ≤"},
       "smartcostlimit": {"name": "@@@ Limit ≤"},
       "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"},
-      "enabledelay": {"name":  "Verzögerung Aktivierung"},
-      "disabledelay": {"name":  "Verzögerung Deaktivierung"}
+      "enabledelay": {"name": "Verzögerung Aktivierung"},
+      "disabledelay": {"name": "Verzögerung Deaktivierung"}
     },
     "select": {
       "prioritysoc": {
@@ -287,7 +288,7 @@
 
       "pvaction": {"name": "PV Aktivität [CODE]"},
       "pvaction_value": {"name": "PV Aktivität"},
-      "pvremaining": {"name":  "PV verbleibend"}
+      "pvremaining": {"name": "PV verbleibend"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

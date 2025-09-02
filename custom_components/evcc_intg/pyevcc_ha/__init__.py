@@ -31,11 +31,7 @@ async def _do_request(method: Callable) -> dict:
                                 data = await res.json()
                                 # check if the data is a dict with a single key "result" - this 'result' container
                                 # will be removed in the future [https://github.com/evcc-io/evcc/pull/22299]
-                                if (
-                                    isinstance(data, dict)
-                                    and "result" in data
-                                    and len(data) == 1
-                                ):
+                                if isinstance(data, dict) and "result" in data and len(data) == 1:
                                     data = data["result"]
                                 return data
                             except JSONDecodeError as json_exc:
@@ -82,13 +78,7 @@ async def _do_request(method: Callable) -> dict:
 
 
 class EvccApiBridge:
-    def __init__(
-        self,
-        host: str,
-        web_session,
-        coordinator: DataUpdateCoordinator = None,
-        lang: str = "en",
-    ) -> None:
+    def __init__(self, host: str, web_session, coordinator: DataUpdateCoordinator = None, lang: str = "en") -> None:
         # make sure we are compliant with old configurations (that does not include the schema in the host variable)
         if not host.startswith(("http://", "https://")):
             host = f"http://{host}"
@@ -150,10 +140,7 @@ class EvccApiBridge:
         self._data = {}
 
     def tariffs_need_update(self) -> bool:
-        if (
-            self.request_tariff_endpoints
-            and self._LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour
-        ):
+        if self.request_tariff_endpoints and self._LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
             return True
         else:
             return False
@@ -194,16 +181,10 @@ class EvccApiBridge:
                                         if domain in self._data:
                                             if len(self._data[domain]) > idx:
                                                 if sub_key in self._data[domain][idx]:
-                                                    self._data[domain][idx][sub_key] = (
-                                                        value
-                                                    )
+                                                    self._data[domain][idx][sub_key] = value
                                                 else:
-                                                    self._data[domain][idx][sub_key] = (
-                                                        value
-                                                    )
-                                                    _LOGGER.debug(
-                                                        f"adding '{sub_key}' to {domain}[{idx}]"
-                                                    )
+                                                    self._data[domain][idx][sub_key] = value
+                                                    _LOGGER.debug(f"adding '{sub_key}' to {domain}[{idx}]")
                                             else:
                                                 # we need to add a new entry to the list... - well
                                                 # if we get index 4 but length is only 2 we must add multiple
@@ -247,13 +228,8 @@ class EvccApiBridge:
                             )
 
                         except Exception as e:
-                            _LOGGER.info(
-                                f"Could not read JSON from: {msg} - caused {e}"
-                            )
-                    elif msg.type in (
-                        aiohttp.WSMsgType.CLOSED,
-                        aiohttp.WSMsgType.ERROR,
-                    ):
+                            _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
+                    elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
                         _LOGGER.debug(f"received: {msg}")
                         break
                     else:
@@ -404,9 +380,7 @@ class EvccApiBridge:
         r_json = None
         if value is None:
             if write_key == Tag.VEHICLEPLANSDELETE.write_key:
-                req = (
-                    f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
-                )
+                req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
                 r_json = await _do_request(
                     method=self.web_session.delete(url=req, ssl=False)
@@ -526,12 +500,8 @@ class EvccApiBridge:
         else:
             value = str(value)
 
-        _LOGGER.info(
-            f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}"
-        )
-        req = (
-            f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
-        )
+        _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
+        req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
         _LOGGER.debug(f"POST request: {req}")
         r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
 
@@ -561,9 +531,7 @@ class EvccApiBridge:
         except Exception as err:
             _LOGGER.info(f"could not write to loadpoint: {idx}")
 
-    async def write_vehicle_plan_for_loadpoint_index(
-        self, idx: str, soc: str, rfc_date: str, precondition: int | None = None
-    ):
+    async def write_vehicle_plan_for_loadpoint_index(self, idx:str, soc:str, rfc_date:str, precondition: int | None = None):
         # before we can write something to the vehicle endpoints, we must know the vehicle_id!
         # -> so we have to grab from the loadpoint the current vehicle!
         if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:

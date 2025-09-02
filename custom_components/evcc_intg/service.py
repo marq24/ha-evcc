@@ -22,7 +22,7 @@ class EvccService:
         input_date_str = call.data.get("startdate", None)
         loadpoint = call.data.get("loadpoint", 0)
 
-        # SOC oder ENERGY abhängig vom Modus
+        # SOC or ENERGY depending on from Mode
         if write_to_vehicle:
             set_value = call.data.get("soc", 0)
         else:
@@ -30,12 +30,7 @@ class EvccService:
 
         precondition = call.data.get("precondition", None)
 
-        if (
-            input_date_str is not None
-            and isinstance(loadpoint, int)
-            and isinstance(set_value, int)
-            and set_value > 0
-        ):
+        if input_date_str is not None and isinstance(loadpoint, int) and isinstance(set_value, int) and set_value > 0:
             try:
                 # date is YYYY-MM-DD HH:MM.SSS -> need to convert it to a UTC based RFC3339
                 start = datetime.datetime.strptime(input_date_str, "%Y-%m-%d %H:%M:%S")
@@ -43,38 +38,29 @@ class EvccService:
                 start = start.astimezone(datetime.timezone.utc)
                 start_str = start.isoformat(timespec="milliseconds")
                 start_str = start_str.replace("+00:00", "Z")
-
-                # Übergabe precondition an Coordinator, falls gesetzt (sonst None)
-                resp = await self._coordinator.async_write_plan(
-                    write_to_vehicle,
-                    str(int(loadpoint)),
-                    str(int(set_value)),
-                    start_str,
-                    precondition,
-                )
-
+                resp = await self._coordinator.async_write_plan(write_to_vehicle, str(int(loadpoint)), str(int(set_value)), start_str, precondition)
                 if resp is not None and len(resp) > 0:
                     if call.return_response:
                         return {
                             "success": "true",
                             "date": str(datetime.datetime.now().time()),
-                            "response": resp,
+                            "response": resp
                         }
                 else:
                     if call.return_response:
                         return {
                             "error": "NO or EMPTY response",
-                            "date": str(datetime.datetime.now().time()),
+                            "date": str(datetime.datetime.now().time())
                         }
             except ValueError as exc:
                 if call.return_response:
                     return {
                         "error": str(exc),
-                        "date": str(datetime.datetime.now().time()),
+                        "date": str(datetime.datetime.now().time())
                     }
 
         if call.return_response:
             return {
                 "error": "No date provided (or false data)",
-                "date": str(datetime.datetime.now().time()),
+                "date": str(datetime.datetime.now().time())
             }

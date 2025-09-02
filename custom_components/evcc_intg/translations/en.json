@@ -25,18 +25,19 @@
       "name": "Set a departure plan for a loadpoint [Energy (kWh)]",
       "description": "Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.",
       "fields": {
-        "startdate":  {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
-        "loadpoint":    {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
-        "energy":  {"name": "Charging goal", "description": "Target energy"}
+        "startdate": {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
+        "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
+        "energy": {"name": "Charging goal", "description": "Target energy"}
       }
     },
     "set_vehicle_plan": {
       "name": "Set a departure plan for a vehicle connected to a loadpoint [SOC (%)]",
       "description": "Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.",
       "fields": {
-        "startdate":  {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
-        "loadpoint":    {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
-        "soc":  {"name": "Charging goal", "description": "Target state of charge"}
+        "startdate": {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
+        "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
+        "soc": {"name": "Charging goal", "description": "Target state of charge"},
+        "precondition": {"name": "Preconditioning in Seconds", "description": "Duration for preconditioning in seconds (e.g., 3600 for 1 hour)"}
       }
     }
   },
@@ -68,8 +69,8 @@
       "smartcostlimit_co2": {"name": "CO₂ limit ≤"},
       "smartcostlimit": {"name": "@@@ limit ≤"},
       "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"},
-      "enabledelay": {"name":  "Delay Enable"},
-      "disabledelay": {"name":  "Delay Disable"}
+      "enabledelay": {"name": "Delay Enable"},
+      "disabledelay": {"name": "Delay Disable"}
     },
     "select": {
       "prioritysoc": {
@@ -357,7 +358,7 @@
 
       "pvaction": {"name": "PV Action [CODE]"},
       "pvaction_value": {"name": "PV Action"},
-      "pvremaining": {"name":  "PV Remaining"}
+      "pvremaining": {"name": "PV Remaining"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},
