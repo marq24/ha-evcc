@@ -39,6 +39,7 @@ class EP_TYPE(Enum):
     STATISTICS = JSONKEY_STATISTICS
     SITE = "site"
     TARIFF = "tariff"
+    SESSIONS = "sessions"
 
 class BATTERY_CONTENT(Enum):
     SOC = "soc"
