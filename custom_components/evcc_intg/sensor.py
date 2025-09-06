@@ -19,6 +19,7 @@ from .const import (
     # SENSOR_SENSORS_PER_VEHICLE,
     ExtSensorEntityDescription
 )
+from .pyevcc_ha import SESSIONS_KEY_TOTAL
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -150,7 +151,9 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     @property
     def extra_state_attributes(self):
         """Return sensor attributes"""
-        if self.tag.type == EP_TYPE.TARIFF:
+        if self.tag.type == EP_TYPE.SESSIONS:
+            return self.coordinator.read_tag_sessions(self.tag)
+        elif self.tag.type == EP_TYPE.TARIFF:
             return self.coordinator.read_tag_tariff(self.tag)
         elif self.tag == Tag.FORECAST_GRID or self.tag == Tag.FORECAST_SOLAR:
             data = self.coordinator.read_tag(self.tag)
@@ -199,6 +202,15 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     @property
     def native_value(self):
         """Return the state of the sensor."""
+        if self.tag.type == EP_TYPE.SESSIONS:
+            attr_data = self.coordinator.read_tag_sessions(self.tag)
+            if attr_data is not None:
+                if SESSIONS_KEY_TOTAL in attr_data:
+                    return attr_data[SESSIONS_KEY_TOTAL]
+
+                if isinstance(attr_data, (dict, list)):
+                    return len(attr_data)
+
         if self.tag.type == EP_TYPE.TARIFF:
             attr_data = self.coordinator.read_tag_tariff(self.tag)
             if attr_data is not None and "rates" in attr_data:

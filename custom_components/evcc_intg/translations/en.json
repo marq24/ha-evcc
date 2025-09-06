@@ -358,7 +358,11 @@
 
       "pvaction": {"name": "PV Action [CODE]"},
       "pvaction_value": {"name": "PV Action"},
-      "pvremaining": {"name": "PV Remaining"}
+      "pvremaining": {"name": "PV Remaining"},
+
+      "charging_sessions": {"name": "Charging Sessions"},
+      "charging_sessions_vehicles": {"name": "Charging Sessions by Vehicles"},
+      "charging_sessions_loadpoints": {"name": "Charging Sessions by Loadpoints"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

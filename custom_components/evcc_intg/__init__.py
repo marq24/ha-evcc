@@ -19,7 +19,8 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import slugify
 from packaging.version import Version
 
-from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS
+from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS, ADDITIONAL_ENDPOINTS_DATA_SESSIONS, \
+    SESSIONS_KEY_VEHICLES, SESSIONS_KEY_LOADPOINTS
 from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_LOADPOINTS,
     JSONKEY_VEHICLES,
@@ -276,8 +277,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'tariffs' updates")
                     await self.bridge.ws_update_tariffs_if_required()
 
-                # _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'sessions' updates")
-                # await self.bridge.ws_update_sessions_if_required()
+                _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'sessions' updates")
+                await self.bridge.ws_update_sessions_if_required()
 
                 _LOGGER.debug(f"Watchdog: websocket is connected")
 
@@ -383,11 +384,14 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 self._currency = "€"
 
         _version_info = None
+        _version_info_raw = None
         if Tag.VERSION.key in initdata:
-            _version_info = initdata[Tag.VERSION.key]
+            _version_info_raw = initdata[Tag.VERSION.key]
             # we need to check for possible NightlyBuild tags in the Version key
-            if " (" in _version_info:
-                _version_info = _version_info.split(" (")[0].strip()
+            if " (" in _version_info_raw:
+                _version_info = _version_info_raw.split(" (")[0].strip()
+            else:
+                _version_info = _version_info_raw
 
         # here we have an issue, when there is no grid data
         # available (or is no object) at system start....
@@ -397,40 +401,46 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 "energy" in initdata["grid"] or
                 "powers" in initdata["grid"] ):
                 self._grid_data_as_object = True
-        elif _version_info is not None:
-            if Version(_version_info) >= Version("0.133.0"):
-                self._grid_data_as_object = True
+        elif _version_info is not None and len(_version_info) > 0:
+            try:
+                if Version(_version_info) >= Version("0.133.0"):
+                    self._grid_data_as_object = True
+            except BaseException as exc:
+                _LOGGER.info(f"read_evcc_config_on_startup(): Exception when trying handle _version_info: '{_version_info}' | raw version: '{_version_info_raw}'")
 
         # enable the additional tariff endpoints...
-        if _version_info is not None:
-            _LOGGER.debug(f"check for tariff endpoints... {_version_info}")
-            if Version(_version_info) >= Version("0.200.0"):
-                request_tariff_keys = []
+        try:
+            if _version_info is not None and len(_version_info) > 0:
+                _LOGGER.debug(f"check for tariff endpoints... {_version_info}")
+                if Version(_version_info) >= Version("0.200.0"):
+                    request_tariff_keys = []
 
-                # we must check, if the tariff entities are enabled...
-                if hass is not None:
-                    registry = entity_registry.async_get(hass)
-                    if registry is not None:
-                        entity_id = f"sensor.{self._system_id}_{Tag.TARIF_GRID.entity_key}".lower()
-                        a_entity = registry.async_get(entity_id)
-                        if a_entity is not None and a_entity.disabled_by is None:
-                            _LOGGER.info("***** QUERY_TARIF_GRID ********")
-                            request_tariff_keys.append(Tag.TARIF_GRID.key)
+                    # we must check, if the tariff entities are enabled...
+                    if hass is not None:
+                        registry = entity_registry.async_get(hass)
+                        if registry is not None:
+                            entity_id = f"sensor.{self._system_id}_{Tag.TARIF_GRID.entity_key}".lower()
+                            a_entity = registry.async_get(entity_id)
+                            if a_entity is not None and a_entity.disabled_by is None:
+                                _LOGGER.info("***** QUERY_TARIF_GRID ********")
+                                request_tariff_keys.append(Tag.TARIF_GRID.key)
 
-                        entity_id = f"sensor.{self._system_id}_{Tag.TARIF_SOLAR.entity_key}".lower()
-                        a_entity = registry.async_get(entity_id)
-                        if a_entity is not None and a_entity.disabled_by is None:
-                            _LOGGER.info("***** QUERY_TARIF_SOLAR ********")
-                            request_tariff_keys.append(Tag.TARIF_SOLAR.key)
+                            entity_id = f"sensor.{self._system_id}_{Tag.TARIF_SOLAR.entity_key}".lower()
+                            a_entity = registry.async_get(entity_id)
+                            if a_entity is not None and a_entity.disabled_by is None:
+                                _LOGGER.info("***** QUERY_TARIF_SOLAR ********")
+                                request_tariff_keys.append(Tag.TARIF_SOLAR.key)
 
-                if len(request_tariff_keys) > 0:
-                    self.bridge.enable_tariff_endpoints(request_tariff_keys)
-                    # make sure, that the tariff data is up-to-date...
-                    await self.bridge.read_all_data(request_all=False, request_tariffs=True)
-        # else:
-        #     _LOGGER.debug(f"no version available... {initdata}")
-        #     for a_key in initdata:
-        #         _LOGGER.error(f"key: {a_key}")
+                    if len(request_tariff_keys) > 0:
+                        self.bridge.enable_tariff_endpoints(request_tariff_keys)
+                        # make sure, that the tariff data is up-to-date...
+                        await self.bridge.read_all_data(request_all=False, request_tariffs=True)
+            # else:
+            #     _LOGGER.debug(f"no version available... {initdata}")
+            #     for a_key in initdata:
+            #         _LOGGER.error(f"key: {a_key}")
+        except BaseException as exc:
+            _LOGGER.info(f"read_evcc_config_on_startup(): Exception when trying to query tariff endpoints - _version_info: '{_version_info}' | raw version: '{_version_info_raw}' - {type(exc).__name__} - {exc}")
 
         _LOGGER.debug(f"read_evcc_config_on_startup(): Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
         return True
@@ -506,6 +516,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key]
             elif tag.key_alias is not None and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key_alias]
+
+    def read_tag_sessions(self, tag: Tag):
+        if ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self.data:
+            if tag == Tag.CHARGING_SESSIONS:
+                return self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
+            elif tag == Tag.CHARGING_SESSIONS_VEHICLES:
+                return self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_VEHICLES]
+            elif tag == Tag.CHARGING_SESSIONS_LOADPOINTS:
+                return self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_LOADPOINTS]
 
     def read_tag_statistics(self, tag: Tag):
         if JSONKEY_STATISTICS in self.data:

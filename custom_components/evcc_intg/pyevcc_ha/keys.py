@@ -413,3 +413,7 @@ class Tag(ApiKey, Enum):
 
     TARIF_GRID = ApiKey(entity_key="tariff_api_grid", key="grid", type=EP_TYPE.TARIFF)
     TARIF_SOLAR = ApiKey(entity_key="tariff_api_solar", key="solar", type=EP_TYPE.TARIFF)
+
+    CHARGING_SESSIONS = ApiKey(key="charging_sessions", type=EP_TYPE.SESSIONS)
+    CHARGING_SESSIONS_VEHICLES = ApiKey(key="charging_sessions_vehicles", type=EP_TYPE.SESSIONS)
+    CHARGING_SESSIONS_LOADPOINTS = ApiKey(key="charging_sessions_loadpoints", type=EP_TYPE.SESSIONS)

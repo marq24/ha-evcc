@@ -28,6 +28,7 @@ JSONKEY_GRID: Final = "grid"
 ADDITIONAL_ENDPOINTS_DATA_TARIFF: Final = "@@@tariff-data"
 ADDITIONAL_ENDPOINTS_DATA_SESSIONS: Final = "@@@session-data"
 SESSIONS_KEY_RAW: Final = "raw"
+SESSIONS_KEY_TOTAL: Final = "total"
 SESSIONS_KEY_VEHICLES: Final = "vehicles"
 SESSIONS_KEY_LOADPOINTS: Final = "loadpoints"
 

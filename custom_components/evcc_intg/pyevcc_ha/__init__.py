@@ -16,6 +16,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
     ADDITIONAL_ENDPOINTS_DATA_SESSIONS,
     SESSIONS_KEY_RAW,
+    SESSIONS_KEY_TOTAL,
     SESSIONS_KEY_VEHICLES,
     SESSIONS_KEY_LOADPOINTS
 )
@@ -67,6 +68,35 @@ async def _do_request(method: Callable) -> dict:
     except Exception as other:
         _LOGGER.warning(f"_do_request() unexpected: {type(other).__name__} - {other}")
 
+
+@staticmethod
+def calculate_session_sums(sessions_resp: dict, json_resp: dict):
+    vehicle_sums = {}
+    loadpoint_sums = {}
+
+    for a_session_entry in sessions_resp:
+        vehicle = a_session_entry["vehicle"]
+        loadpoint = a_session_entry["loadpoint"]
+
+        charge_duration = a_session_entry["chargeDuration"]
+        charged_energy = a_session_entry["chargedEnergy"]
+        cost = a_session_entry["price"]
+
+        _add_to_sums(vehicle_sums, vehicle, charge_duration, charged_energy, cost)
+        _add_to_sums(loadpoint_sums, loadpoint, charge_duration, charged_energy, cost)
+
+    json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_VEHICLES] = vehicle_sums
+    json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_LOADPOINTS] = loadpoint_sums
+
+@staticmethod
+def _add_to_sums(a_sums_dict: dict, key: str, val_charge_duration, val_charged_energy, val_cost):
+    if len(key) > 0:
+        if key not in a_sums_dict:
+            a_sums_dict[key] = {"chargeDuration": 0, "chargedEnergy": 0, "cost": 0}
+
+        a_sums_dict[key]["chargeDuration"] += val_charge_duration
+        a_sums_dict[key]["chargedEnergy"] += val_charged_energy
+        a_sums_dict[key]["cost"] += val_cost
 
 class EvccApiBridge:
     def __init__(self, host: str, web_session, coordinator: DataUpdateCoordinator = None, lang: str = "en") -> None:
@@ -131,31 +161,19 @@ class EvccApiBridge:
         self._SESSIONS_LAST_UPDATE_HOUR = -1
         self._data = {}
 
-    def tariffs_need_update(self) -> bool:
-        if self.request_tariff_endpoints and self._TARIFF_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
-            return True
-        else:
-            return False
-
-    def sessions_need_update(self) -> bool:
-        if self._SESSIONS_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
-            return True
-        else:
-            return False
-
     async def ws_update_tariffs_if_required(self):
         """if we are in websocket mode, then we must (at least once each hour) update the tariff-data - we call
         this method in the watchdog to make sure that we have the latest data available!
         """
-        if self.tariffs_need_update():
+        if self.request_tariff_endpoints and self._TARIFF_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
             await self.read_all_data(request_all=False, request_tariffs=True)
 
-    # async def ws_update_sessions_if_required(self):
-    #     """if we are in websocket mode, then we must (at least once each hour) update the sessions-data - we call
-    #     this method in the watchdog to make sure that we have the latest data available!
-    #     """
-    #     if self.sessions_need_update():
-    #         await self.read_all_data(request_all=False, request_sessions=True)
+    async def ws_update_sessions_if_required(self):
+        """if we are in websocket mode, then we must (at least once each hour) update the sessions-data - we call
+        this method in the watchdog to make sure that we have the latest data available!
+        """
+        if self._SESSIONS_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
+            await self.read_all_data(request_all=False, request_sessions=True)
 
     async def connect_ws(self):
         try:
@@ -270,16 +288,16 @@ class EvccApiBridge:
                     if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
 
-        # if request_all or request_sessions:
-        #     _LOGGER.debug(f"going to request sessions data from evcc@{self.host}")
-        #     # we only update the sessions data once per hour...
-        #     if self._SESSIONS_LAST_UPDATE_HOUR != current_hour:
-        #         json_resp = await self.read_sessions_data(json_resp)
-        #         self._SESSIONS_LAST_UPDATE_HOUR = current_hour
-        #     else:
-        #         # we must copy the previous existing data to the new json_resp!
-        #         if ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
-        #             json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
+        if request_all or request_sessions:
+            _LOGGER.debug(f"going to request sessions data from evcc@{self.host}")
+            # we only update the sessions data once per hour...
+            if self._SESSIONS_LAST_UPDATE_HOUR != current_hour:
+                json_resp = await self.read_sessions_data(json_resp)
+                self._SESSIONS_LAST_UPDATE_HOUR = current_hour
+            else:
+                # we must copy the previous existing data to the new json_resp!
+                if ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
+                    json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
 
         self._data = json_resp
         return json_resp
@@ -312,43 +330,17 @@ class EvccApiBridge:
             _LOGGER.debug(f"GET request: {req}")
             sessions_resp = await _do_request(method=self.web_session.get(url=req, ssl=False))
             if sessions_resp is not None and len(sessions_resp) > 0:
-                json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_RAW] = sessions_resp
+                json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_TOTAL] = len(sessions_resp)
+                # raw data will exceed maximum size of 16384 bytes - so we can't store this
+                # json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_RAW] = sessions_resp
 
             # do the math stuff...
-            self.calculate_session_sums(sessions_resp, json_resp)
+            calculate_session_sums(sessions_resp, json_resp)
 
         except Exception as err:
             _LOGGER.info(f"could not read sessions data -> '{err}'")
 
         return json_resp
-
-    def calculate_session_sums(self, sessions_resp: dict, json_resp: dict):
-        vehicle_sums = {}
-        loadpoint_sums = {}
-
-        for a_session_entry in sessions_resp:
-            vehicle = a_session_entry["vehicle"]
-            loadpoint = a_session_entry["loadpoint"]
-
-            charge_duration = a_session_entry["chargeDuration"]
-            charged_energy = a_session_entry["chargedEnergy"]
-            price = a_session_entry["price"]
-
-            self._add_to_sums(vehicle_sums, vehicle, charge_duration, charged_energy, price)
-            self._add_to_sums(loadpoint_sums, loadpoint, charge_duration, charged_energy, price)
-
-        json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_VEHICLES] = vehicle_sums
-        json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_LOADPOINTS] = loadpoint_sums
-
-    @staticmethod
-    def _add_to_sums(a_sums_dict: dict, key: str, val_charge_duration, val_charged_energy, val_price):
-        if len(key) > 0:
-            if key not in a_sums_dict:
-                a_sums_dict[key] = {"chargeDuration": 0, "chargedEnergy": 0, "price": 0}
-
-            a_sums_dict[key]["chargeDuration"] += val_charge_duration
-            a_sums_dict[key]["chargedEnergy"] += val_charged_energy
-            a_sums_dict[key]["price"] += val_price
 
     async def press_tag(self, tag: Tag, value, idx: str = None) -> dict:
         ret = {}

@@ -288,7 +288,11 @@
 
       "pvaction": {"name": "PV Aktivität [CODE]"},
       "pvaction_value": {"name": "PV Aktivität"},
-      "pvremaining": {"name": "PV verbleibend"}
+      "pvremaining": {"name": "PV verbleibend"},
+
+      "charging_sessions": {"name": "Ladevorgänge"},
+      "charging_sessions_vehicles": {"name": "Ladevorgänge je Fahrzeug"},
+      "charging_sessions_loadpoints": {"name": "Ladevorgänge je Ladepunkt"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

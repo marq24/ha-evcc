@@ -1000,6 +1000,29 @@ SENSOR_SENSORS = [
         device_class=None,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.CHARGING_SESSIONS,
+        key=Tag.CHARGING_SESSIONS.key,
+        icon="mdi:chart-box-multiple-outline",
+        device_class=None,
+        entity_category=EntityCategory.DIAGNOSTIC
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.CHARGING_SESSIONS_VEHICLES,
+        key=Tag.CHARGING_SESSIONS_VEHICLES.key,
+        icon="mdi:chart-box-outline",
+        device_class=None,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.CHARGING_SESSIONS_LOADPOINTS,
+        key=Tag.CHARGING_SESSIONS_LOADPOINTS.key,
+        icon="mdi:chart-box-outline",
+        device_class=None,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        entity_registry_enabled_default=False
     )
 ]
 SENSOR_SENSORS_PER_LOADPOINT = [
