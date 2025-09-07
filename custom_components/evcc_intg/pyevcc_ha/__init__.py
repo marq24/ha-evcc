@@ -75,25 +75,39 @@ def calculate_session_sums(sessions_resp, json_resp: dict):
     loadpoint_sums = {}
 
     for a_session_entry in sessions_resp:
-        vehicle = a_session_entry.get("vehicle", "")
-        loadpoint = a_session_entry.get("loadpoint", "")
+        try:
+            a_vehicle = a_session_entry.get("vehicle", "")
+            a_loadpoint = a_session_entry.get("loadpoint", "")
+            if a_vehicle is None or len(a_vehicle) == 0 or a_loadpoint is None or len(a_loadpoint) == 0:
+                _LOGGER.info(f"calculate_session_sums(): missing a key in session entry: {a_session_entry}")
 
-        charge_duration = a_session_entry.get("chargeDuration", 0)
-        charged_energy = a_session_entry.get("chargedEnergy", 0)
-        cost = a_session_entry.get("price", 0)
+            charge_duration = a_session_entry.get("chargeDuration", 0)
+            if charge_duration is None or not isinstance(charge_duration, Number):
+                charge_duration = 0
+                _LOGGER.info(f"calculate_session_sums(): invalid 'charge_duration' in session entry: {a_session_entry}")
 
-        if len(vehicle) == 0 or len(loadpoint) == 0:
-            _LOGGER.debug(f"calculate_session_sums(): missing a key in session entry: {a_session_entry}")
+            charged_energy = a_session_entry.get("chargedEnergy", 0)
+            if charged_energy is None or not isinstance(charged_energy, Number):
+                charged_energy = 0
+                _LOGGER.info(f"calculate_session_sums(): invalid 'charged_energy' in session entry: {a_session_entry}")
 
-        _add_to_sums(vehicle_sums, vehicle, charge_duration, charged_energy, cost)
-        _add_to_sums(loadpoint_sums, loadpoint, charge_duration, charged_energy, cost)
+            cost = a_session_entry.get("price", 0)
+            if cost is None or not isinstance(cost, Number):
+                cost = 0
+                _LOGGER.info(f"calculate_session_sums(): invalid 'costs' in session entry: {a_session_entry}")
+
+            _add_to_sums(vehicle_sums, a_vehicle, charge_duration, charged_energy, cost)
+            _add_to_sums(loadpoint_sums, a_loadpoint, charge_duration, charged_energy, cost)
+
+        except BaseException as exception:
+            _LOGGER.info(f"calculate_session_sums(): {a_session_entry} caused: {type(exception).__name__} details: {exception}")
 
     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_VEHICLES] = vehicle_sums
     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_LOADPOINTS] = loadpoint_sums
 
 @staticmethod
 def _add_to_sums(a_sums_dict: dict, key: str, val_charge_duration, val_charged_energy, val_cost):
-    if len(key) > 0:
+    if key is not None and len(key) > 0:
         if key not in a_sums_dict:
             a_sums_dict[key] = {"chargeDuration": 0, "chargedEnergy": 0, "cost": 0}
 
@@ -340,8 +354,8 @@ class EvccApiBridge:
                 # do the math stuff...
                 calculate_session_sums(sessions_resp, json_resp)
 
-        except Exception as err:
-            _LOGGER.info(f"could not read sessions data -> '{err}'")
+        except BaseException as err:
+            _LOGGER.info(f"could not read sessions data '{type(err).__name__}' -> {err}")
 
         return json_resp
 
