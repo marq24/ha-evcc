@@ -1006,6 +1006,7 @@ SENSOR_SENSORS = [
         key=Tag.CHARGING_SESSIONS.key,
         icon="mdi:chart-box-multiple-outline",
         device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC
     ),
     ExtSensorEntityDescription(
@@ -1013,6 +1014,7 @@ SENSOR_SENSORS = [
         key=Tag.CHARGING_SESSIONS_VEHICLES.key,
         icon="mdi:chart-box-outline",
         device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False
     ),
@@ -1021,6 +1023,7 @@ SENSOR_SENSORS = [
         key=Tag.CHARGING_SESSIONS_LOADPOINTS.key,
         icon="mdi:chart-box-outline",
         device_class=None,
+        state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False
     )

@@ -70,17 +70,20 @@ async def _do_request(method: Callable) -> dict:
 
 
 @staticmethod
-def calculate_session_sums(sessions_resp: dict, json_resp: dict):
+def calculate_session_sums(sessions_resp, json_resp: dict):
     vehicle_sums = {}
     loadpoint_sums = {}
 
     for a_session_entry in sessions_resp:
-        vehicle = a_session_entry["vehicle"]
-        loadpoint = a_session_entry["loadpoint"]
+        vehicle = a_session_entry.get("vehicle", "")
+        loadpoint = a_session_entry.get("loadpoint", "")
 
-        charge_duration = a_session_entry["chargeDuration"]
-        charged_energy = a_session_entry["chargedEnergy"]
-        cost = a_session_entry["price"]
+        charge_duration = a_session_entry.get("chargeDuration", 0)
+        charged_energy = a_session_entry.get("chargedEnergy", 0)
+        cost = a_session_entry.get("price", 0)
+
+        if len(vehicle) == 0 or len(loadpoint) == 0:
+            _LOGGER.debug(f"calculate_session_sums(): missing a key in session entry: {a_session_entry}")
 
         _add_to_sums(vehicle_sums, vehicle, charge_duration, charged_energy, cost)
         _add_to_sums(loadpoint_sums, loadpoint, charge_duration, charged_energy, cost)
@@ -334,8 +337,8 @@ class EvccApiBridge:
                 # raw data will exceed maximum size of 16384 bytes - so we can't store this
                 # json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_RAW] = sessions_resp
 
-            # do the math stuff...
-            calculate_session_sums(sessions_resp, json_resp)
+                # do the math stuff...
+                calculate_session_sums(sessions_resp, json_resp)
 
         except Exception as err:
             _LOGGER.info(f"could not read sessions data -> '{err}'")
