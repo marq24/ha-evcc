@@ -1,5 +1,7 @@
 import logging
+from dataclasses import replace
 from datetime import datetime, timezone
+from numbers import Number
 
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
@@ -16,7 +18,7 @@ from .const import (
     SENSOR_SENSORS_GRID_AS_PREFIX,
     SENSOR_SENSORS_GRID_AS_OBJECT,
     SENSOR_SENSORS_PER_LOADPOINT,
-    # SENSOR_SENSORS_PER_VEHICLE,
+    SENSOR_SENSORS_PER_VEHICLE,
     ExtSensorEntityDescription
 )
 from .pyevcc_ha import SESSIONS_KEY_TOTAL
@@ -94,49 +96,75 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
                 # if it's a lookup value, we just patch the translation key...
                 if a_stub.lookup is not None:
-                    description.key = f"{description.key}_value"
-                    description.translation_key = f"{description.translation_key}_value"
+                    description = replace(
+                        description,
+                        key = f"{description.key}_value",
+                        translation_key = f"{description.translation_key}_value"
+                    )
 
+                # for charging session sensor we must patch some additional stuff...
+                if a_stub.tag.type == EP_TYPE.SESSIONS:
+                    if a_stub.tag.entity_key is not None:
+                        description = replace(
+                            description,
+                            key = f"cstotal_{description.key}",
+                            translation_key = a_stub.tag.entity_key,
+                            name_addon = lp_name_addon if multi_loadpoint_config else None,
+                        )
 
                 entity = EvccSensor(coordinator, description)
                 entities.append(entity)
 
-    # # vehicle sensors...
-    # for a_vehicle_key in coordinator._vehicle:
-    #     a_vehicle = coordinator._vehicle[a_vehicle_key]
-    #     veh_id_addon = a_vehicle["id"]
-    #     veh_name_addon = load_point_config["name"]
-    #     for a_stub in SENSOR_SENSORS_PER_VEHICLE:
-    #         description = ExtSensorEntityDescription(
-    #             tag=a_stub.tag,
-    #             key=f"{veh_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{veh_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",
-    #             translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
-    #             name_addon=veh_name_addon if multi_loadpoint_config else None,
-    #             icon=a_stub.icon,
-    #             device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
-    #             unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
-    #             entity_category=a_stub.entity_category,
-    #             entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
-    #
-    #             # the entity type specific values...
-    #             state_class=a_stub.state_class,
-    #             native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
-    #             suggested_display_precision=a_stub.suggested_display_precision,
-    #             array_idx=a_stub.array_idx,
-    #             tuple_idx=a_stub.tuple_idx,
-    #             factor=a_stub.factor,
-    #             lookup=a_stub.lookup,
-    #             ignore_zero=a_stub.ignore_zero
-    #         )
-    #
-    #         # if it's a lookup value, we just patch the translation key...
-    #         if a_stub.lookup is not None:
-    #             description.key = f"{description.key}_value"
-    #             description.translation_key = f"{description.translation_key}_value"
-    #
-    #
-    #         entity = EvccSensor(coordinator, description)
-    #         entities.append(entity)
+    # vehicle sensors...
+    for a_vehicle_key in coordinator._vehicle:
+        a_vehicle = coordinator._vehicle[a_vehicle_key]
+        veh_id_addon = a_vehicle["id"]
+        veh_name_addon = a_vehicle["name"]
+
+        for a_stub in SENSOR_SENSORS_PER_VEHICLE:
+            description = ExtSensorEntityDescription(
+                tag=a_stub.tag,
+                key=f"{veh_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{veh_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",
+                translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
+                name_addon=veh_name_addon if multi_loadpoint_config else None,
+                icon=a_stub.icon,
+                device_class=a_stub.device_class,
+                unit_of_measurement=a_stub.unit_of_measurement,
+                entity_category=a_stub.entity_category,
+                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+
+                # the entity type specific values...
+                state_class=a_stub.state_class,
+                native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                suggested_display_precision=a_stub.suggested_display_precision,
+                array_idx=a_stub.array_idx,
+                tuple_idx=a_stub.tuple_idx,
+                factor=a_stub.factor,
+                lookup=a_stub.lookup,
+                ignore_zero=a_stub.ignore_zero
+            )
+
+            # if it's a lookup value, we just patch the translation key...
+            if a_stub.lookup is not None:
+                description = replace(
+                    description,
+                    key = f"{description.key}_value",
+                    translation_key = f"{description.translation_key}_value"
+                )
+
+            # for charging session sensor we must patch some additional stuff...
+            if a_stub.tag.type == EP_TYPE.SESSIONS:
+                if a_stub.tag.entity_key is not None:
+                    description = replace(
+                        description,
+                        key = f"cstotal_{description.key}",
+                        translation_key = a_stub.tag.entity_key,
+                        name_addon = veh_name_addon
+                    )
+
+            entity = EvccSensor(coordinator, description)
+            entities.append(entity)
+
     add_entity_cb(entities)
 
 
@@ -152,9 +180,12 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def extra_state_attributes(self):
         """Return sensor attributes"""
         if self.tag.type == EP_TYPE.SESSIONS:
-            return self.coordinator.read_tag_sessions(self.tag)
+            if self.tag.subtype is None:
+                return self.coordinator.read_tag_sessions(self.tag)
+
         elif self.tag.type == EP_TYPE.TARIFF:
             return self.coordinator.read_tag_tariff(self.tag)
+
         elif self.tag == Tag.FORECAST_GRID or self.tag == Tag.FORECAST_SOLAR:
             data = self.coordinator.read_tag(self.tag)
             if data is not None:
@@ -203,13 +234,18 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def native_value(self):
         """Return the state of the sensor."""
         if self.tag.type == EP_TYPE.SESSIONS:
-            attr_data = self.coordinator.read_tag_sessions(self.tag)
+            attr_data = self.coordinator.read_tag_sessions(self.tag, self._attr_name_addon)
             if attr_data is not None:
-                if SESSIONS_KEY_TOTAL in attr_data:
-                    return attr_data[SESSIONS_KEY_TOTAL]
-
                 if isinstance(attr_data, (dict, list)):
+                    if SESSIONS_KEY_TOTAL in attr_data:
+                        return attr_data[SESSIONS_KEY_TOTAL]
+
                     return len(attr_data)
+
+                if isinstance(attr_data, (Number, str)):
+                    return attr_data
+
+            return None
 
         if self.tag.type == EP_TYPE.TARIFF:
             attr_data = self.coordinator.read_tag_tariff(self.tag)

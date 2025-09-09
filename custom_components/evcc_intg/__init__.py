@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime, timedelta, timezone
 from typing import Any, Final
+from dataclasses import replace
 
 import aiohttp
 from aiohttp import ClientConnectorError
@@ -19,9 +20,10 @@ from homeassistant.loader import async_get_integration
 from homeassistant.util import slugify
 from packaging.version import Version
 
-from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge, TRANSLATIONS, ADDITIONAL_ENDPOINTS_DATA_SESSIONS, \
-    SESSIONS_KEY_VEHICLES, SESSIONS_KEY_LOADPOINTS
+from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
+
 from custom_components.evcc_intg.pyevcc_ha.const import (
+    TRANSLATIONS,
     JSONKEY_LOADPOINTS,
     JSONKEY_VEHICLES,
     JSONKEY_PLAN,
@@ -34,7 +36,11 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_365D,
     JSONKEY_STATISTICS_30D,
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
+    ADDITIONAL_ENDPOINTS_DATA_SESSIONS,
+    SESSIONS_KEY_LOADPOINTS,
+    SESSIONS_KEY_VEHICLES
 )
+
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from .const import (
     NAME,
@@ -517,7 +523,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             elif tag.key_alias is not None and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key_alias]
 
-    def read_tag_sessions(self, tag: Tag):
+    def read_tag_sessions(self, tag: Tag, additional_key: str = None):
         if ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self.data:
             if tag == Tag.CHARGING_SESSIONS:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
@@ -525,6 +531,14 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_VEHICLES]
             elif tag == Tag.CHARGING_SESSIONS_LOADPOINTS:
                 return self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_LOADPOINTS]
+
+            elif tag.subtype is not None and tag.subtype in self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]:
+                # vehicles or loadpoints sub-tag ?
+                a_dict = self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][tag.subtype]
+                if additional_key is not None and additional_key in a_dict:
+                    return a_dict[additional_key].get(tag.key, None)
+                else:
+                    return a_dict.get(tag.key, None)
 
     def read_tag_statistics(self, tag: Tag):
         if JSONKEY_STATISTICS in self.data:
@@ -717,6 +731,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         }
         return a_device_info_dict
 
+    def device_info_dict_for_vehicle(self, addon: str) -> dict:
+        # check also 'read_evcc_config_on_startup' where we create the default device_info_dict
+        unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}_{addon}")
+        a_device_info_dict = {
+            "identifiers": {(DOMAIN, unique_device_id)},
+            "manufacturer": MANUFACTURER,
+            "name": f"{NAME_SHORT} - Vehicle {addon} [{self._system_id}]",
+            "sw_version": self._version
+        }
+        return a_device_info_dict
+
     @property
     def grid_data_as_object(self) -> bool:
         return self._grid_data_as_object
@@ -751,7 +776,10 @@ class EvccBaseEntity(Entity):
 
         if hasattr(description, "native_unit_of_measurement") and description.native_unit_of_measurement is not None:
             if "@@@" in description.native_unit_of_measurement:
-                description.native_unit_of_measurement = description.native_unit_of_measurement.replace("@@@", coordinator.currency)
+                description = replace(
+                    description,
+                    native_unit_of_measurement = description.native_unit_of_measurement.replace("@@@", coordinator.currency)
+                )
 
         self.entity_description = description
         self.coordinator = coordinator
@@ -768,6 +796,12 @@ class EvccBaseEntity(Entity):
 
     @property
     def device_info(self) -> dict:
+        if self.tag.type == EP_TYPE.SESSIONS and self.tag.subtype is not None and self._attr_name_addon is not None:
+            if self.tag.subtype == SESSIONS_KEY_LOADPOINTS:
+                return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
+            elif self.tag.subtype == SESSIONS_KEY_VEHICLES:
+                return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
+
         if self._attr_name_addon is not None:
             return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
         else:

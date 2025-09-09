@@ -7,6 +7,7 @@ from typing import Callable
 
 import aiohttp
 from aiohttp import ClientResponseError, ClientConnectorError, ClientError
+from dateutil import parser
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
@@ -81,10 +82,22 @@ def calculate_session_sums(sessions_resp, json_resp: dict):
             if a_vehicle is None or len(a_vehicle) == 0 or a_loadpoint is None or len(a_loadpoint) == 0:
                 _LOGGER.info(f"calculate_session_sums(): missing a key in session entry: {a_session_entry}")
 
-            charge_duration = a_session_entry.get("chargeDuration", 0)
-            if charge_duration is None or not isinstance(charge_duration, Number):
-                charge_duration = 0
-                _LOGGER.info(f"calculate_session_sums(): invalid 'charge_duration' in session entry: {a_session_entry}")
+            created = a_session_entry.get("created", None)
+            finished = a_session_entry.get("finished", None)
+            if created is not None and finished is not None:
+                try:
+                    delta = parser.isoparse(finished) - parser.isoparse(created)
+                    charge_duration = delta.total_seconds()
+                    #_LOGGER.debug(f"calculate_session_sums(): {a_session_entry["id"]} {charge_duration}")
+
+                except BaseException as exception:
+                    _LOGGER.info(f"calculate_session_sums(): invalid 'created' or 'finished' in session entry: {a_session_entry} caused: {type(exception).__name__} details: {exception}")
+                    charge_duration = 0
+            else:
+                charge_duration = a_session_entry.get("chargeDuration", 0)
+                if charge_duration is None or not isinstance(charge_duration, Number):
+                    charge_duration = 0
+                    _LOGGER.info(f"calculate_session_sums(): invalid 'charge_duration' in session entry: {a_session_entry}")
 
             charged_energy = a_session_entry.get("chargedEnergy", 0)
             if charged_energy is None or not isinstance(charged_energy, Number):

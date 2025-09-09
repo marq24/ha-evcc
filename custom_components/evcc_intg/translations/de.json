@@ -291,8 +291,14 @@
       "pvremaining": {"name": "PV verbleibend"},
 
       "charging_sessions": {"name": "Ladevorgänge"},
-      "charging_sessions_vehicles": {"name": "Ladevorgänge je Fahrzeug"},
-      "charging_sessions_loadpoints": {"name": "Ladevorgänge je Ladepunkt"}
+      "charging_sessions_vehicles": {"name": "Ladevorgänge: Anzahl Fahrzeuge"},
+      "charging_sessions_vehicle_cost": {"name": "Ladevorgänge: Kosten [Fzg.]"},
+      "charging_sessions_vehicle_chargedenergy": {"name": "Ladevorgänge: Energie [Fzg.]"},
+      "charging_sessions_vehicle_chargeduration": {"name": "Ladevorgänge: Dauer [Fzg.]"},
+      "charging_sessions_loadpoints": {"name": "Ladevorgänge: Anzahl Ladepunkte"},
+      "charging_sessions_loadpoint_cost": {"name": "Ladevorgänge: Kosten [LP]"},
+      "charging_sessions_loadpoint_chargedenergy": {"name": "Ladevorgänge: Energie [LP]"},
+      "charging_sessions_loadpoint_chargeduration": {"name": "Ladevorgänge: Dauer [LP]"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

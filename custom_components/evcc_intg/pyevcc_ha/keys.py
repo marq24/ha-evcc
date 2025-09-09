@@ -15,7 +15,9 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_THISYEAR,
     JSONKEY_STATISTICS_365D,
     JSONKEY_STATISTICS_30D,
-    BATTERY_LIST
+    BATTERY_LIST,
+    SESSIONS_KEY_VEHICLES,
+    SESSIONS_KEY_LOADPOINTS
 )
 
 # from aenum import Enum, extend_enum
@@ -260,7 +262,7 @@ class Tag(ApiKey, Enum):
 
     # "planOverrun": 0,
     PLANOVERRUN = ApiKey(key="planOverrun", type=EP_TYPE.LOADPOINTS)
-    
+
     # "priority": 0,
 
     # "pvAction": "inactive", "activ", "disable"
@@ -416,4 +418,11 @@ class Tag(ApiKey, Enum):
 
     CHARGING_SESSIONS = ApiKey(key="charging_sessions", type=EP_TYPE.SESSIONS)
     CHARGING_SESSIONS_VEHICLES = ApiKey(key="charging_sessions_vehicles", type=EP_TYPE.SESSIONS)
+    CHARGING_SESSIONS_VEHICLE_COST = ApiKey(entity_key="charging_sessions_vehicle_cost", key="cost", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_VEHICLES)
+    CHARGING_SESSIONS_VEHICLE_ENERGY = ApiKey(entity_key="charging_sessions_vehicle_chargedenergy", key="chargedEnergy", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_VEHICLES)
+    CHARGING_SESSIONS_VEHICLE_DURATION = ApiKey(entity_key="charging_sessions_vehicle_chargeduration", key="chargeDuration", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_VEHICLES)
+
     CHARGING_SESSIONS_LOADPOINTS = ApiKey(key="charging_sessions_loadpoints", type=EP_TYPE.SESSIONS)
+    CHARGING_SESSIONS_LOADPOINT_COST = ApiKey(entity_key="charging_sessions_loadpoint_cost", key="cost", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
+    CHARGING_SESSIONS_LOADPOINT_ENERGY = ApiKey(entity_key="charging_sessions_loadpoint_chargedenergy", key="chargedEnergy", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
+    CHARGING_SESSIONS_LOADPOINT_DURATION = ApiKey(entity_key="charging_sessions_loadpoint_chargeduration", key="chargeDuration", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)

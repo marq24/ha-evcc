@@ -361,8 +361,14 @@
       "pvremaining": {"name": "PV Remaining"},
 
       "charging_sessions": {"name": "Charging Sessions"},
-      "charging_sessions_vehicles": {"name": "Charging Sessions by Vehicles"},
-      "charging_sessions_loadpoints": {"name": "Charging Sessions by Loadpoints"}
+      "charging_sessions_vehicles": {"name": "Charging Sessions: #Vehicles"},
+      "charging_sessions_vehicle_cost": {"name": "Charging Sessions: Costs [Veh]"},
+      "charging_sessions_vehicle_chargedenergy": {"name": "Charging Sessions: Energy [Veh]"},
+      "charging_sessions_vehicle_chargeduration": {"name": "Charging Sessions: Duration [Veh]"},
+      "charging_sessions_loadpoints": {"name": "Charging Sessions: #Loadpoints"},
+      "charging_sessions_loadpoint_cost": {"name": "Charging Sessions: Costs [LP]"},
+      "charging_sessions_loadpoint_chargedenergy": {"name": "Charging Sessions: Energy [LP]"},
+      "charging_sessions_loadpoint_chargeduration": {"name": "Charging Sessions: Duration [LP]"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},
