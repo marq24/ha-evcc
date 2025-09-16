@@ -1177,7 +1177,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         tag=Tag.SESSIONCO2PERKWH,
         icon="mdi:molecule-co2",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="CO₂/kWh",
+        native_unit_of_measurement="g/kWh",
         device_class=None,
         suggested_display_precision=3
     ),
