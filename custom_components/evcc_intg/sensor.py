@@ -190,7 +190,12 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             data = self.coordinator.read_tag(self.tag)
             if data is not None:
                 if self.tag == Tag.FORECAST_GRID and FORECAST_CONTENT.GRID.value in data:
-                    return {"rates": data[FORECAST_CONTENT.GRID.value]}
+                    # thanks - with the extension to 1/4 h forcast data the content of evcc
+                    # is no longer storable in HA database (exceed maximum size of 16384 bytes)
+                    # so as workaround we throw away all 'end' values...
+                    a_array = data[FORECAST_CONTENT.GRID.value]
+                    a_array_without_end_values = [{k: v for k, v in entry.items() if k != 'end'} for entry in a_array]
+                    return {"rates": a_array_without_end_values}
                 elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
                     return data[FORECAST_CONTENT.SOLAR.value]
             #if self.tag == Tag.FORCAST_SOLAR and "timeseries" in data:
