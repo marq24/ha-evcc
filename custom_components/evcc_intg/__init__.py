@@ -1,8 +1,8 @@
 import asyncio
 import logging
+from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from typing import Any, Final
-from dataclasses import replace
 
 import aiohttp
 from aiohttp import ClientConnectorError
@@ -21,7 +21,6 @@ from homeassistant.util import slugify
 from packaging.version import Version
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
-
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
     JSONKEY_LOADPOINTS,
@@ -40,7 +39,6 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_LOADPOINTS,
     SESSIONS_KEY_VEHICLES
 )
-
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from .const import (
     NAME,
@@ -55,6 +53,7 @@ from .const import (
     CONF_USE_WS,
     CONFIG_VERSION,
     CONFIG_MINOR_VERSION,
+    EVIL_EVCC_JSON_VEH_NAME,
 )
 from .service import EvccService
 
@@ -327,15 +326,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         }
 
         if JSONKEY_VEHICLES in initdata:
-            for a_veh_name in initdata[JSONKEY_VEHICLES]:
-                a_veh = initdata[JSONKEY_VEHICLES][a_veh_name]
-                self._vehicle[a_veh_name] = {
-                    "name": a_veh["title"],
-                    # "id": slugify(f"vid_{a_veh_name}"),
-                    "id": slugify(a_veh["title"]),
-                    "capacity": a_veh["capacity"] if "capacity" in a_veh else None,
-                    "minSoc": a_veh["minSoc"] if "minSoc" in a_veh else None,
-                    "limitSoc": a_veh["limitSoc"] if "limitSoc" in a_veh else None
+            for a_evcc_veh_name in initdata[JSONKEY_VEHICLES]:
+                a_veh_object = initdata[JSONKEY_VEHICLES][a_evcc_veh_name]
+                # we must remove all possible ':' chars (like from 'db:12' - since HA can't handle them
+                # in the translation keys - be careful with this self._vehicle dict keys!
+                self._vehicle[a_evcc_veh_name.replace(':', '_')] = {
+                    EVIL_EVCC_JSON_VEH_NAME: a_evcc_veh_name,
+                    "name": a_veh_object["title"],
+                    "id": slugify(a_veh_object["title"]),
+                    "capacity": a_veh_object["capacity"] if "capacity" in a_veh_object else None,
+                    "minSoc": a_veh_object["minSoc"] if "minSoc" in a_veh_object else None,
+                    "limitSoc": a_veh_object["limitSoc"] if "limitSoc" in a_veh_object else None
                 }
         else:
             _LOGGER.warning(f"NO vehicles found [{JSONKEY_VEHICLES}] in the evcc data: {initdata}")

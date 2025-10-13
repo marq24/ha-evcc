@@ -9,7 +9,8 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, ExtSelectEntityDescription
+from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, EVIL_EVCC_JSON_VEH_NAME, \
+    ExtSelectEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 entities_min_max_dict = {}
@@ -71,8 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
                     # the entity type specific values...
-                    options=["null"] + list(
-                        coordinator._vehicle.keys()) if a_stub.tag == Tag.VEHICLENAME else a_stub.tag.options,
+                    options=["null"] + list(coordinator._vehicle.keys()) if a_stub.tag == Tag.VEHICLENAME else a_stub.tag.options,
                 )
 
                 # we might need to patch(remove) the 'auto-mode' from the phases selector
@@ -106,7 +106,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 if is_new_ha_version:
                     self.platform.platform_data.platform_translations[a_trans_key] = a_value
                 else:
-                    # old HA comparible version...
+                    # old HA compatible version...
                     self.platform.platform_translations[a_trans_key] = a_value
 
             #_LOGGER.error(f"-> {self.platform.platform_data.platform_translations}")
@@ -238,6 +238,11 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             if isinstance(value, (int, float)):
                 value = str(value)
 
+            if self.tag == Tag.VEHICLENAME and isinstance(value, str):
+                # when we read from the API a value like 'db:12' we MUST convert it
+                # to our local format 'db_12' ... since HA can't handle the ':'
+                value = value.replace(':', '_')
+
         except KeyError as kerr:
             _LOGGER.debug(f"SELECT KeyError: '{self.tag}' '{self.idx}' {kerr}")
             value = "unknown"
@@ -251,6 +256,13 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             if str(option) == "null":
                 await self.coordinator.async_write_tag(self.tag, None, self.idx, self)
             else:
+                if self.tag == Tag.VEHICLENAME:
+                    # me must map the value selected in the select.options to the final value
+                    # that is used in EVCC as identifier (can be a value like 'db:12') - but
+                    # HA can't deal correctly with the ':'
+                    if option in self.coordinator._vehicle:
+                        option = self.coordinator._vehicle[option][EVIL_EVCC_JSON_VEH_NAME]
+
                 await self.coordinator.async_write_tag(self.tag, option, self.idx, self)
 
             if self.tag == Tag.MAXCURRENT:

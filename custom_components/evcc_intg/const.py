@@ -42,6 +42,8 @@ If you have any issues with this you need to open an issue here:
 CONF_INCLUDE_EVCC: Final = "include_evcc"
 CONF_USE_WS = "use_websocket"
 
+EVIL_EVCC_JSON_VEH_NAME = "evccJsonVehicleName"
+
 SERVICE_SET_LOADPOINT_PLAN: Final = "set_loadpoint_plan"
 SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
 
