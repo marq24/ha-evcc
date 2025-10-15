@@ -53,7 +53,7 @@ from .const import (
     CONF_USE_WS,
     CONFIG_VERSION,
     CONFIG_MINOR_VERSION,
-    EVIL_EVCC_JSON_VEH_NAME,
+    EVCC_JSON_VEH_NAME,
 )
 from .service import EvccService
 
@@ -328,10 +328,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if JSONKEY_VEHICLES in initdata:
             for a_evcc_veh_name in initdata[JSONKEY_VEHICLES]:
                 a_veh_object = initdata[JSONKEY_VEHICLES][a_evcc_veh_name]
+
                 # we must remove all possible ':' chars (like from 'db:12' - since HA can't handle them
                 # in the translation keys - be careful with this self._vehicle dict keys!
-                self._vehicle[a_evcc_veh_name.replace(':', '_')] = {
-                    EVIL_EVCC_JSON_VEH_NAME: a_evcc_veh_name,
+                # self._vehicle[a_evcc_veh_name.replace(':', '_')] = {
+                self._vehicle[a_evcc_veh_name] = {
+                    EVCC_JSON_VEH_NAME: a_evcc_veh_name,
                     "name": a_veh_object["title"],
                     "id": slugify(a_veh_object["title"]),
                     "capacity": a_veh_object["capacity"] if "capacity" in a_veh_object else None,

@@ -9,8 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, EVIL_EVCC_JSON_VEH_NAME, \
-    ExtSelectEntityDescription
+from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, ExtSelectEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 entities_min_max_dict = {}
@@ -109,7 +108,9 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                     # old HA compatible version...
                     self.platform.platform_translations[a_trans_key] = a_value
 
+                _LOGGER.debug(f"added vehicle-translation-key: evcc: '{a_key}' name: '{a_value}' key: {a_trans_key}")
             #_LOGGER.error(f"-> {self.platform.platform_data.platform_translations}")
+
         elif self.tag == Tag.VEHICLEMINSOC:
             #_LOGGER.error(f"{self.platform.platform_data.platform_translations}")
             pass
@@ -223,6 +224,15 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
     #             val_limitsoc = "0"
 
     @property
+    def extra_state_attributes(self):
+        """Return select attributes"""
+        if Tag.VEHICLENAME == self.tag:
+            a_key = self.current_option
+            if isinstance(a_key, str) and a_key in self.coordinator._vehicle:
+                return {"vehicle": self.coordinator._vehicle[a_key]}
+        return None
+
+    @property
     def current_option(self) -> str | None:
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
@@ -231,17 +241,17 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
             if value is None or value == "":
                 # we must patch an empty vehicle_id to 'null' to avoid the select option being set to 'unknown'
-                if self.tag.key == Tag.VEHICLENAME.key:
+                if Tag.VEHICLENAME.key == self.tag.key:
                     value = "null"
                 else:
                     value = 'unknown'
             if isinstance(value, (int, float)):
                 value = str(value)
 
-            if self.tag == Tag.VEHICLENAME and isinstance(value, str):
-                # when we read from the API a value like 'db:12' we MUST convert it
-                # to our local format 'db_12' ... since HA can't handle the ':'
-                value = value.replace(':', '_')
+            #if self.tag == Tag.VEHICLENAME and isinstance(value, str):
+            #    # when we read from the API a value like 'db:12' we MUST convert it
+            #    # to our local format 'db_12' ... since HA can't handle the ':'
+            #    value = value.replace(':', '_')
 
         except KeyError as kerr:
             _LOGGER.debug(f"SELECT KeyError: '{self.tag}' '{self.idx}' {kerr}")
@@ -253,23 +263,23 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         try:
-            if str(option) == "null":
+            if "null" == str(option):
                 await self.coordinator.async_write_tag(self.tag, None, self.idx, self)
             else:
-                if self.tag == Tag.VEHICLENAME:
-                    # me must map the value selected in the select.options to the final value
-                    # that is used in EVCC as identifier (can be a value like 'db:12') - but
-                    # HA can't deal correctly with the ':'
-                    if option in self.coordinator._vehicle:
-                        option = self.coordinator._vehicle[option][EVIL_EVCC_JSON_VEH_NAME]
+                #if Tag.VEHICLENAME == self.tag:
+                #    # me must map the value selected in the select.options to the final value
+                #    # that is used in EVCC as identifier (can be a value like 'db:12') - but
+                #    # HA can't deal correctly with the ':'
+                #    if option in self.coordinator._vehicle:
+                #        option = self.coordinator._vehicle[option][EVCC_JSON_VEH_NAME]
 
                 await self.coordinator.async_write_tag(self.tag, option, self.idx, self)
 
-            if self.tag == Tag.MAXCURRENT:
+            if Tag.MAXCURRENT == self.tag:
                 self._check_min_options(option)
-            elif self.tag == Tag.MINCURRENT:
+            elif Tag.MINCURRENT == self.tag:
                 self._check_max_options(option)
-            elif self.tag in SOCS_TAG_LIST:
+            elif SOCS_TAG_LIST == self.tag:
                 self._check_socs(option)
 
         except ValueError:
