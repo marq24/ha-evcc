@@ -96,20 +96,31 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     async def add_to_platform_finish(self) -> None:
         if self.tag == Tag.VEHICLENAME:
-            is_new_ha_version = hasattr(self.platform, "platform_data")
+
+            has_pf_data = hasattr(self.platform, "platform_data")
+            has_pf_trans = hasattr(self.platform.platform_data, "platform_translations") if has_pf_data else hasattr(self.platform, "platform_translations")
+            has_pf_default_lang_trans = hasattr(self.platform.platform_data, "default_language_platform_translations") if has_pf_data else hasattr(self.platform, "default_language_platform_translations")
 
             # ok we're going to patch the display strings for the vehicle names... this is quite a HACK!
             for a_key in self.coordinator._vehicle.keys():
                 a_trans_key = f"component.{DOMAIN}.entity.select.{Tag.VEHICLENAME.key.lower()}.state.{a_key.lower()}"
                 a_value = self.coordinator._vehicle[a_key]["name"]
-                if is_new_ha_version:
-                    self.platform.platform_data.platform_translations[a_trans_key] = a_value
+                if has_pf_data:
+                    if has_pf_trans:
+                        self.platform.platform_data.platform_translations[a_trans_key] = a_value
+                    if has_pf_default_lang_trans:
+                        self.platform.platform_data.default_language_platform_translations[a_trans_key] = a_value
                 else:
                     # old HA compatible version...
-                    self.platform.platform_translations[a_trans_key] = a_value
+                    if has_pf_trans:
+                        self.platform.platform_translations[a_trans_key] = a_value
+                    if has_pf_default_lang_trans:
+                        self.platform.default_language_platform_translations[a_trans_key] = a_value
 
                 _LOGGER.debug(f"added vehicle-translation-key: evcc: '{a_key}' name: '{a_value}' key: {a_trans_key}")
-            #_LOGGER.error(f"-> {self.platform.platform_data.platform_translations}")
+            #_LOGGER.info(f"-> {self.platform.platform_data.platform_translations}")
+            #_LOGGER.info("----------------")
+            #_LOGGER.info(f"-> {self.platform.platform_data.default_language_platform_translations}")
 
         elif self.tag == Tag.VEHICLEMINSOC:
             #_LOGGER.error(f"{self.platform.platform_data.platform_translations}")
