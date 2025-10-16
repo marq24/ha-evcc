@@ -16,8 +16,7 @@ set_vehicle_plan:
       required: true
       example: "db:7"
       selector:
-        select:
-          custom_value: true
+        text:
 
     soc:
       name: Charging goal
