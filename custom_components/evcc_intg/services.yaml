@@ -17,7 +17,6 @@ set_vehicle_plan:
       example: "db:7"
       selector:
         text:
-
     soc:
       name: Charging goal
       description: Target state of charge

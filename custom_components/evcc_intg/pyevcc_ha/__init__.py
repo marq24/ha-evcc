@@ -555,42 +555,19 @@ class EvccApiBridge:
         except Exception as err:
             _LOGGER.info(f"could not write to loadpoint: {idx}")
 
-    async def write_vehicle_plan_for_loadpoint_index(self, idx:str, soc:str, rfc_date:str, precondition: int | None = None):
-        # before we can write something to the vehicle endpoints, we must know the vehicle_id!
-        # -> so we have to grab from the loadpoint the current vehicle!
-        if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
+    async def write_vehicle_plan(self, vehicle_id:str, soc:str, rfc_date:str, precondition: int | None = None):
+        if vehicle_id is not None:
             try:
-                int_idx = int(idx) - 1
-                vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
-                if vehicle_id is not None:
-                    req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
-                    if precondition is not None and precondition > 0:
-                        req += f"?precondition={precondition}"
-                    _LOGGER.debug(f"POST request: {req}")
+                req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
+                if precondition is not None and precondition > 0:
+                    req += f"?precondition={precondition}"
+                _LOGGER.debug(f"POST request: {req}")
 
-                    r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
-                    if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
-                        return r_json
-                    else:
-                        return {"err": "no response from evcc"}
-
+                r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
+                if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+                    return r_json
+                else:
+                    return {"err": "no response from evcc"}
             except Exception as err:
-                _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx}")
-
-    async def write_vehicle_plan_direct(self, vehicle_name: str, soc: str, rfc_date: str, precondition: int | None = None):
-        """Write a vehicle plan directly using the vehicle name."""
-        try:
-            req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_name}/plan/soc/{soc}/{rfc_date}"
-            if precondition is not None and precondition > 0:
-                req += f"?precondition={precondition}"
-            _LOGGER.debug(f"POST request: {req}")
-
-            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
-            if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
-                return r_json
-            else:
-                return {"err": "no response from evcc"}
-
-        except Exception as err:
-            _LOGGER.error(f"could not write vehicle plan for vehicle: {vehicle_name}, error: {err}")
-            return {"err": f"could not write vehicle plan: {err}"}
+                _LOGGER.error(f"could not write vehicle plan for vehicle: {vehicle_id}, error: {err}")
+                return {"err": f"could not write vehicle plan: {err}"}

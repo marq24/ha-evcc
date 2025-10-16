@@ -187,14 +187,17 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             a_dict = self.coordinator.read_tag_tariff(self.tag)
             if "rates" in a_dict:
                 a_array = a_dict["rates"]
-                a_array_without_end_values = [
-                    {
-                        "start_utc": int(datetime.fromisoformat(entry["start"]).timestamp()),
-                        "value": round(entry["value"], 4) if not float(entry["value"]).is_integer() else entry["value"],
-                    }
-                    for entry in a_array
-                ]
-                return {"rates": a_array_without_end_values}
+                if a_array is not None:
+                    a_array_without_end_values = [
+                        {
+                            "start_utc": int(datetime.fromisoformat(entry["start"]).timestamp()),
+                            "value": round(entry["value"], 4) if not float(entry["value"]).is_integer() else entry["value"],
+                        }
+                        for entry in a_array
+                    ]
+                    return {"rates": a_array_without_end_values}
+                else:
+                    return a_dict
             else:
                 return a_dict
 
@@ -206,14 +209,17 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     # is no longer storable in HA database (exceed maximum size of 16384 bytes)
                     # so as workaround we throw away all 'end' values...
                     a_array = data[FORECAST_CONTENT.GRID.value]
-                    a_array_without_end_values = [
-                        {
-                            "start_utc": int(datetime.fromisoformat(entry["start"]).timestamp()),
-                            "value": round(entry["value"], 4) if not float(entry["value"]).is_integer() else entry["value"],
-                        }
-                        for entry in a_array
-                    ]
-                    return {"rates": a_array_without_end_values}
+                    if a_array is not None:
+                        a_array_without_end_values = [
+                            {
+                                "start_utc": int(datetime.fromisoformat(entry["start"]).timestamp()),
+                                "value": round(entry["value"], 4) if not float(entry["value"]).is_integer() else entry["value"],
+                            }
+                            for entry in a_array
+                        ]
+                        return {"rates": a_array_without_end_values}
+                    else:
+                        return {"rates": a_array}
 
                 elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
                     # wow - these are real vales from the evcc API:
@@ -224,7 +230,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     a_object = data[FORECAST_CONTENT.SOLAR.value]
                     if "timeseries" in a_object:
                         a_array = a_object["timeseries"]
-                        if "ts" in a_array[0]:
+                        if a_array is not None and "ts" in a_array[0]:
                             rounded_array = [
                                 {
                                     "ts_utc": int(datetime.fromisoformat(entry["ts"]).timestamp()),
