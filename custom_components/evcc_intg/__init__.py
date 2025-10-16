@@ -640,6 +640,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             return await self.bridge.write_loadpoint_plan(loadpoint_idx, soc, rfcdate)
 
+    async def async_write_vehicle_plan_direct(self, vehicle_name: str, soc: str, rfcdate: str, precondition: int | None = None):
+        """Write a vehicle plan directly using the vehicle name."""
+        return await self.bridge.write_vehicle_plan_direct(vehicle_name, soc, rfcdate, precondition)
+
     async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
         result = await self.bridge.press_tag(tag, value, idx)
         _LOGGER.debug(f"press result: {result}")

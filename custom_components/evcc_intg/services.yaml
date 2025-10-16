@@ -1,5 +1,5 @@
 set_vehicle_plan:
-  name: Set a departure plan for a vehicle connected to a loadpoint [SOC (%)]
+  name: Set a departure plan for a vehicle [SOC (%)]
   description: Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.
   fields:
     # Key of the field
@@ -10,16 +10,14 @@ set_vehicle_plan:
       selector:
         datetime:
       # Selector (https://www.home-assistant.io/docs/blueprint/selectors/) to control the input UI for this field
-    loadpoint:
-      name: Loadpoint ID
-      description: A number starting from 1...n (where 1'st your first configured loadpoint)
+    vehicle:
+      name: Vehicle Name/ID
+      description: Select or enter vehicle name from your evcc configuration (vehicle_1 or db:7)
       required: true
-      default: 1
+      example: "db:7"
       selector:
-        number:
-          min: 1
-          max: 10
-          mode: box
+        text:
+
     soc:
       name: Charging goal
       description: Target state of charge
@@ -34,14 +32,14 @@ set_vehicle_plan:
           mode: slider
     precondition:
       name: Preconditioning in Seconds
-      description: Duration for preconditioning in seconds (e.g., 3600 for 1 hour)
+      description: Duration for preconditioning in seconds (900s = 15min, 1200s = 20min, etc.)
       required: false
-      default: 0
+      default: 900
       selector:
         number:
-          min: 0
+          min: 900
           max: 14400
-          step: 600
+          step: 300
           unit_of_measurement: "s"
           mode: slider
 
