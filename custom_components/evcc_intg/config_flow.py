@@ -2,17 +2,18 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-
-from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult, SOURCE_RECONFIGURE
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, ATTR_SW_VERSION, CONF_NAME
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+
+from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from .const import (
     DOMAIN,
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
+    CONF_PURGE_ALL,
     CONFIG_VERSION, CONFIG_MINOR_VERSION
 )
 
@@ -72,6 +73,10 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 user_input[CONF_SCAN_INTERVAL] = max(5, user_input[CONF_SCAN_INTERVAL])
                 self._abort_if_unique_id_configured()
                 if self.source == SOURCE_RECONFIGURE:
+                    # when the hostname has changed, the device_entries must be purged (since they will include
+                    # the hostname)
+                    if self._default_host != user_input[CONF_HOST]:
+                        user_input[CONF_PURGE_ALL] = True
                     return self.async_update_reload_and_abort(entry=self._get_reconfigure_entry(), data=user_input)
                 else:
                     return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
@@ -84,6 +89,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_SCAN_INTERVAL] = self._default_scan_interval
             user_input[CONF_USE_WS] = self._default_use_ws
             user_input[CONF_INCLUDE_EVCC] = self._default_include_evcc
+            user_input[CONF_PURGE_ALL] = False
 
         return self.async_show_form(
             step_id="user",
@@ -93,6 +99,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_USE_WS, default=user_input.get(CONF_USE_WS)): bool,
                 vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
                 vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
+                # vol.Optional(CONF_PURGE_ALL, default=user_input.get(CONF_PURGE_ALL)): bool,
             }),
             last_step=True,
             errors=self._errors

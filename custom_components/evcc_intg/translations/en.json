@@ -12,7 +12,11 @@
           "host": "Your local EVCC-Server URL (including the port)",
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
-          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'"
+          "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
+          "purge_all": "Remove an recreate all Devices"
+        },
+        "data_description": {
+          "purge_all": "This may be necessary if you have orphaned device entries - this setting will be reset automatically."
         }
       }
     },
@@ -31,13 +35,13 @@
       }
     },
     "set_vehicle_plan": {
-      "name": "Set a departure plan for a vehicle connected to a loadpoint [SOC (%)]",
+      "name": "Set a departure plan for a vehicle [SOC (%)]",
       "description": "Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.",
       "fields": {
         "startdate": {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
-        "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
+        "vehicle": {"name": "Vehicle name/ID", "description": "Enter the vehicle name from your evcc configuration (e.g.: vehicle_1 or db:7)"},
         "soc": {"name": "Charging goal", "description": "Target state of charge"},
-        "precondition": {"name": "Preconditioning in Seconds", "description": "Duration for preconditioning in seconds (e.g., 3600 for 1 hour)"}
+        "precondition": {"name": "Preconditioning in Seconds", "description": "Duration for preconditioning in seconds (900s = 15min, 1200s = 20min, etc.)"}
       }
     }
   },

@@ -12,7 +12,11 @@
           "host": "Deine lokale EVCC-Server Addresse (einschließlich des Ports)",
           "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
           "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
-          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen"
+          "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen",
+          "purge_all": "Alle Geräte (Devices) Löschen und neu Erstellen"
+        },
+        "data_description": {
+          "purge_all": "Dies kann notwendig werden, wenn Du verwaiste Geräte Einträge bei Dir hast - diese Einstellung wird automatisch zurückgesetzt."
         }
       }
     },
@@ -31,13 +35,13 @@
       }
     },
     "set_vehicle_plan": {
-      "name": "Abfahrt Ladeplanung für einen am Ladepunkt verbundens Fahrzeug erstellen [SOC (%)]",
+      "name": "Abfahrt Ladeplanung für ein Fahrzeug erstellen [SOC (%)]",
       "description": "Ladeplanung ist nur im PV-Modus aktiv. Die eingestellte CO₂-Grenze von NaN g wird in diesem Zeitraum ignoriert.",
       "fields": {
         "startdate": {"name": "Abfahrt", "description": "Bitte gib das Datum und die Uhrzeit Deiner geplanten Abreise an (die Sekunden werden ignoriert)"},
-        "loadpoint": {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"},
+        "vehicle": {"name": "Fahrzeugname/ID", "description": "Gib den Fahrzeugnamen aus Deiner evcc Konfiguration ein (z.B.: vehicle_1 oder db:7)"},
         "soc": {"name": "Ladeziel", "description": "Ziel Ladezustand (SOC)"},
-        "precondition": {"name": "Batterie Vorkonditionierung", "description": "Dauer der Batterie Vorkonditionierung in Sekunden (z.b: 3600 Sekunden für eine Stunden)"}
+        "precondition": {"name": "Batterie Vorkonditionierung", "description": "Dauer der Batterie Vorkonditionierung in Sekunden (900s = 15min, 1200s = 20min, etc.)"}
       }
     }
   },
