@@ -97,6 +97,16 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         _LOGGER.info(STARTUP_MESSAGE % intg_version)
         hass.data.setdefault(DOMAIN, {"manifest_version": intg_version})
 
+    # yes - hurray! we can now cleanup the device registry...
+    purge_all_devices = config_entry.data.get(CONF_PURGE_ALL, False)
+    asyncio.create_task(check_device_registry(hass, purge_all_devices, config_entry.entry_id))
+    if purge_all_devices:
+        # we remove the 'purge_all_devices' flag from the config entry...
+        new_data_dict = config_entry.data.copy()
+        del new_data_dict[CONF_PURGE_ALL]
+        hass.config_entries.async_update_entry(config_entry, data=new_data_dict, options={}, version=CONFIG_VERSION, minor_version=CONFIG_MINOR_VERSION)
+        _LOGGER.debug(f"Updated configuration (PURGE_ALL removed): {new_data_dict}")
+
     # using the same http client for test and final integration...
     http_session = async_get_clientsession(hass)
 
@@ -131,17 +141,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                                      supports_response=SupportsResponse.OPTIONAL)
         hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, evcc_services.set_vehicle_plan,
                                      supports_response=SupportsResponse.OPTIONAL)
-
-        # yes - hurray! we can now cleanup the device registry...
-        purge_all_devices = config_entry.data.get(CONF_PURGE_ALL, False)
-
-        asyncio.create_task(check_device_registry(hass, purge_all_devices))
-        #if purge_all_devices:
-        #    # we remove the 'purge_all_devices' flag from the config entry...
-        #    new_data = config_entry.data
-        #    del new_data[CONF_PURGE_ALL]
-        #    hass.config_entries.async_update_entry(config_entry, data=new_data, options={}, version=CONFIG_VERSION, minor_version=CONFIG_MINOR_VERSION)
-        #    _LOGGER.debug(f"Updated configuration (PURGE_ALL removed): {new_data}")
 
         config_entry.async_on_unload(config_entry.add_update_listener(entry_update_listener))
         # ok we are done...
@@ -184,11 +183,10 @@ async def check_evcc_is_available(http_session: aiohttp.ClientSession, config_en
 
 
 @staticmethod
-async def check_device_registry(hass: HomeAssistant, purge_all: bool = False) -> None:
+async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, config_entry_id:str = None) -> None:
     global DEVICE_REG_CLEANUP_RUNNING
     if not DEVICE_REG_CLEANUP_RUNNING:
         DEVICE_REG_CLEANUP_RUNNING = True
-        completed = False
         _LOGGER.debug(f"check device registry for outdated {DOMAIN} devices...")
         if hass is not None:
             a_device_reg = device_reg.async_get(hass)
@@ -197,9 +195,20 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False) ->
                 for a_device_entry in list(a_device_reg.devices.values()):
                     if hasattr(a_device_entry, "identifiers"):
                         ident_value = a_device_entry.identifiers
+
                         if f"{ident_value}".__contains__(DOMAIN):
-                            if purge_all:
+                            if hasattr(a_device_entry, "serial_number"):
+                                a_config_entry_id = a_device_entry.serial_number
+
+                            # ok this is an old 'device' entry (that does not include the
+                            # config_entry_id as serial_number)... This will be deleted in
+                            # any case...
+                            if a_config_entry_id is None:
                                 key_list.append(a_device_entry.id)
+
+                            if purge_all and config_entry_id is not None:
+                                if config_entry_id == a_config_entry_id:
+                                    key_list.append(a_device_entry.id)
 
                             elif hasattr(a_device_entry, "manufacturer"):
                                 manufacturer_value = a_device_entry.manufacturer
@@ -220,9 +229,7 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False) ->
                     for a_device_entry_id in key_list:
                         a_device_reg.async_remove_device(device_id=a_device_entry_id)
 
-                completed = True
-
-        DEVICE_REG_CLEANUP_RUNNING = completed
+        DEVICE_REG_CLEANUP_RUNNING = False
 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
@@ -342,7 +349,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": self._version,
+            "serial_number": self._config_entry.entry_id
         }
 
         if JSONKEY_VEHICLES in initdata:
@@ -750,7 +758,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - Loadpoint {addon} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": self._version,
+            "serial_number": self._config_entry.entry_id
         }
         return a_device_info_dict
 
@@ -761,7 +770,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - Vehicle {addon} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": self._version,
+            "serial_number": self._config_entry.entry_id
         }
         return a_device_info_dict
 

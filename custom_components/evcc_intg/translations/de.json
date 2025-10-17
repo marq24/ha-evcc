@@ -13,10 +13,10 @@
           "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
           "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
           "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen",
-          "purge_all": "Alle Geräte (Devices) Löschen und neu Erstellen"
+          "purge_all_devices": "Alle Geräte (Devices) Löschen und neu Erstellen"
         },
         "data_description": {
-          "purge_all": "Dies kann notwendig werden, wenn Du verwaiste Geräte Einträge bei Dir hast - diese Einstellung wird automatisch zurückgesetzt."
+          "purge_all_devices": "Dies kann notwendig werden, wenn Du verwaiste Geräte (Einträge) bei Dir in HA hast. Diese Einstellung wird automatisch zurückgesetzt."
         }
       }
     },

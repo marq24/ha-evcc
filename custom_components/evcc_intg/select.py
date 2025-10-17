@@ -117,7 +117,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                     if has_pf_default_lang_trans:
                         self.platform.default_language_platform_translations[a_trans_key] = a_value
 
-                _LOGGER.debug(f"added vehicle-translation-key: evcc: '{a_key}' name: '{a_value}' key: {a_trans_key}")
+                #_LOGGER.debug(f"added vehicle-translation-key: evcc: '{a_key}' name: '{a_value}' key: {a_trans_key}")
             #_LOGGER.info(f"-> {self.platform.platform_data.platform_translations}")
             #_LOGGER.info("----------------")
             #_LOGGER.info(f"-> {self.platform.platform_data.default_language_platform_translations}")

@@ -99,7 +99,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_USE_WS, default=user_input.get(CONF_USE_WS)): bool,
                 vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
                 vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
-                # vol.Optional(CONF_PURGE_ALL, default=user_input.get(CONF_PURGE_ALL)): bool,
+                vol.Optional(CONF_PURGE_ALL, default=user_input.get(CONF_PURGE_ALL)): bool,
             }),
             last_step=True,
             errors=self._errors

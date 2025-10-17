@@ -40,7 +40,7 @@ If you have any issues with this you need to open an issue here:
 """
 
 CONF_INCLUDE_EVCC: Final = "include_evcc"
-CONF_PURGE_ALL: Final = "purge_all"
+CONF_PURGE_ALL: Final = "purge_all_devices"
 CONF_USE_WS= "use_websocket"
 
 EVCC_JSON_VEH_NAME: Final = "evccName"

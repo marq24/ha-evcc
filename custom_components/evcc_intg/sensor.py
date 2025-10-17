@@ -185,7 +185,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
 
         elif self.tag.type == EP_TYPE.TARIFF:
             a_dict = self.coordinator.read_tag_tariff(self.tag)
-            if "rates" in a_dict:
+            if a_dict is not None and "rates" in a_dict:
                 a_array = a_dict["rates"]
                 if a_array is not None:
                     a_array_without_end_values = [

@@ -13,10 +13,10 @@
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
           "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
-          "purge_all": "Remove an recreate all Devices"
+          "purge_all_devices": "Remove an recreate all Devices"
         },
         "data_description": {
-          "purge_all": "This may be necessary if you have orphaned device entries - this setting will be reset automatically."
+          "purge_all_devices": "This may be necessary if you have orphaned device entries in your HA. This setting (checkbox) will be reset automatically."
         }
       }
     },
