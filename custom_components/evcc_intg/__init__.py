@@ -636,9 +636,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
     async def async_write_plan(self, vehicle_name:str, loadpoint_idx: str, soc_or_energy: str, rfcdate: str, precondition: int | None = None):
         if vehicle_name is not None and loadpoint_idx is None:
-            return await self.bridge.write_vehicle_plan(vehicle_id=vehicle_name, soc=soc_or_energy, rfcdate=rfcdate, precondition=precondition)
+            return await self.bridge.write_vehicle_plan_direct(vehicle_name=vehicle_name, soc=soc_or_energy, rfc_date=rfcdate, precondition=precondition)
         else:
-            return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=soc_or_energy, rfcdate=rfcdate)
+            return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=soc_or_energy, rfc_date=rfcdate)
 
     async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
         result = await self.bridge.press_tag(tag, value, idx)
