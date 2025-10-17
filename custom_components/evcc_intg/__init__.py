@@ -51,6 +51,7 @@ from .const import (
     SERVICE_SET_VEHICLE_PLAN,
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
+    CONF_PURGE_ALL,
     CONFIG_VERSION,
     CONFIG_MINOR_VERSION,
     EVCC_JSON_VEH_NAME,
@@ -132,7 +133,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                                      supports_response=SupportsResponse.OPTIONAL)
 
         # yes - hurray! we can now cleanup the device registry...
-        asyncio.create_task(check_device_registry(hass))
+        purge_all_devices = config_entry.data.get(CONF_PURGE_ALL, False)
+
+        asyncio.create_task(check_device_registry(hass, purge_all_devices))
+        #if purge_all_devices:
+        #    # we remove the 'purge_all_devices' flag from the config entry...
+        #    new_data = config_entry.data
+        #    del new_data[CONF_PURGE_ALL]
+        #    hass.config_entries.async_update_entry(config_entry, data=new_data, options={}, version=CONFIG_VERSION, minor_version=CONFIG_MINOR_VERSION)
+        #    _LOGGER.debug(f"Updated configuration (PURGE_ALL removed): {new_data}")
 
         config_entry.async_on_unload(config_entry.add_update_listener(entry_update_listener))
         # ok we are done...
@@ -175,7 +184,7 @@ async def check_evcc_is_available(http_session: aiohttp.ClientSession, config_en
 
 
 @staticmethod
-async def check_device_registry(hass: HomeAssistant):
+async def check_device_registry(hass: HomeAssistant, purge_all: bool = False) -> None:
     global DEVICE_REG_CLEANUP_RUNNING
     if not DEVICE_REG_CLEANUP_RUNNING:
         DEVICE_REG_CLEANUP_RUNNING = True
@@ -189,14 +198,25 @@ async def check_device_registry(hass: HomeAssistant):
                     if hasattr(a_device_entry, "identifiers"):
                         ident_value = a_device_entry.identifiers
                         if f"{ident_value}".__contains__(DOMAIN):
-                            if hasattr(a_device_entry, "manufacturer"):
+                            if purge_all:
+                                key_list.append(a_device_entry.id)
+
+                            elif hasattr(a_device_entry, "manufacturer"):
                                 manufacturer_value = a_device_entry.manufacturer
                                 if not f"{manufacturer_value}".__eq__(MANUFACTURER):
                                     _LOGGER.info(f"found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
                                     key_list.append(a_device_entry.id)
 
+                            #elif intg_version != "UNKNOWN":
+                            #    if not f"{ident_value}".__contains__(intg_version):
+                            #        key_list.append(a_device_entry.id)
+
                 if len(key_list) > 0:
-                    _LOGGER.info(f"NEED TO DELETE old {DOMAIN} DeviceEntries: {key_list}")
+                    if purge_all:
+                        _LOGGER.info(f"CLEAN ALL {DOMAIN} DeviceEntries: {key_list}")
+                    else:
+                        _LOGGER.info(f"NEED TO DELETE old {DOMAIN} DeviceEntries: {key_list}")
+
                     for a_device_entry_id in key_list:
                         a_device_reg.async_remove_device(device_id=a_device_entry_id)
 
@@ -634,11 +654,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             else:
                 return "0"
 
-    async def async_write_plan(self, vehicle_name:str, loadpoint_idx: str, soc_or_energy: str, rfcdate: str, precondition: int | None = None):
+    async def async_write_plan(self, vehicle_name:str, loadpoint_idx: str, soc_or_energy: str, rfc_date: str, precondition: int | None = None):
         if vehicle_name is not None and loadpoint_idx is None:
-            return await self.bridge.write_vehicle_plan_direct(vehicle_name=vehicle_name, soc=soc_or_energy, rfc_date=rfcdate, precondition=precondition)
+            return await self.bridge.write_vehicle_plan(vehicle_id=vehicle_name, soc=soc_or_energy, rfc_date=rfc_date, precondition=precondition)
         else:
-            return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=soc_or_energy, rfc_date=rfcdate)
+            return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=soc_or_energy, rfc_date=rfc_date)
 
     async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
         result = await self.bridge.press_tag(tag, value, idx)

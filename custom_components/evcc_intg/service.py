@@ -47,15 +47,15 @@ class EvccService:
                 start = datetime.datetime.strptime(input_date_str, "%Y-%m-%d %H:%M:%S")
                 start = start.replace(second=0)
                 start = start.astimezone(datetime.timezone.utc)
-                start_str = start.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+                rfc_date = start.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
                 # Vehicle plan
                 if vehicle_name is not None and vehicle_name in available_vehicles and isinstance(soc, int) and soc > 0:
-                    resp = await self._coordinator.async_write_plan(vehicle_name, None, str(int(soc)), start_str, precondition)
+                    resp = await self._coordinator.async_write_plan(vehicle_name, None, str(int(soc)), rfc_date, precondition)
 
                 # Loadpoint plan
                 elif loadpoint is not None and isinstance(loadpoint, int) and isinstance(energy, int) and energy > 0:
-                    resp = await self._coordinator.async_write_plan(None, str(int(loadpoint)), str(int(energy)), start_str, None)
+                    resp = await self._coordinator.async_write_plan(None, str(int(loadpoint)), str(int(energy)), rfc_date, None)
 
                 else:
                     resp = None
