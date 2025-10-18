@@ -162,14 +162,14 @@ chargers:
     standbypower: 0
     integrateddevice: true
     heating: true
-    baseurl: http://[MY-HA-INSTANCE]:8123
+    uri: http://[MY-HA-INSTANCE]:8123
     token: [MY-HA-TOKEN]
     # the homeassistant entity that is used to turn on/off the hot water-boost
     # (in my case this is a helper switch used by an automation)
-    switchentity: input_boolean.wkh_hotwater_switch
+    switch: input_boolean.wkh_hotwater_switch
     # the homeassistant entity providing the current power consumption
     # of the heat pump (must be in Watt)!
-    powerentity: sensor.wkh_power_electric_in_watt 
+    power: sensor.wkh_power_electric_in_watt 
     icon: waterheater
 
 meters:
