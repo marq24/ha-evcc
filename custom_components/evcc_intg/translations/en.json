@@ -74,7 +74,8 @@
       "smartcostlimit": {"name": "@@@ limit ≤"},
       "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"},
       "enabledelay": {"name": "Delay Enable"},
-      "disabledelay": {"name": "Delay Disable"}
+      "disabledelay": {"name": "Delay Disable"},
+      "priority": {"name": "Priority"}
     },
     "select": {
       "prioritysoc": {

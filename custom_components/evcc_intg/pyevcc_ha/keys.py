@@ -264,6 +264,7 @@ class Tag(ApiKey, Enum):
     PLANOVERRUN = ApiKey(key="planOverrun", type=EP_TYPE.LOADPOINTS)
 
     # "priority": 0,
+    LPPRIORIRY = ApiKey(key="priority", write_key="priority", type=EP_TYPE.LOADPOINTS)
 
     # "pvAction": "inactive", "activ", "disable"
     PVACTION = ApiKey(key="pvAction", type=EP_TYPE.LOADPOINTS)

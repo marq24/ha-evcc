@@ -74,7 +74,8 @@
       "smartcostlimit": {"name": "@@@ Limit ≤"},
       "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"},
       "enabledelay": {"name": "Verzögerung Aktivierung"},
-      "disabledelay": {"name": "Verzögerung Deaktivierung"}
+      "disabledelay": {"name": "Verzögerung Deaktivierung"},
+      "priority": {"name": "Priorität"}
     },
     "select": {
       "prioritysoc": {

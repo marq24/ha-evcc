@@ -365,6 +365,16 @@ NUMBER_SENSORS_PER_LOADPOINT = [
         native_step=1,
         native_unit_of_measurement=UnitOfTime.SECONDS,
     ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.LPPRIORIRY,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:priority-high",
+        mode = NumberMode.SLIDER,
+        native_max_value=10,
+        native_min_value=0,
+        native_step=1,
+        device_class=None
+    ),
 ]
 
 SELECT_SENSORS = [
