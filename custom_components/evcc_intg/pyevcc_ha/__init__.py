@@ -232,11 +232,9 @@ class EvccApiBridge:
                                         sub_key = key_parts[2]
                                         if domain in self._data:
                                             if len(self._data[domain]) > idx:
-                                                if sub_key in self._data[domain][idx]:
-                                                    self._data[domain][idx][sub_key] = value
-                                                else:
-                                                    self._data[domain][idx][sub_key] = value
+                                                if not sub_key in self._data[domain][idx]:
                                                     _LOGGER.debug(f"adding '{sub_key}' to {domain}[{idx}]")
+                                                self._data[domain][idx][sub_key] = value
                                             else:
                                                 # we need to add a new entry to the list... - well
                                                 # if we get index 4 but length is only 2 we must add multiple
@@ -247,11 +245,21 @@ class EvccApiBridge:
                                                 self._data[domain][idx] = {sub_key: value}
                                                 _LOGGER.debug(f"adding index {idx} to '{domain}' -> {self._data[domain][idx]}")
                                         else:
-                                            _LOGGER.info(f"unhandled [{domain} not in data] {key} - ignoring: {value} data: {self._data}")
+                                            _LOGGER.info(f"unhandled [{domain} not in data] 3part: {key} - ignoring: {value} data: {self._data}")
                                         # if domain == "loadpoints":
                                         #     pass
                                         # elif domain == "vehicles":
                                         #     pass
+                                    elif len(key_parts) == 2:
+                                        # currently only 'forcast.solar'
+                                        domain = key_parts[0]
+                                        sub_key = key_parts[1]
+                                        if domain in self._data:
+                                            if not sub_key in self._data[domain]:
+                                                _LOGGER.debug(f"adding '{sub_key}' to {domain}")
+                                            self._data[domain][sub_key] = value
+                                        else:
+                                            _LOGGER.info(f"unhandled [{domain} not in data] 2part: {key} - domain {domain} not in self.data - ignoring: {value}")
                                     else:
                                         _LOGGER.info(f"unhandled [not parsable key] {key} - ignoring: {value}")
                                 else:
