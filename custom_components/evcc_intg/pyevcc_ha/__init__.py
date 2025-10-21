@@ -549,12 +549,19 @@ class EvccApiBridge:
             return {"err": "no response from evcc"}
 
     async def write_loadpoint_plan(self, idx: str, energy: str, rfc_date: str):
-        # before we can write something to the vehicle endpoints, we must know the vehicle_id!
-        # -> so we have to grab from the loadpoint the current vehicle!
         try:
-            req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
-            _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
+            r_json = None
+            if energy is not None and rfc_date is not None:
+                # WRITE PLAN...
+                req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
+                _LOGGER.debug(f"POST request: {req}")
+                r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
+            else:
+                # DELETE PLAN...
+                req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy"
+                _LOGGER.debug(f"DELETE request: {req}")
+                r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False))
+
             if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
                 return r_json
             else:
@@ -566,16 +573,25 @@ class EvccApiBridge:
     async def write_vehicle_plan(self, vehicle_id:str, soc:str, rfc_date:str, precondition: int | None = None):
         if vehicle_id is not None:
             try:
-                req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
-                if precondition is not None and precondition > 0:
-                    req += f"?precondition={precondition}"
-                _LOGGER.debug(f"POST request: {req}")
+                r_json = None
+                if soc is not None and rfc_date is not None:
+                    # WRITE PLAN...
+                    req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc/{soc}/{rfc_date}"
+                    if precondition is not None and precondition > 0:
+                        req += f"?precondition={precondition}"
+                    _LOGGER.debug(f"POST request: {req}")
+                    r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
+                else:
+                    # DELETE PLAN...
+                    req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc"
+                    _LOGGER.debug(f"DELETE request: {req}")
+                    r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False))
 
-                r_json = await _do_request(method=self.web_session.post(url=req, ssl=False))
                 if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
                     return r_json
                 else:
                     return {"err": "no response from evcc"}
+
             except Exception as err:
                 _LOGGER.error(f"could not write vehicle plan for vehicle: {vehicle_id}, error: {err}")
                 return {"err": f"could not write vehicle plan: {err}"}

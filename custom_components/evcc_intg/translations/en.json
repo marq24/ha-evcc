@@ -43,7 +43,22 @@
         "soc": {"name": "Charging goal", "description": "Target state of charge"},
         "precondition": {"name": "Preconditioning in Seconds", "description": "Duration for preconditioning in seconds (900s = 15min, 1200s = 20min, etc.)"}
       }
+    },
+    "del_loadpoint_plan": {
+      "name": "Delete a departure plan for a loadpoint [Energy (kWh)]",
+      "description": "Delete a existing Charging plan for a Loadpoint",
+      "fields": {
+        "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"}
+      }
+    },
+    "del_vehicle_plan": {
+      "name": "Delete a departure plan for a vehicle [SOC (%)]",
+      "description": "Delete a existing Charging plan for a Vehicle",
+      "fields": {
+        "vehicle": {"name": "Vehicle name/ID", "description": "Enter the vehicle name from your evcc configuration (e.g.: vehicle_1 or db:7)"}
+      }
     }
+
   },
   "entity": {
     "binary_sensor": {

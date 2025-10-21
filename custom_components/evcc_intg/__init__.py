@@ -49,6 +49,8 @@ from .const import (
     STARTUP_MESSAGE,
     SERVICE_SET_LOADPOINT_PLAN,
     SERVICE_SET_VEHICLE_PLAN,
+    SERVICE_DEL_LOADPOINT_PLAN,
+    SERVICE_DEL_VEHICLE_PLAN,
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
     CONF_PURGE_ALL,
@@ -141,6 +143,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                                      supports_response=SupportsResponse.OPTIONAL)
         hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, evcc_services.set_vehicle_plan,
                                      supports_response=SupportsResponse.OPTIONAL)
+        hass.services.async_register(DOMAIN, SERVICE_DEL_LOADPOINT_PLAN, evcc_services.del_loadpoint_plan,
+                                     supports_response=SupportsResponse.OPTIONAL)
+        hass.services.async_register(DOMAIN, SERVICE_DEL_VEHICLE_PLAN, evcc_services.del_vehicle_plan,
+                                     supports_response=SupportsResponse.OPTIONAL)
 
         config_entry.async_on_unload(config_entry.add_update_listener(entry_update_listener))
         # ok we are done...
@@ -160,6 +166,8 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
 
         hass.services.async_remove(DOMAIN, SERVICE_SET_LOADPOINT_PLAN)
         hass.services.async_remove(DOMAIN, SERVICE_SET_VEHICLE_PLAN)
+        hass.services.async_remove(DOMAIN, SERVICE_DEL_LOADPOINT_PLAN)
+        hass.services.async_remove(DOMAIN, SERVICE_DEL_VEHICLE_PLAN)
 
     return unload_ok
 
@@ -667,6 +675,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             return await self.bridge.write_vehicle_plan(vehicle_id=vehicle_name, soc=soc_or_energy, rfc_date=rfc_date, precondition=precondition)
         else:
             return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=soc_or_energy, rfc_date=rfc_date)
+
+    async def async_delete_plan(self, vehicle_name:str, loadpoint_idx: str):
+        if vehicle_name is not None and loadpoint_idx is None:
+            return await self.bridge.write_vehicle_plan(vehicle_id=vehicle_name, soc=None, rfc_date=None, precondition=-1)
+        else:
+            return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=None, rfc_date=None)
 
     async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
         result = await self.bridge.press_tag(tag, value, idx)

@@ -43,6 +43,20 @@
         "soc": {"name": "Ladeziel", "description": "Ziel Ladezustand (SOC)"},
         "precondition": {"name": "Batterie Vorkonditionierung", "description": "Dauer der Batterie Vorkonditionierung in Sekunden (900s = 15min, 1200s = 20min, etc.)"}
       }
+    },
+    "del_loadpoint_plan": {
+      "name": "Abfahrt Ladeplanung für einen Ladepunkt löschen [Energie (kWh)]",
+      "description": "Löschen der Energie-basierten Ladeplanung für ein Ladepunkt",
+      "fields": {
+        "loadpoint": {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"}
+      }
+    },
+    "del_vehicle_plan": {
+      "name": "Abfahrt Ladeplanung für ein Fahrzeug löschen [SOC (%)]",
+      "description": "Löschen der SOC-basierten Ladeplanung für eine Fahrzeug",
+      "fields": {
+        "vehicle": {"name": "Fahrzeugname/ID", "description": "Gib den Fahrzeugnamen aus Deiner evcc Konfiguration ein (z.B.: vehicle_1 oder db:7)"}
+      }
     }
   },
   "entity": {

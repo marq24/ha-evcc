@@ -13,11 +13,11 @@ class EvccService:
         self._config = config
         self._coordinator = coordinator
 
-    async def set_vehicle_plan(self, call: ServiceCall):
-        """Set vehicle plan directly by vehicle name/id."""
+    async def set_loadpoint_plan(self, call: ServiceCall):
         return await self.set_plan(call)
 
-    async def set_loadpoint_plan(self, call: ServiceCall):
+    async def set_vehicle_plan(self, call: ServiceCall):
+        """Set vehicle plan directly by vehicle name/id."""
         return await self.set_plan(call)
 
     async def set_plan(self, call: ServiceCall):
@@ -56,6 +56,68 @@ class EvccService:
                 # Loadpoint plan
                 elif loadpoint is not None and isinstance(loadpoint, int) and isinstance(energy, int) and energy > 0:
                     resp = await self._coordinator.async_write_plan(None, str(int(loadpoint)), str(int(energy)), rfc_date, None)
+
+                else:
+                    resp = None
+
+                if resp is not None and len(resp) > 0:
+                    if call.return_response:
+                        return {
+                            "success": "true",
+                            "date": str(datetime.datetime.now().time()),
+                            "response": resp
+                        }
+                else:
+                    if call.return_response:
+                        return {
+                            "error": "NO or EMPTY response",
+                            "date": str(datetime.datetime.now().time())
+                        }
+            except ValueError as exc:
+                if call.return_response:
+                    return {
+                        "error": str(exc),
+                        "date": str(datetime.datetime.now().time())
+                    }
+        else:
+            if call.return_response:
+                return {
+                    "error": "No date or false data provided",
+                    "date": str(datetime.datetime.now().time())
+                }
+
+
+    async def del_loadpoint_plan(self, call: ServiceCall):
+        return await self.del_plan(call)
+
+    async def del_vehicle_plan(self, call: ServiceCall):
+        return await self.del_plan(call)
+
+    async def del_plan(self, call: ServiceCall):
+        # vehicle plan data
+        vehicle_name = call.data.get("vehicle", None)
+
+        # loadpoint plan data
+        loadpoint = call.data.get("loadpoint", None)
+
+        if vehicle_name:
+            # Get available vehicles...
+            available_vehicles = list(self._coordinator._vehicle.keys())
+            _LOGGER.debug(f"Available vehicles: {available_vehicles}")
+        else:
+            available_vehicles = []
+
+        # Validate input
+        if vehicle_name is not None or loadpoint is not None:
+            try:
+
+                # Vehicle plan
+                if vehicle_name is not None and vehicle_name in available_vehicles:
+                    resp = await self._coordinator.async_delete_plan(vehicle_name, None)
+
+                # Loadpoint plan
+                elif loadpoint is not None and isinstance(loadpoint, int):
+                    resp = await self._coordinator.async_delete_plan(None, str(int(loadpoint)))
 
                 else:
                     resp = None

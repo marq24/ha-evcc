@@ -47,6 +47,8 @@ EVCC_JSON_VEH_NAME: Final = "evccName"
 
 SERVICE_SET_LOADPOINT_PLAN: Final = "set_loadpoint_plan"
 SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
+SERVICE_DEL_LOADPOINT_PLAN: Final = "del_loadpoint_plan"
+SERVICE_DEL_VEHICLE_PLAN: Final = "del_vehicle_plan"
 
 @dataclass
 class EntityDescriptionStub(metaclass=FrozenOrThawed, frozen_or_thawed=True):

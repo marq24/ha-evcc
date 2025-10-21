@@ -76,3 +76,30 @@ set_loadpoint_plan:
           step: 1
           unit_of_measurement: "kWh"
           mode: box
+
+del_vehicle_plan:
+  name: Delete a departure plan for a vehicle [SOC (%)]
+  description: Delete a existing Charging plan for a Vehicle
+  fields:
+    vehicle:
+      name: Vehicle Name/ID
+      description: Select or enter vehicle name from your evcc configuration (vehicle_1 or db:7)
+      required: true
+      example: "db:7"
+      selector:
+        text:
+
+del_loadpoint_plan:
+  name: Delete a departure plan for a loadpoint [Energy (kWh)]
+  description: Delete a existing Charging plan for a Loadpoint
+  fields:
+    loadpoint:
+      name: Loadpoint ID
+      description: A number starting from 1...n (where 1'st your first configured loadpoint)
+      required: true
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 10
+          mode: box
