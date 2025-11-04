@@ -229,6 +229,7 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
                             #        key_list.append(a_device_entry.id)
 
                 if len(key_list) > 0:
+                    key_list = list(dict.fromkeys(key_list))
                     if purge_all:
                         _LOGGER.info(f"CLEAN ALL {DOMAIN} DeviceEntries: {key_list}")
                     else:
