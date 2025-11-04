@@ -99,17 +99,25 @@ class Tag(ApiKey, Enum):
     # "batteryMode": unknown|normal|hold|charge
     BATTERYMODE = ApiKey(key="batteryMode", type=EP_TYPE.SITE)
 
+    # "battery":[{"power":0,"capacity":12,"soc":81,"controllable":false}], -> we must access this attribute via tuple_idx
+    BATTERY = ApiKey(key="battery", type=EP_TYPE.SITE)
+    BATTERY2DEVICES = ApiKey(entity_key="batteryDevices", key="devices", type=EP_TYPE.SITE, subtype=BATTERY.key)
+
     # "batteryPower": 3.21,
     BATTERYPOWER = ApiKey(key="batteryPower", type=EP_TYPE.SITE)
+    BATTERYPOWER2 = ApiKey(entity_key="batteryPower", key="power", type=EP_TYPE.SIT, subtype=BATTERY.key)
 
     # "batterySoc": 70,
     BATTERYSOC = ApiKey(key="batterySoc", type=EP_TYPE.SITE)
+    BATTERYSOC2 = ApiKey(entity_key="batterySoc", key="soc", type=EP_TYPE.SITE, subtype=BATTERY.key)
 
     # "batteryCapacity": 7.5,
     BATTERYCAPACITY = ApiKey(key="batteryCapacity", type=EP_TYPE.SITE)
+    BATTERYCAPACITY2 = ApiKey(enity_key="batteryCapacity", key="capacity", type=EP_TYPE.SITE, subtype=BATTERY.key)
 
-    # "battery":[{"power":0,"capacity":12,"soc":81,"controllable":false}], -> we must access this attribute via tuple_idx
-    BATTERY = ApiKey(key="battery", type=EP_TYPE.SITE)
+    # "batteryEnergy": 0,
+    BATTERYENERGY = ApiKey(key="batteryEnergy", type=EP_TYPE.SITE)
+    BATTERYENERGY2 = ApiKey(enity_key="batteryEnergy", key="energy", type=EP_TYPE.SITE, subtype=BATTERY.key)
 
     # "pvPower": 8871.22,
     PVPOWER = ApiKey(key="pvPower", type=EP_TYPE.SITE)

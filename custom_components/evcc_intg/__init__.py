@@ -548,6 +548,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     #        ret = None
                 elif tag.key_alias is not None and tag.key_alias in self.data:
                     ret = self.data[tag.key_alias]
+
+                elif tag.subtype is not None and tag.subtype in self.data:
+                    a_obj = self.data[tag.subtype]
+                    if isinstance(a_obj, dict) and len(a_obj) > 0:
+                        if tag.key in a_obj:
+                            ret = a_obj[tag.key]
+                        elif tag.key_alias is not None and tag.key_alias in a_obj:
+                            ret = a_obj[tag.key_alias]
+
             elif tag.type == EP_TYPE.STATISTICS:
                 ret = self.read_tag_statistics(tag=tag)
             elif tag.type == EP_TYPE.TARIFF:

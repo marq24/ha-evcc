@@ -252,6 +252,7 @@
 
       "auxpower": {"name": "Leistung AUX"},
       "batterycapacity": {"name": "Batterie Kapazität"},
+      "batteryenergy": {"name": "Batterie Energie"},
       "batterymode": {"name": "Batterie Modus [CODE]"},
       "batterymode_value": {"name": "Batterie Modus"},
       "batterypower": {"name": "Leistung Batterie"},
