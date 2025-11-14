@@ -66,7 +66,7 @@ class ExtBinarySensorEntityDescriptionStub(EntityDescriptionStub):
     icon_off: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtBinarySensorEntityDescription(BinarySensorEntityDescription):
     tag: Tag = None
     idx: int | None = None
@@ -80,12 +80,11 @@ class ExtButtonEntityDescriptionStub(EntityDescriptionStub):
     payload: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtButtonEntityDescription(ButtonEntityDescription):
     tag: Tag = None
     idx: int | None = None
     name_addon: str | None = None
-
     payload: str | None = None
 
 
@@ -100,7 +99,7 @@ class ExtNumberEntityDescriptionStub(EntityDescriptionStub):
     native_unit_of_measurement: str | None = None
     step: None = None
 
-@dataclass
+@dataclass(frozen=True)
 class ExtNumberEntityDescription(NumberEntityDescription):
     tag: Tag = None
     idx: int | None = None
@@ -112,7 +111,7 @@ class ExtSelectEntityDescriptionStub(EntityDescriptionStub):
     options: list[str] | None = None,
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtSelectEntityDescription(SelectEntityDescription):
     tag: Tag = None
     idx: int | None = None
@@ -133,7 +132,7 @@ class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
     ignore_zero: bool | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtSensorEntityDescription(SensorEntityDescription):
     tag: Tag = None
     idx: int | None = None
@@ -150,7 +149,7 @@ class ExtSwitchEntityDescriptionStub(EntityDescriptionStub):
     icon_off: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtSwitchEntityDescription(SwitchEntityDescription):
     tag: Tag = None
     idx: int | None = None
@@ -161,7 +160,7 @@ class ExtSwitchEntityDescription(SwitchEntityDescription):
 
 PLATFORMS: Final = ["binary_sensor", "button", "number", "select", "sensor", "switch"]
 
-BINARY_SENSORS = [
+BINARY_ENTITIES = [
     ExtBinarySensorEntityDescription(
         tag=Tag.BATTERYGRIDCHARGEACTIVE,
         key=Tag.BATTERYGRIDCHARGEACTIVE.key,
@@ -170,7 +169,7 @@ BINARY_SENSORS = [
         device_class=None
     ),
 ]
-BINARY_SENSORS_PER_LOADPOINT = [
+BINARY_ENTITIES_PER_LOADPOINT = [
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.CHARGING,
         icon=None,
@@ -234,8 +233,8 @@ BINARY_SENSORS_PER_LOADPOINT = [
     )
 ]
 
-BUTTONS = []
-BUTTONS_PER_LOADPOINT = [
+BUTTONS_ENTITIES = []
+BUTTONS_ENTITIES_PER_LOADPOINT = [
     ExtButtonEntityDescriptionStub(
         tag=Tag.VEHICLEPLANSDELETE,
         entity_category=EntityCategory.CONFIG,
@@ -267,7 +266,7 @@ BUTTONS_PER_LOADPOINT = [
     )
 ]
 
-NUMBER_SENSORS = [
+NUMBER_ENTITIES = [
     ExtNumberEntityDescription(
         tag=Tag.RESIDUALPOWER,
         key=Tag.RESIDUALPOWER.key,
@@ -292,7 +291,7 @@ NUMBER_SENSORS = [
         native_unit_of_measurement="@@@/kWh"
     ),
 ]
-NUMBER_SENSORS_PER_LOADPOINT = [
+NUMBER_ENTITIES_PER_LOADPOINT = [
     ExtNumberEntityDescriptionStub(
         tag=Tag.LIMITSOC,
         icon="mdi:battery-charging",
@@ -379,7 +378,7 @@ NUMBER_SENSORS_PER_LOADPOINT = [
     ),
 ]
 
-SELECT_SENSORS = [
+SELECT_ENTITIES = [
     ExtSelectEntityDescription(
         tag=Tag.PRIORITYSOC,
         key=Tag.PRIORITYSOC.key,
@@ -411,7 +410,7 @@ SELECT_SENSORS = [
         #device_class= NumberDeviceClass.BATTERY,
     )
 ]
-SELECT_SENSORS_PER_LOADPOINT = [
+SELECT_ENTITIES_PER_LOADPOINT = [
     ExtSelectEntityDescriptionStub(
         tag=Tag.MODE,
         #entity_category=EntityCategory.CONFIG,
@@ -462,7 +461,7 @@ SELECT_SENSORS_PER_LOADPOINT = [
     )
 ]
 
-SENSOR_SENSORS_GRID_AS_PREFIX = [
+SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.GRIDPOWER,
         key=Tag.GRIDPOWER.key,
@@ -503,7 +502,7 @@ SENSOR_SENSORS_GRID_AS_PREFIX = [
         entity_registry_enabled_default=False
     )
 ]
-SENSOR_SENSORS_GRID_AS_OBJECT = [
+SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
         key=Tag.GRIDPOWER.key, # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
@@ -545,29 +544,7 @@ SENSOR_SENSORS_GRID_AS_OBJECT = [
         entity_registry_enabled_default=False
     ),
 ]
-
-SENSOR_SENSORS = [
-    ExtSensorEntityDescription(
-        tag=Tag.AUXPOWER,
-        key=Tag.AUXPOWER.key,
-        icon="mdi:home-circle-outline",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.BATTERYMODE,
-        key=f"{Tag.BATTERYMODE.key}_value",
-        icon="mdi:state-machine",
-        lookup=True
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.BATTERYMODE,
-        key=f"{Tag.BATTERYMODE.key}",
-        icon="mdi:state-machine",
-        entity_registry_enabled_default=False
-    ),
+SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERYPOWER,
         key=Tag.BATTERYPOWER.key,
@@ -616,6 +593,7 @@ SENSOR_SENSORS = [
         device_class=SensorDeviceClass.POWER,
         entity_registry_enabled_default=False
     ),
+
     ExtSensorEntityDescription(
         tag=Tag.BATTERYSOC,
         key=Tag.BATTERYSOC.key,
@@ -667,6 +645,153 @@ SENSOR_SENSORS = [
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
         suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYCAPACITY,
+        key=Tag.BATTERYCAPACITY.key,
+        icon="mdi:battery",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=1
+    ),
+]
+SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYPOWER_AS_OBJ,
+        key=Tag.BATTERYPOWER_AS_OBJ.entity_key,
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_0_power",
+        tuple_idx = [0, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_1_power",
+        tuple_idx = [1, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_2_power",
+        tuple_idx = [2, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_3_power",
+        tuple_idx = [3, BATTERY_CONTENT.POWER.value],
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYSOC_AS_OBJ,
+        key=Tag.BATTERYSOC_AS_OBJ.entity_key,
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_0_soc",
+        tuple_idx = [0, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_1_soc",
+        tuple_idx = [1, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_2_soc",
+        tuple_idx = [2, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERY_AS_OBJ,
+        key="battery_3_soc",
+        tuple_idx = [3, BATTERY_CONTENT.SOC.value],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYCAPACITY_AS_OBJ,
+        key=Tag.BATTERYCAPACITY_AS_OBJ.entity_key,
+        icon="mdi:battery",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=1
+    ),
+]
+SENSOR_ENTITIES = [
+    ExtSensorEntityDescription(
+        tag=Tag.AUXPOWER,
+        key=Tag.AUXPOWER.key,
+        icon="mdi:home-circle-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYMODE,
+        key=f"{Tag.BATTERYMODE.key}_value",
+        icon="mdi:state-machine",
+        lookup=True
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.BATTERYMODE,
+        key=f"{Tag.BATTERYMODE.key}",
+        icon="mdi:state-machine",
         entity_registry_enabled_default=False
     ),
 
@@ -784,15 +909,6 @@ SENSOR_SENSORS = [
         device_class=SensorDeviceClass.POWER,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.BATTERYCAPACITY,
-        key=Tag.BATTERYCAPACITY.key,
-        icon="mdi:battery",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=1
     ),
     ExtSensorEntityDescription(
         tag=Tag.TARIFFGRID,
@@ -1043,7 +1159,7 @@ SENSOR_SENSORS = [
         entity_registry_enabled_default=False
     )
 ]
-SENSOR_SENSORS_PER_LOADPOINT = [
+SENSOR_ENTITIES_PER_LOADPOINT = [
 
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGECURRENT,
@@ -1383,7 +1499,7 @@ SENSOR_SENSORS_PER_LOADPOINT = [
         entity_registry_enabled_default=True
     ),
 ]
-SENSOR_SENSORS_PER_VEHICLE = [
+SENSOR_ENTITIES_PER_VEHICLE = [
     # charging session sensors's per VEHICLE
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGING_SESSIONS_VEHICLE_ENERGY,
@@ -1437,7 +1553,7 @@ SENSOR_SENSORS_PER_VEHICLE = [
 #     ),
 # ]
 
-SWITCH_SENSORS = [
+SWITCH_ENTITIES = [
     ExtSwitchEntityDescription(
         tag=Tag.BATTERYDISCHARGECONTROL,
         key=Tag.BATTERYDISCHARGECONTROL.key,
@@ -1446,7 +1562,7 @@ SWITCH_SENSORS = [
         device_class=None
     )
 ]
-SWITCH_SENSORS_PER_LOADPOINT = [
+SWITCH_ENTITIES_PER_LOADPOINT = [
     ExtSwitchEntityDescriptionStub(
         tag=Tag.BATTERYBOOST,
         icon="mdi:battery-plus",

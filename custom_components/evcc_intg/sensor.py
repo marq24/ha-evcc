@@ -14,11 +14,13 @@ from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CO
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import (
     DOMAIN,
-    SENSOR_SENSORS,
-    SENSOR_SENSORS_GRID_AS_PREFIX,
-    SENSOR_SENSORS_GRID_AS_OBJECT,
-    SENSOR_SENSORS_PER_LOADPOINT,
-    SENSOR_SENSORS_PER_VEHICLE,
+    SENSOR_ENTITIES,
+    SENSOR_ENTITIES_GRID_AS_PREFIX,
+    SENSOR_ENTITIES_GRID_AS_OBJECT,
+    SENSOR_ENTITIES_BATTERY_AS_PREFIX,
+    SENSOR_ENTITIES_BATTERY_AS_OBJECT,
+    SENSOR_ENTITIES_PER_LOADPOINT,
+    SENSOR_ENTITIES_PER_VEHICLE,
     ExtSensorEntityDescription
 )
 from .pyevcc_ha import SESSIONS_KEY_TOTAL
@@ -30,22 +32,31 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     _LOGGER.debug("SENSOR async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
-    for description in SENSOR_SENSORS:
-        entity = EvccSensor(coordinator, description)
-        entities.append(entity)
+
+    the_sensors_list = SENSOR_ENTITIES
 
     # we need to check if the grid data (power & currents) is available as separate object...
     # or if it's still part of the main/site object (as gridPower, gridCurrents)
     if coordinator.grid_data_as_object:
-        _LOGGER.debug("evcc 'grid' data is available as separate object")
-        for description in SENSOR_SENSORS_GRID_AS_OBJECT:
-            entity = EvccSensor(coordinator, description)
-            entities.append(entity)
+        _LOGGER.debug("evcc 'grid' data is available in separate object")
+        the_sensors_list = the_sensors_list + SENSOR_ENTITIES_GRID_AS_OBJECT
     else:
         _LOGGER.debug("evcc 'grid' as prefix")
-        for description in SENSOR_SENSORS_GRID_AS_PREFIX:
-            entity = EvccSensor(coordinator, description)
-            entities.append(entity)
+        the_sensors_list = the_sensors_list + SENSOR_ENTITIES_GRID_AS_PREFIX
+
+    # additionally the battery sensors can be either with prefix (at least till
+    # evcc 0.209.7), or as a separate 'battery' object
+    if coordinator.battery_data_as_object:
+        _LOGGER.debug("evcc 'battery' data is available in separate object")
+        the_sensors_list = the_sensors_list + SENSOR_ENTITIES_BATTERY_AS_OBJECT
+    else:
+        _LOGGER.debug("evcc 'battery' as prefix")
+        the_sensors_list = the_sensors_list + SENSOR_ENTITIES_BATTERY_AS_PREFIX
+
+    # finally creating all the Sensors, based on the descriptions
+    for description in the_sensors_list:
+        entity = EvccSensor(coordinator, description)
+        entities.append(entity)
 
     multi_loadpoint_config = len(coordinator._loadpoint) > 1 #or len(coordinator._vehicle) > 1
 
@@ -59,7 +70,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
 
-        for a_stub in SENSOR_SENSORS_PER_LOADPOINT:
+        for a_stub in SENSOR_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
                 # well - a hack to show any heating related loadpoints with temperature units...
                 # note: this will not change the label (that still show 'SOC')
@@ -121,7 +132,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         veh_id_addon = a_vehicle_obj["id"]
         veh_name_addon = a_vehicle_obj["name"]
 
-        for a_stub in SENSOR_SENSORS_PER_VEHICLE:
+        for a_stub in SENSOR_ENTITIES_PER_VEHICLE:
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
                 key=f"{veh_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{veh_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",

@@ -101,23 +101,23 @@ class Tag(ApiKey, Enum):
 
     # "battery":[{"power":0,"capacity":12,"soc":81,"controllable":false}], -> we must access this attribute via tuple_idx
     BATTERY = ApiKey(key="battery", type=EP_TYPE.SITE)
-    BATTERY2DEVICES = ApiKey(entity_key="batteryDevices", key="devices", type=EP_TYPE.SITE, subtype=BATTERY.key)
+    BATTERY_AS_OBJ = ApiKey(entity_key="batteryDevices", key="devices", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
     # "batteryPower": 3.21,
     BATTERYPOWER = ApiKey(key="batteryPower", type=EP_TYPE.SITE)
-    BATTERYPOWER2 = ApiKey(entity_key="batteryPower", key="power", type=EP_TYPE.SIT, subtype=BATTERY.key)
+    BATTERYPOWER_AS_OBJ = ApiKey(entity_key="batteryPower", key="power", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
     # "batterySoc": 70,
     BATTERYSOC = ApiKey(key="batterySoc", type=EP_TYPE.SITE)
-    BATTERYSOC2 = ApiKey(entity_key="batterySoc", key="soc", type=EP_TYPE.SITE, subtype=BATTERY.key)
+    BATTERYSOC_AS_OBJ = ApiKey(entity_key="batterySoc", key="soc", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
     # "batteryCapacity": 7.5,
     BATTERYCAPACITY = ApiKey(key="batteryCapacity", type=EP_TYPE.SITE)
-    BATTERYCAPACITY2 = ApiKey(enity_key="batteryCapacity", key="capacity", type=EP_TYPE.SITE, subtype=BATTERY.key)
+    BATTERYCAPACITY_AS_OBJ = ApiKey(enity_key="batteryCapacity", key="capacity", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
     # "batteryEnergy": 0,
     BATTERYENERGY = ApiKey(key="batteryEnergy", type=EP_TYPE.SITE)
-    BATTERYENERGY2 = ApiKey(enity_key="batteryEnergy", key="energy", type=EP_TYPE.SITE, subtype=BATTERY.key)
+    BATTERYENERGY_AS_OBJ = ApiKey(enity_key="batteryEnergy", key="energy", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
     # "pvPower": 8871.22,
     PVPOWER = ApiKey(key="pvPower", type=EP_TYPE.SITE)

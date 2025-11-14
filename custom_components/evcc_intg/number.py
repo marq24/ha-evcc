@@ -1,14 +1,15 @@
 import logging
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.number import NumberEntity
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, NUMBER_SENSORS, ExtNumberEntityDescription, NUMBER_SENSORS_PER_LOADPOINT
+from .const import DOMAIN, NUMBER_ENTITIES, ExtNumberEntityDescription, NUMBER_ENTITIES_PER_LOADPOINT
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     _LOGGER.debug("NUMBER async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
-    for description in NUMBER_SENSORS:
+    for description in NUMBER_ENTITIES:
         # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
         if description.tag == Tag.BATTERYGRIDCHARGELIMIT:
             if coordinator._currency != "€":
@@ -36,7 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
 
-        for a_stub in NUMBER_SENSORS_PER_LOADPOINT:
+        for a_stub in NUMBER_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
                 force_celsius = lp_is_heating  and a_stub.tag == Tag.LIMITSOC
 

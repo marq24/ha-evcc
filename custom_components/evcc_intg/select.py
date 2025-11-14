@@ -9,7 +9,7 @@ from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SELECT_SENSORS, SELECT_SENSORS_PER_LOADPOINT, ExtSelectEntityDescription
+from .const import DOMAIN, SELECT_ENTITIES, SELECT_ENTITIES_PER_LOADPOINT, ExtSelectEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 entities_min_max_dict = {}
@@ -39,7 +39,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     entities_min_max_dict = {}
 
     entities = []
-    for description in SELECT_SENSORS:
+    for description in SELECT_ENTITIES:
         entity = EvccSelect(coordinator, description)
         entities.append(entity)
         if description.tag in SOCS_TAG_LIST:
@@ -56,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_integrated = load_point_config["is_integrated"]
         lp_is_single_phase_only = load_point_config["only_single_phase"]
 
-        for a_stub in SELECT_SENSORS_PER_LOADPOINT:
+        for a_stub in SELECT_ENTITIES_PER_LOADPOINT:
             if (not lp_is_single_phase_only or a_stub.tag != Tag.PHASES) and (not lp_is_integrated or a_stub.integrated_supported):
                 description = ExtSelectEntityDescription(
                     tag=a_stub.tag,

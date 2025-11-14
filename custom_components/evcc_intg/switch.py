@@ -6,8 +6,9 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_ON, STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SWITCH_SENSORS, SWITCH_SENSORS_PER_LOADPOINT, ExtSwitchEntityDescription
+from .const import DOMAIN, SWITCH_ENTITIES, SWITCH_ENTITIES_PER_LOADPOINT, ExtSwitchEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     _LOGGER.debug("SWITCH async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
-    for description in SWITCH_SENSORS:
+    for description in SWITCH_ENTITIES:
         entity = EvccSwitch(coordinator, description)
         entities.append(entity)
 
@@ -30,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
 
-        for a_stub in SWITCH_SENSORS_PER_LOADPOINT:
+        for a_stub in SWITCH_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
                 description = ExtSwitchEntityDescription(
                     tag=a_stub.tag,

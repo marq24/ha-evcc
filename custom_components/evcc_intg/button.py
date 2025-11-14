@@ -4,8 +4,9 @@ from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, BUTTONS, BUTTONS_PER_LOADPOINT, ExtButtonEntityDescription
+from .const import DOMAIN, BUTTONS_ENTITIES, BUTTONS_ENTITIES_PER_LOADPOINT, ExtButtonEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -14,7 +15,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     _LOGGER.debug("BUTTON async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
-    for description in BUTTONS:
+    for description in BUTTONS_ENTITIES:
         entity = EvccButton(coordinator, description)
         entities.append(entity)
 
@@ -28,7 +29,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
 
-        for a_stub in BUTTONS_PER_LOADPOINT:
+        for a_stub in BUTTONS_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
                 description = ExtButtonEntityDescription(
                     tag=a_stub.tag,

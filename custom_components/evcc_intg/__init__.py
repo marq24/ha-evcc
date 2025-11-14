@@ -279,6 +279,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._vehicle = {}
         self._version = None
         self._grid_data_as_object = False
+        self._battery_data_as_object = False
 
         self._watchdog = None
 
@@ -344,8 +345,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         if Tag.VERSION.key in initdata:
             self._version = initdata[Tag.VERSION.key]
-        elif Tag.AVAILABLEVERSION.key in initdata:
-            self._version = initdata[Tag.AVAILABLEVERSION.key]
+        else:
+            self._version = "UNKNOWN"
 
         # Something I just learned - the 'identifiers' is a LIST of keys which are used to identify one device...
         # E.g., if the identifiers contain just the 'domain', then all instances (config_entries) will be shown
@@ -442,17 +443,37 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # here we have an issue, when there is no grid data
         # available (or is no object) at system start....
         if "grid" in initdata and initdata["grid"] is not None and isinstance(initdata["grid"], (dict, list)):
-            if ("power" in initdata["grid"] or
-                "currents" in initdata["grid"] or
-                "energy" in initdata["grid"] or
-                "powers" in initdata["grid"] ):
+            grid_obj = initdata["grid"]
+            if ("power"     in grid_obj or
+                "currents"  in grid_obj or
+                "energy"    in grid_obj or
+                "powers"    in grid_obj):
                 self._grid_data_as_object = True
         elif _version_info is not None and len(_version_info) > 0:
             try:
                 if Version(_version_info) >= Version("0.133.0"):
                     self._grid_data_as_object = True
+
             except BaseException as exc:
-                _LOGGER.info(f"read_evcc_config_on_startup(): Exception when trying handle _version_info: '{_version_info}' | raw version: '{_version_info_raw}'")
+                _LOGGER.info(f"read_evcc_config_on_startup(): [1] Exception when trying handle _version_info: '{_version_info}' | raw version: '{_version_info_raw}'")
+
+        # we must check, if the battery is just a ARRAY... or if it's a OBJECT
+        if "battery" in initdata and initdata["battery"] is not None and isinstance(initdata["battery"], (dict, list)):
+            batt_obj = initdata["battery"]
+            if ("power"     in batt_obj or
+                "capacity"  in batt_obj or
+                "soc"       in batt_obj or
+                "devices"   in batt_obj):
+                self._battery_data_as_object = True
+        elif _version_info is not None and len(_version_info) > 0:
+            try:
+                if Version(_version_info) >= Version("0.209.8"):
+                    self._battery_data_as_object = True
+
+            except BaseException as exc:
+                _LOGGER.info(f"read_evcc_config_on_startup(): [2] Exception when trying handle _version_info: '{_version_info}' | raw version: '{_version_info_raw}'")
+
+
 
         # enable the additional tariff endpoints...
         try:
@@ -488,7 +509,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         except BaseException as exc:
             _LOGGER.info(f"read_evcc_config_on_startup(): Exception when trying to query tariff endpoints - _version_info: '{_version_info}' | raw version: '{_version_info_raw}' - {type(exc).__name__} - {exc}")
 
-        _LOGGER.debug(f"read_evcc_config_on_startup(): Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GAO: {self._grid_data_as_object}")
+        _LOGGER.debug(f"read_evcc_config_on_startup(): Use Websocket: {self.use_ws} (already started? {self.bridge.ws_connected}) LPs: {len(self._loadpoint)} VEHs: {len(self._vehicle)} CT: '{self._cost_type}' CUR: {self._currency} GridAsObject: {self._grid_data_as_object} BatteryAsObject: {self._battery_data_as_object}")
         return True
 
     async def _async_update_data(self) -> dict:
@@ -803,6 +824,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def grid_data_as_object(self) -> bool:
         return self._grid_data_as_object
 
+    @property
+    def battery_data_as_object(self) -> bool:
+        return self._battery_data_as_object
 
 class EvccBaseEntity(Entity):
     _attr_should_poll = False

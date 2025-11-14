@@ -1,13 +1,14 @@
 import logging
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, BINARY_SENSORS, BINARY_SENSORS_PER_LOADPOINT, ExtBinarySensorEntityDescription
+from .const import DOMAIN, BINARY_ENTITIES, BINARY_ENTITIES_PER_LOADPOINT, ExtBinarySensorEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -16,7 +17,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     _LOGGER.debug("BINARY_SENSOR async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
-    for description in BINARY_SENSORS:
+    for description in BINARY_ENTITIES:
         entity = EvccBinarySensor(coordinator, description)
         entities.append(entity)
 
@@ -30,7 +31,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
 
-        for a_stub in BINARY_SENSORS_PER_LOADPOINT:
+        for a_stub in BINARY_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
                 description = ExtBinarySensorEntityDescription(
                     tag=a_stub.tag,
