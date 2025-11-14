@@ -22,8 +22,8 @@ from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CON
 
 # Base component constants
 MANUFACTURER: Final = "marq24"
-NAME: Final = "evcc☀️🚘- Solar Charging"
-NAME_SHORT: Final = "evcc☀️🚘"
+NAME: Final = "evcc ☀️🚘 Solar Charging"
+NAME_SHORT: Final = "evcc"
 DOMAIN: Final = "evcc_intg"
 ISSUE_URL: Final = "https://github.com/marq24/ha-evcc/issues"
 
