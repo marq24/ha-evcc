@@ -18,7 +18,7 @@ Before we can use the HA-API to read sensor data via http, we need some sort of 
 
 You can open this via `http://[YOUR-HA-INSTANCE]:8123/profile/security`
 
-![screenshot_tokens](https://github.com/marq24/ha-senec-v3/blob/master/images/evcc_token01.png)
+![screenshot_tokens](https://github.com/marq24/ha-senec-v3/blob/main/images/evcc_token01.png)
 
 Create a new token via the _Create Token_ button, specify a name (e.g. 'evcc-access') and then copy the generated token to your clipboard (and paste it to a secure place). A token will look like this:
 
@@ -37,6 +37,10 @@ This step is only required, if you want to use alternative HA sensors. In order 
     - `sensor.senec_enfluri_net_current_p1`
     - `sensor.senec_enfluri_net_current_p2`
     - `sensor.senec_enfluri_net_current_p3`
+  - Voltage of P1,P2 & P3
+    - `sensor.senec_enfluri_net_potential_p1`
+    - `sensor.senec_enfluri_net_potential_p2`
+    - `sensor.senec_enfluri_net_potential_p3`
 
      
 - __PV__:
@@ -50,7 +54,7 @@ This step is only required, if you want to use alternative HA sensors. In order 
   - State of Charge (in percent) 
     - `sensor.senec_battery_charge_percent`
 
-
+<!--
 - _Optional_ __Aux__:
   - Electrical consumption of my waterkotte heatpump:
     - `sensor.wkh_power_electric`
@@ -60,9 +64,270 @@ This step is only required, if you want to use alternative HA sensors. In order 
     
   - Electrical consumption of my garden (water) pump (Shelly):
     - `sensor.kanal_2_power`
+-->
+
+## Example evcc.yaml<br/>[using evcc homeassistant template]
+There is a new template in evcc allow to specify all (well most of) the required entities in separate blocks. This will reduce the load of your HA and the complexity.
+
+### Required replacements
+
+Below you will find a valid evcc meters configuration — __but you have to make two replacements__:
+1. The text '__[YOUR-HA-INSTANCE]__' has to be replaced with the IP/host name of your Home Assistant installation.
+
+   E.g., when your HA is reachable via: http://192.168.10.20:8123, then you need to replace `[YOUR-HA-INSTANCE]` with `192.168.10.20`
 
 
-## Example evcc.yaml (`meters` section)
+2. The text '__[YOUR-TOKEN-HERE]__' has to be replaced with the _Long-lived access token_ you have just created in HA.
+
+   E.g. when your token is: `eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNWVjNzg5M2Y0ZjQ0MzBmYjUwOGEwMmU4N2Q0MzFmNyIsImlhdCI6MTcxNTUwNzYxMCwiZXhwIjoyMDMwODY3NjEwfQ.GMWO8saHpawkjNzk-uokxYeaP0GFKPQSeDoP3lCO488`, then you need to replace `[YOUR-TOKEN-HERE]` with this (long) token text.
+
+So as a short example (with all replacements) would look like:
+```
+      ...
+      type: template
+      template: homeassistant
+      usage: grid
+      uri: http://192.168.10.20:8123
+      token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiIzNWVjNzg5M2Y0ZjQ0MzBmYjUwOGEwMmU4N2Q0MzFmNyIsImlhdCI6MTcxNTUwNzYxMCwiZXhwIjoyMDMwODY3NjEwfQ.GMWO8saHpawkjNzk-uokxYeaP0GFKPQSeDoP3lCO488
+      ...
+```
+
+### Complete sample evcc.yaml meters section for SENEC.Home Sensors
+
+```yaml
+meters:
+  - name: TIBBER.grid
+    type: template
+    template: homeassistant
+    usage: grid
+    # URI, HTTP(S) address
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    # Home Assistant Long-Lived Access Token
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.lan_tibber_0100100700ff
+    
+  - name: SENEC.grid
+    type: template
+    template: homeassistant
+    usage: grid
+    # URI, HTTP(S) address
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    # Home Assistant Long-Lived Access Token
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.senec_grid_state_power
+    # L1 Current Entity, Entity ID for L1 current measurement in amperes (optional)
+    currentL1: sensor.senec_enfluri_net_current_p1
+    # L2 Current Entity, Entity ID for L2 current measurement in amperes (optional)
+    currentL2: sensor.senec_enfluri_net_current_p2
+    # L3 Current Entity, Entity ID for L3 current measurement in amperes (optional)
+    currentL3: sensor.senec_enfluri_net_current_p3
+    # L1 Voltage Entity, Entity ID for L1 voltage measurement in volts (optional)
+    voltageL1: sensor.senec_enfluri_net_potential_p1
+    # L2 Voltage Entity, Entity ID for L2 voltage measurement in volts (optional)
+    voltageL2: sensor.senec_enfluri_net_potential_p2
+    # L3 Voltage Entity, Entity ID for L3 voltage measurement in volts (optional)
+    voltageL3: sensor.senec_enfluri_net_potential_p3
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    #soc: sensor.senec_battery_charge_percent
+
+  - name: SENEC.pv
+    type: template
+    template: homeassistant
+    usage: pv
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.senec_solar_generated_power
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    #soc: sensor.senec_battery_charge_percent
+
+  - name: SENEC.bat
+    type: template
+    template: homeassistant
+    usage: battery
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.senec_battery_state_power
+    # Battery capacity (kWh), optional
+    capacity: 12
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    soc: sensor.senec_battery_charge_percent
+```
+
+### FULL REFERENCE<br/>[for evcc meter homeassistant templates]
+see also https://docs.evcc.io/en/docs/devices/meters#home-assistant-meter
+
+```yaml
+meters:
+  - name: SENEC.grid
+    type: template
+    template: homeassistant
+    usage: grid
+    # URI, HTTP(S) address
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    # Home Assistant Long-Lived Access Token
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.senec_grid_state_power
+    # Energy Entity, Entity ID for cumulative energy measurement in kWh.
+    # Should provide total energy consumed/produced, not daily or interval values. (optional)
+    energy: sensor.house_energy
+    # L1 Current Entity, Entity ID for L1 current measurement in amperes (optional)
+    currentL1: sensor.senec_enfluri_net_current_p1
+    # L2 Current Entity, Entity ID for L2 current measurement in amperes (optional)
+    currentL2: sensor.senec_enfluri_net_current_p2
+    # L3 Current Entity, Entity ID for L3 current measurement in amperes (optional)
+    currentL3: sensor.senec_enfluri_net_current_p3
+    # L1 Voltage Entity, Entity ID for L1 voltage measurement in volts (optional)
+    voltageL1: sensor.senec_enfluri_net_potential_p1
+    # L2 Voltage Entity, Entity ID for L2 voltage measurement in volts (optional)
+    voltageL2: sensor.senec_enfluri_net_potential_p2
+    # L3 Voltage Entity, Entity ID for L3 voltage measurement in volts (optional)
+    voltageL3: sensor.senec_enfluri_net_potential_p3
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    soc: sensor.senec_battery_charge_percent
+
+  - name: SENEC.pv
+    type: template
+    template: homeassistant
+    usage: pv
+    # URI, HTTP(S) address
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    # Home Assistant Long-Lived Access Token
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.senec_solar_generated_power
+    # Energy Entity, Entity ID for cumulative energy measurement in kWh.
+    # Should provide total energy consumed/produced, not daily or interval values. (optional)
+    energy: sensor.house_energy
+    # L1 Current Entity, Entity ID for L1 current measurement in amperes (optional)
+    currentL1: sensor.house_current_l1
+    # L2 Current Entity, Entity ID for L2 current measurement in amperes (optional)
+    currentL2: sensor.house_current_l2
+    # L3 Current Entity, Entity ID for L3 current measurement in amperes (optional)
+    currentL3: sensor.house_current_l3
+    # L1 Voltage Entity, Entity ID for L1 voltage measurement in volts (optional)
+    voltageL1: sensor.house_voltage_l1
+    # L2 Voltage Entity, Entity ID for L2 voltage measurement in volts (optional)
+    voltageL2: sensor.house_voltage_l2
+    # L3 Voltage Entity, Entity ID for L3 voltage measurement in volts (optional)
+    voltageL3: sensor.house_voltage_l3
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    soc: sensor.senec_battery_charge_percent
+    # Maximum AC power of the hybrid inverter (W), optional
+    maxacpower: 0
+
+  - name: SENEC.bat
+    type: template
+    template: homeassistant
+    usage: battery
+    # URI, HTTP(S) address
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    # Home Assistant Long-Lived Access Token
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.senec_battery_state_power
+    # Battery capacity (kWh), optional
+    capacity: 12
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    soc: sensor.senec_battery_charge_percent
+    # Maximum charge power (W), For forced charging of the battery. (optional)
+    maxchargepower:
+    # Maximum discharge power (W), Maximum discharge power of the storage. (optional)
+    maxdischargepower:
+    # Minimum charge (%), Lower limit when discharging the battery in normal operation (optional)
+    minsoc: 25
+    # Maximum charge (%), Upper limit when charging the battery from the grid (optional)
+    maxsoc: 95
+    # Energy Entity, Entity ID for cumulative energy measurement in kWh.
+    # Should provide total energy consumed/produced, not daily or interval values. (optional)
+    energy: sensor.house_energy
+    # L1 Current Entity, Entity ID for L1 current measurement in amperes (optional)
+    currentL1: sensor.house_current_l1
+    # L2 Current Entity, Entity ID for L2 current measurement in amperes (optional)
+    currentL2: sensor.house_current_l2
+    # L3 Current Entity, Entity ID for L3 current measurement in amperes (optional)
+    currentL3: sensor.house_current_l3
+    # L1 Voltage Entity, Entity ID for L1 voltage measurement in volts (optional)
+    voltageL1: sensor.house_voltage_l1
+    # L2 Voltage Entity, Entity ID for L2 voltage measurement in volts (optional)
+    voltageL2: sensor.house_voltage_l2
+    # L3 Voltage Entity, Entity ID for L3 voltage measurement in volts (optional)
+    voltageL3: sensor.house_voltage_l3
+
+  - name: my_aux
+    type: template
+    template: homeassistant
+    usage: aux
+    # URI, HTTP(S) address
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    # Home Assistant Long-Lived Access Token
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.house_power
+    # Energy Entity, Entity ID for cumulative energy measurement in kWh.
+    # Should provide total energy consumed/produced, not daily or interval values. (optional)
+    energy: sensor.house_energy
+    # L1 Current Entity, Entity ID for L1 current measurement in amperes (optional)
+    currentL1: sensor.house_current_l1
+    # L2 Current Entity, Entity ID for L2 current measurement in amperes (optional)
+    currentL2: sensor.house_current_l2
+    # L3 Current Entity, Entity ID for L3 current measurement in amperes (optional)
+    currentL3: sensor.house_current_l3
+    # L1 Voltage Entity, Entity ID for L1 voltage measurement in volts (optional)
+    voltageL1: sensor.house_voltage_l1
+    # L2 Voltage Entity, Entity ID for L2 voltage measurement in volts (optional)
+    voltageL2: sensor.house_voltage_l2
+    # L3 Voltage Entity, Entity ID for L3 voltage measurement in volts (optional)
+    voltageL3: sensor.house_voltage_l3
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    soc: sensor.senec_battery_charge_percent
+
+  - name: my_charger
+    type: template
+    template: homeassistant
+    usage: charge
+    # URI, HTTP(S) address
+    uri: http://[YOUR-HA-INSTANCE]:8123
+    # Home Assistant Long-Lived Access Token
+    token: [YOUR-TOKEN-HERE]
+    # Power Entity, Entity ID for instantaneous power measurement in watts.
+    # The entity must provide numeric values only (e.g., "1234", not "1234 W").
+    power: sensor.house_power
+    # Energy Entity, Entity ID for cumulative energy measurement in kWh.
+    # Should provide total energy consumed/produced, not daily or interval values. (optional)
+    energy: sensor.house_energy
+    # L1 Current Entity, Entity ID for L1 current measurement in amperes (optional)
+    currentL1: sensor.house_current_l1
+    # L2 Current Entity, Entity ID for L2 current measurement in amperes (optional)
+    currentL2: sensor.house_current_l2
+    # L3 Current Entity, Entity ID for L3 current measurement in amperes (optional)
+    currentL3: sensor.house_current_l3
+    # L1 Voltage Entity, Entity ID for L1 voltage measurement in volts (optional)
+    voltageL1: sensor.house_voltage_l1
+    # L2 Voltage Entity, Entity ID for L2 voltage measurement in volts (optional)
+    voltageL2: sensor.house_voltage_l2
+    # L3 Voltage Entity, Entity ID for L3 voltage measurement in volts (optional)
+    voltageL3: sensor.house_voltage_l3
+    # Battery State of Charge, Entity ID for battery state of charge in percent (optional)
+    soc: sensor.senec_battery_charge_percent
+```
+
+<!--
+
+---
+## [OLD] Example evcc.yaml (`meters` section)
 
 ### Required replacements
 
@@ -152,6 +417,8 @@ meters:
       insecure: true
       jq: .state|tonumber * -1 # this does the trick to invert the sensor value for evcc
       timeout: 2s
+    # after the LFP change the capacity seams to be 12kWh (instead of 10)
+    capacity: 12
     soc:
       source: http
       uri: http://[YOUR-HA-INSTANCE]:8123/api/states/sensor.senec_battery_charge_percent
@@ -204,6 +471,7 @@ Just to demonstrate the general concept of adding additional AUX senors (all thi
       jq: .state|tonumber
       timeout: 2s
 ```
+--> 
 
 ## Final step: configure the evcc `site`
 
@@ -218,10 +486,6 @@ site:
       - SENEC.pv
     battery:
       - SENEC.bat
-    aux:
-      - AUX.heat
-      - AUX.pool
-      - AUX.gardenpump
   ...
 ```
 

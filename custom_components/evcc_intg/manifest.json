@@ -1,6 +1,6 @@
 {
   "domain": "evcc_intg",
-  "name": "evcc☀\uFE0F\uD83D\uDE98- Solar Charging",
+  "name": "evcc ☀\uFE0F\uD83D\uDE98 Solar Charging",
   "codeowners": [
     "@marq24"
   ],
@@ -10,5 +10,5 @@
   "iot_class": "local_push",
   "issue_tracker": "https://github.com/marq24/ha-evcc/issues",
   "requirements": ["packaging>=21.0"],
-  "version": "2025.10.8"
+  "version": "2025.11.0"
 }

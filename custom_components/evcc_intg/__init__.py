@@ -463,7 +463,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 self._battery_data_as_object = True
         elif _version_info is not None and len(_version_info) > 0:
             try:
-                if Version(_version_info) >= Version("0.209.8"):
+                # TODO LATER: we don't know in which release the battery object will be
+                # refactored... [so we keep this open right now]
+                if Version(_version_info) >= Version("999.209.8"):
                     self._battery_data_as_object = True
 
             except BaseException as exc:
