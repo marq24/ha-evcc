@@ -43,7 +43,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
                 description = ExtNumberEntityDescription(
                     tag=a_stub.tag,
-                    idx=lp_api_index,
+                    lp_idx=lp_api_index,
                     key=f"{lp_id_addon}_{a_stub.tag.key}",
                     translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
@@ -91,7 +91,7 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
     @property
     def native_value(self):
         try:
-            value = self.coordinator.read_tag(self.tag, self.idx)
+            value = self.coordinator.read_tag(self.tag, self.lp_idx)
             if value is None or value == "":
                 return "unknown"
             else:
@@ -116,9 +116,9 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
     async def async_set_native_value(self, value) -> None:
         try:
             if self.tag == Tag.SMARTCOSTLIMIT or self.tag == Tag.BATTERYGRIDCHARGELIMIT:
-                await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self.idx, self)
+                await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self.lp_idx, self)
             else:
-                await self.coordinator.async_write_tag(self.tag, int(value), self.idx, self)
+                await self.coordinator.async_write_tag(self.tag, int(value), self.lp_idx, self)
 
         except ValueError:
             return "unavailable"

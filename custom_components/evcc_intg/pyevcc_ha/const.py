@@ -71,7 +71,9 @@ TRANSLATIONS: Final = {
             "enable": "Ausreichend PV-Leistung vorhanden",
             "disable": "Unzureichende PV-Leistung, Aktivierung des Timeouts",
             "inactive": "Auch nach dem Timeout ist keine PV-Leistung verfügbar"
-        }
+        },
+        "device_name_loadpoint": "Ladepunkt",
+        "device_name_vehicle": "Fahrzeug"
     },
     "en": {
         "batterymode": {
@@ -89,6 +91,8 @@ TRANSLATIONS: Final = {
             "enable": "Sufficient PV power available",
             "disable": "Insufficient PV power, activating the timeout",
             "inactive": "No PV power available even after the timeout"
-        }
+        },
+        "device_name_loadpoint": "Loadpoint",
+        "device_name_vehicle": "Vehicle"
     }
 }

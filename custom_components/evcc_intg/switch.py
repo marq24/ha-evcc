@@ -35,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             if not lp_is_integrated or a_stub.integrated_supported:
                 description = ExtSwitchEntityDescription(
                     tag=a_stub.tag,
-                    idx=lp_api_index,
+                    lp_idx=lp_api_index,
                     key=f"{lp_id_addon}_{a_stub.tag.key}",
                     translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
@@ -64,7 +64,7 @@ class EvccSwitch(EvccBaseEntity, SwitchEntity):
        """Turn on the switch."""
        try:
            # cause of a minor bug in evcc, we need to write 1 instead of True
-           await self.coordinator.async_write_tag(self.tag, 1, self.idx, self)
+           await self.coordinator.async_write_tag(self.tag, 1, self.lp_idx, self)
        except ValueError:
            return "unavailable"
 
@@ -72,14 +72,14 @@ class EvccSwitch(EvccBaseEntity, SwitchEntity):
        """Turn off the switch."""
        try:
             # cause of a minor bug in evcc, we need to write 0 instead of False
-            await self.coordinator.async_write_tag(self.tag, 0, self.idx, self)
+            await self.coordinator.async_write_tag(self.tag, 0, self.lp_idx, self)
        except ValueError:
            return "unavailable"
 
     @property
     def is_on(self) -> bool | None:
         try:
-            value = self.coordinator.read_tag(self.tag, self.idx)
+            value = self.coordinator.read_tag(self.tag, self.lp_idx)
 
         except KeyError:
             _LOGGER.info(f"is_on caused KeyError for: {self.tag.key}")

@@ -60,7 +60,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             if (not lp_is_single_phase_only or a_stub.tag != Tag.PHASES) and (not lp_is_integrated or a_stub.integrated_supported):
                 description = ExtSelectEntityDescription(
                     tag=a_stub.tag,
-                    idx=lp_api_index,
+                    lp_idx=lp_api_index,
                     key=f"{lp_id_addon}_{a_stub.tag.key}",
                     translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
@@ -246,9 +246,9 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
     @property
     def current_option(self) -> str | None:
         try:
-            value = self.coordinator.read_tag(self.tag, self.idx)
+            value = self.coordinator.read_tag(self.tag, self.lp_idx)
 
-            # _LOGGER.error(f"{self.tag.key} {self.idx} {value}")
+            # _LOGGER.error(f"{self.tag.key} {self.lp_idx} {value}")
 
             if value is None or value == "":
                 # we must patch an empty vehicle_id to 'null' to avoid the select option being set to 'unknown'
@@ -265,17 +265,17 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             #    value = value.replace(':', '_')
 
         except KeyError as kerr:
-            _LOGGER.debug(f"SELECT KeyError: '{self.tag}' '{self.idx}' {kerr}")
+            _LOGGER.debug(f"SELECT KeyError: '{self.tag}' '{self.lp_idx}' {kerr}")
             value = "unknown"
         except TypeError as terr:
-            _LOGGER.debug(f"SELECT TypeError: '{self.tag}' '{self.idx}' {terr}")
+            _LOGGER.debug(f"SELECT TypeError: '{self.tag}' '{self.lp_idx}' {terr}")
             value = None
         return value
 
     async def async_select_option(self, option: str) -> None:
         try:
             if "null" == str(option):
-                await self.coordinator.async_write_tag(self.tag, None, self.idx, self)
+                await self.coordinator.async_write_tag(self.tag, None, self.lp_idx, self)
             else:
                 #if Tag.VEHICLENAME == self.tag:
                 #    # me must map the value selected in the select.options to the final value
@@ -284,7 +284,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 #    if option in self.coordinator._vehicle:
                 #        option = self.coordinator._vehicle[option][EVCC_JSON_VEH_NAME]
 
-                await self.coordinator.async_write_tag(self.tag, option, self.idx, self)
+                await self.coordinator.async_write_tag(self.tag, option, self.lp_idx, self)
 
             if Tag.MAXCURRENT == self.tag:
                 self._check_min_options(option)

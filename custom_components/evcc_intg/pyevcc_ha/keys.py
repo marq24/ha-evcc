@@ -113,11 +113,11 @@ class Tag(ApiKey, Enum):
 
     # "batteryCapacity": 7.5,
     BATTERYCAPACITY = ApiKey(key="batteryCapacity", type=EP_TYPE.SITE)
-    BATTERYCAPACITY_AS_OBJ = ApiKey(enity_key="batteryCapacity", key="capacity", subtype=BATTERY.key, type=EP_TYPE.SITE)
+    BATTERYCAPACITY_AS_OBJ = ApiKey(entity_key="batteryCapacity", key="capacity", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
     # "batteryEnergy": 0,
     BATTERYENERGY = ApiKey(key="batteryEnergy", type=EP_TYPE.SITE)
-    BATTERYENERGY_AS_OBJ = ApiKey(enity_key="batteryEnergy", key="energy", subtype=BATTERY.key, type=EP_TYPE.SITE)
+    BATTERYENERGY_AS_OBJ = ApiKey(entity_key="batteryEnergy", key="energy", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
     # "pvPower": 8871.22,
     PVPOWER = ApiKey(key="pvPower", type=EP_TYPE.SITE)

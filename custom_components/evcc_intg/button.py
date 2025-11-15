@@ -33,7 +33,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             if not lp_is_integrated or a_stub.integrated_supported:
                 description = ExtButtonEntityDescription(
                     tag=a_stub.tag,
-                    idx=lp_api_index,
+                    lp_idx=lp_api_index,
                     key=f"{lp_id_addon}_{a_stub.tag.key}",
                     translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
@@ -59,6 +59,6 @@ class EvccButton(EvccBaseEntity, ButtonEntity):
 
     async def async_press(self, **kwargs):
         try:
-            await self.coordinator.async_press_tag(self.tag, self.entity_description.payload, self.idx, self)
+            await self.coordinator.async_press_tag(self.tag, self.entity_description.payload, self.lp_idx, self)
         except ValueError:
             return "unavailable"

@@ -35,7 +35,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             if not lp_is_integrated or a_stub.integrated_supported:
                 description = ExtBinarySensorEntityDescription(
                     tag=a_stub.tag,
-                    idx=lp_api_index,
+                    lp_idx=lp_api_index,
                     key=f"{lp_id_addon}_{a_stub.tag.key}",
                     translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
@@ -66,13 +66,13 @@ class EvccBinarySensor(EvccBaseEntity, BinarySensorEntity):
             if self.tag == Tag.PLANACTIVEALT:
                 # here we have a special implementation, since the attribute will not be provided via the API (yet)
                 # so we check here, if the 'effectivePlanTime' is not none...
-                value = self.coordinator.read_tag(Tag.EFFECTIVEPLANTIME, self.idx) is not None
+                value = self.coordinator.read_tag(Tag.EFFECTIVEPLANTIME, self.lp_idx) is not None
             else:
-                value = self.coordinator.read_tag(self.tag, self.idx)
+                value = self.coordinator.read_tag(self.tag, self.lp_idx)
 
         except IndexError:
-            if self.entity_description.idx is not None:
-                _LOGGER.debug(f"lc-key: {self.tag.key.lower()} value: {value} idx: {self.idx} -> {self.coordinator.data[self.tag.key]}")
+            if self.lp_idx is not None:
+                _LOGGER.debug(f"lc-key: {self.tag.key.lower()} value: {value} idx: {self.lp_idx} -> {self.coordinator.data[self.tag.key]}")
             else:
                 _LOGGER.debug(f"lc-key: {self.tag.key.lower()} caused IndexError")
             value = None

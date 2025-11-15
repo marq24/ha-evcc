@@ -83,10 +83,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                                  a_stub.tag == Tag.VEHICLEPLANSSOC)
 
                 # only when the json_idx has a length of 1 we must patch our key & translation_key
-                patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) > 1
+                patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
+
                 description = ExtSensorEntityDescription(
                     tag=a_stub.tag,
-                    idx=lp_api_index,
+                    lp_idx=lp_api_index,
                     key=f"{lp_id_addon}_{a_stub.tag.key}" if not patch_keys else f"{lp_id_addon}_{a_stub.tag.key}_{a_stub.json_idx[0]}",
                     translation_key=a_stub.tag.key if not patch_keys else f"{a_stub.tag.key}_{a_stub.json_idx[0]}",
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
@@ -135,7 +136,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in SENSOR_ENTITIES_PER_VEHICLE:
             # only when the json_idx has a length of 1 we must patch our key & translation_key
-            patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) > 1
+            patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
 
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
@@ -333,7 +334,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 _LOGGER.debug(f"no tariff data found for {self.tag}")
                 return None
         try:
-            value = self.coordinator.read_tag(self.tag, self.idx)
+            value = self.coordinator.read_tag(self.tag, self.lp_idx)
             if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
                 json_keys_len = len(self.entity_description.json_idx)
                 # for sure this could be also done in loop... but this code is IMHO readable...
@@ -388,7 +389,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         value = float(value)/self.entity_description.factor
 
         except (IndexError, ValueError, TypeError, KeyError) as err:
-            _LOGGER.debug(f"tag: {self.tag} (idx: '{self.idx}') (value: '{value}') caused {err}")
+            _LOGGER.debug(f"tag: {self.tag} (lp_idx: '{self.lp_idx}') (value: '{value}') caused {err}")
             value = None
 
         # make sure that we do not return unknown or smaller values

@@ -199,43 +199,35 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
         if hass is not None:
             a_device_reg = device_reg.async_get(hass)
             if a_device_reg is not None:
-                key_list = []
+                devices_to_delete = []
                 for a_device_entry in list(a_device_reg.devices.values()):
                     if hasattr(a_device_entry, "identifiers"):
                         ident_value = a_device_entry.identifiers
 
                         if f"{ident_value}".__contains__(DOMAIN):
-                            if hasattr(a_device_entry, "serial_number"):
-                                a_config_entry_id = a_device_entry.serial_number
-
-                            # ok this is an old 'device' entry (that does not include the
-                            # config_entry_id as serial_number)... This will be deleted in
-                            # any case...
-                            if a_config_entry_id is None:
-                                key_list.append(a_device_entry.id)
 
                             if purge_all and config_entry_id is not None:
-                                if config_entry_id == a_config_entry_id:
-                                    key_list.append(a_device_entry.id)
+                                if config_entry_id in a_device_entry.config_entries:
+                                    devices_to_delete.append(a_device_entry.id)
 
                             elif hasattr(a_device_entry, "manufacturer"):
                                 manufacturer_value = a_device_entry.manufacturer
                                 if not f"{manufacturer_value}".__eq__(MANUFACTURER):
                                     _LOGGER.info(f"found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
-                                    key_list.append(a_device_entry.id)
+                                    devices_to_delete.append(a_device_entry.id)
 
                             #elif intg_version != "UNKNOWN":
                             #    if not f"{ident_value}".__contains__(intg_version):
-                            #        key_list.append(a_device_entry.id)
+                            #        devices_to_delete.append(a_device_entry.id)
 
-                if len(key_list) > 0:
-                    key_list = list(dict.fromkeys(key_list))
+                if len(devices_to_delete) > 0:
+                    devices_to_delete = list(dict.fromkeys(devices_to_delete))
                     if purge_all:
-                        _LOGGER.info(f"CLEAN ALL {DOMAIN} DeviceEntries: {key_list}")
+                        _LOGGER.info(f"CLEAN ALL {DOMAIN} DeviceEntries: {devices_to_delete}")
                     else:
-                        _LOGGER.info(f"NEED TO DELETE old {DOMAIN} DeviceEntries: {key_list}")
+                        _LOGGER.info(f"NEED TO DELETE old {DOMAIN} DeviceEntries: {devices_to_delete}")
 
-                    for a_device_entry_id in key_list:
+                    for a_device_entry_id in devices_to_delete:
                         a_device_reg.async_remove_device(device_id=a_device_entry_id)
 
         DEVICE_REG_CLEANUP_RUNNING = False
@@ -244,9 +236,14 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def __init__(self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry):
         _LOGGER.debug(f"starting evcc_intg for: data:{config_entry.data}")
-        lang = hass.config.language.lower()
         self.name = config_entry.title
         self.use_ws = config_entry.data.get(CONF_USE_WS, True)
+
+        lang = hass.config.language.lower()
+        if lang in TRANSLATIONS:
+            self.lang_map = TRANSLATIONS[lang]
+        else:
+            self.lang_map = TRANSLATIONS["en"]
 
         self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
                                     web_session=http_session,
@@ -359,8 +356,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME} [{self._system_id}]",
-            "sw_version": self._version,
-            "serial_number": self._config_entry.entry_id
+            "sw_version": self._version
         }
 
         if JSONKEY_VEHICLES in initdata:
@@ -802,9 +798,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         a_device_info_dict = {
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
-            "name": f"{NAME_SHORT} - Loadpoint {addon} [{self._system_id}]",
-            "sw_version": self._version,
-            "serial_number": self._config_entry.entry_id
+            "name": f"{NAME_SHORT} - {self.lang_map["device_name_loadpoint"]} {addon} [{self._system_id}]",
+            "sw_version": self._version
         }
         return a_device_info_dict
 
@@ -814,9 +809,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         a_device_info_dict = {
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
-            "name": f"{NAME_SHORT} - Vehicle {addon} [{self._system_id}]",
-            "sw_version": self._version,
-            "serial_number": self._config_entry.entry_id
+            "name": f"{NAME_SHORT} - {self.lang_map["device_name_vehicle"]} {addon} [{self._system_id}]",
+            "sw_version": self._version
         }
         return a_device_info_dict
 
@@ -839,11 +833,11 @@ class EvccBaseEntity(Entity):
         else:
             self.tag = None
 
-        self.idx = None
-        if hasattr(description, "idx"):
-            self.idx = description.idx
+        self.lp_idx = None
+        if hasattr(description, "lp_idx"):
+            self.lp_idx = description.lp_idx
         else:
-            self.idx = None
+            self.lp_idx = None
 
         if hasattr(description, "translation_key") and description.translation_key is not None:
             self._attr_translation_key = description.translation_key.lower()

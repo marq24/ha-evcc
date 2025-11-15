@@ -16,7 +16,6 @@ from homeassistant.const import (
     UnitOfTime,
     PERCENTAGE
 )
-from homeassistant.util.frozen_dataclass_compat import FrozenOrThawed
 
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 
@@ -50,8 +49,8 @@ SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
 SERVICE_DEL_LOADPOINT_PLAN: Final = "del_loadpoint_plan"
 SERVICE_DEL_VEHICLE_PLAN: Final = "del_vehicle_plan"
 
-@dataclass
-class EntityDescriptionStub(metaclass=FrozenOrThawed, frozen_or_thawed=True):
+@dataclass(frozen=True)
+class EntityDescriptionStub():
     tag: Tag = None,
     icon: str | None = None
     device_class: str | None = None
@@ -61,34 +60,33 @@ class EntityDescriptionStub(metaclass=FrozenOrThawed, frozen_or_thawed=True):
     integrated_supported: bool = True
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtBinarySensorEntityDescriptionStub(EntityDescriptionStub):
     icon_off: str | None = None
-
 
 @dataclass(frozen=True)
 class ExtBinarySensorEntityDescription(BinarySensorEntityDescription):
     tag: Tag = None
-    idx: int | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
     icon_off: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtButtonEntityDescriptionStub(EntityDescriptionStub):
     payload: str | None = None
-
 
 @dataclass(frozen=True)
 class ExtButtonEntityDescription(ButtonEntityDescription):
     tag: Tag = None
-    idx: int | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
+
     payload: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtNumberEntityDescriptionStub(EntityDescriptionStub):
     max_value: None = None
     min_value: None = None
@@ -102,23 +100,22 @@ class ExtNumberEntityDescriptionStub(EntityDescriptionStub):
 @dataclass(frozen=True)
 class ExtNumberEntityDescription(NumberEntityDescription):
     tag: Tag = None
-    idx: int | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtSelectEntityDescriptionStub(EntityDescriptionStub):
     options: list[str] | None = None,
-
 
 @dataclass(frozen=True)
 class ExtSelectEntityDescription(SelectEntityDescription):
     tag: Tag = None
-    idx: int | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
 
-@dataclass
+@dataclass(frozen=True)
 class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
     state_class: SensorStateClass | str | None = None
     suggested_unit_of_measurement: str | None = None
@@ -130,11 +127,10 @@ class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
     lookup: bool | None = None
     ignore_zero: bool | None = None
 
-
 @dataclass(frozen=True)
 class ExtSensorEntityDescription(SensorEntityDescription):
     tag: Tag = None
-    idx: int | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
     json_idx: list[str|int] | None = None
@@ -142,15 +138,15 @@ class ExtSensorEntityDescription(SensorEntityDescription):
     lookup: bool | None = None
     ignore_zero: bool | None = None
 
-@dataclass
+
+@dataclass(frozen=True)
 class ExtSwitchEntityDescriptionStub(EntityDescriptionStub):
     icon_off: str | None = None
-
 
 @dataclass(frozen=True)
 class ExtSwitchEntityDescription(SwitchEntityDescription):
     tag: Tag = None
-    idx: int | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
     icon_off: str | None = None
