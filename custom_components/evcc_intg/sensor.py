@@ -82,11 +82,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                                  a_stub.tag == Tag.VEHICLELIMITSOC or
                                  a_stub.tag == Tag.VEHICLEPLANSSOC)
 
+                # only when the json_idx has a length of 1 we must patch our key & translation_key
+                patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) > 1
                 description = ExtSensorEntityDescription(
                     tag=a_stub.tag,
                     idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{lp_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",
-                    translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
+                    key=f"{lp_id_addon}_{a_stub.tag.key}" if not patch_keys else f"{lp_id_addon}_{a_stub.tag.key}_{a_stub.json_idx[0]}",
+                    translation_key=a_stub.tag.key if not patch_keys else f"{a_stub.tag.key}_{a_stub.json_idx[0]}",
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
@@ -98,8 +100,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     state_class=a_stub.state_class,
                     native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
                     suggested_display_precision=a_stub.suggested_display_precision,
-                    array_idx=a_stub.array_idx,
-                    tuple_idx=a_stub.tuple_idx,
+                    json_idx=a_stub.json_idx,
                     factor=a_stub.factor,
                     lookup=a_stub.lookup,
                     ignore_zero=a_stub.ignore_zero
@@ -133,10 +134,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         veh_name_addon = a_vehicle_obj["name"]
 
         for a_stub in SENSOR_ENTITIES_PER_VEHICLE:
+            # only when the json_idx has a length of 1 we must patch our key & translation_key
+            patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) > 1
+
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
-                key=f"{veh_id_addon}_{a_stub.tag.key}" if a_stub.array_idx is None else f"{veh_id_addon}_{a_stub.tag.key}_{a_stub.array_idx}",
-                translation_key=a_stub.tag.key if a_stub.array_idx is None else f"{a_stub.tag.key}_{a_stub.array_idx}",
+                key=f"{veh_id_addon}_{a_stub.tag.key}" if not patch_keys else f"{veh_id_addon}_{a_stub.tag.key}_{a_stub.json_idx[0]}",
+                translation_key=a_stub.tag.key if not patch_keys else f"{a_stub.tag.key}_{a_stub.json_idx[0]}",
                 name_addon=veh_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
@@ -148,8 +152,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 state_class=a_stub.state_class,
                 native_unit_of_measurement=a_stub.native_unit_of_measurement,
                 suggested_display_precision=a_stub.suggested_display_precision,
-                array_idx=a_stub.array_idx,
-                tuple_idx=a_stub.tuple_idx,
+                json_idx=a_stub.json_idx,
                 factor=a_stub.factor,
                 lookup=a_stub.lookup,
                 ignore_zero=a_stub.ignore_zero
@@ -331,22 +334,24 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 return None
         try:
             value = self.coordinator.read_tag(self.tag, self.idx)
-            if hasattr(self.entity_description, "tuple_idx") and self.entity_description.tuple_idx is not None and len(self.entity_description.tuple_idx) > 1:
-                array_idx1 = self.entity_description.tuple_idx[0]
-                array_idx2 = self.entity_description.tuple_idx[1]
-                try:
-                    value = value[array_idx1][array_idx2]
-                except (IndexError, KeyError):
-                    _LOGGER.debug(f"index {array_idx1} or {array_idx2} not found in {value}")
-                    value = None
+            if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
+                json_keys_len = len(self.entity_description.json_idx)
+                # for sure this could be also done in loop... but this code is IMHO readable...
+                if json_keys_len > 0:
+                    json_idx1 = self.entity_description.json_idx[0]
+                    try:
+                        value = value[json_idx1]
+                    except (IndexError, KeyError):
+                        _LOGGER.debug(f"index1 {json_idx1} not found in {value}")
+                        value = None
 
-            elif hasattr(self.entity_description, "array_idx") and self.entity_description.array_idx is not None:
-                array_idx = self.entity_description.array_idx
-                try:
-                    value = value[array_idx]
-                except (IndexError, KeyError):
-                    _LOGGER.debug(f"index {array_idx} not found in {value}")
-                    value = None
+                if json_keys_len > 1:
+                    json_idx2 = self.entity_description.json_idx[1]
+                    try:
+                        value = value[json_idx2]
+                    except (IndexError, KeyError):
+                        _LOGGER.debug(f"index2 {json_idx2} not found in {value}")
+                        value = None
 
             if isinstance(value, (dict, list)):
                 if self.tag == Tag.FORECAST_GRID:

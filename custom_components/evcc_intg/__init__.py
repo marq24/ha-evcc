@@ -561,7 +561,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     ret = self.data[tag.key]
 
                     # checking for possible existing subtypes (so key is just a 'container' for the real value)
-                    # (elsewhere we solve this right now via entity_description.array_idx) -> we must check, if
+                    # (elsewhere we solve this right now via entity_description.json_idx[0]) -> we must check, if
                     # this can't be also used here ?!
                     # if tag.subtype is not None and isinstance(ret, dict):
                     #    if tag.subtype in ret:

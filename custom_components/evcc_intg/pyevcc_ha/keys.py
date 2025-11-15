@@ -99,7 +99,7 @@ class Tag(ApiKey, Enum):
     # "batteryMode": unknown|normal|hold|charge
     BATTERYMODE = ApiKey(key="batteryMode", type=EP_TYPE.SITE)
 
-    # "battery":[{"power":0,"capacity":12,"soc":81,"controllable":false}], -> we must access this attribute via tuple_idx
+    # "battery":[{"power":0,"capacity":12,"soc":81,"controllable":false}], -> we must access this attribute via json_idx
     BATTERY = ApiKey(key="battery", type=EP_TYPE.SITE)
     BATTERY_AS_OBJ = ApiKey(entity_key="batteryDevices", key="devices", subtype=BATTERY.key, type=EP_TYPE.SITE)
 
@@ -125,7 +125,7 @@ class Tag(ApiKey, Enum):
     # "pvEnergy": 4235.825,
     PVENERGY = ApiKey(key="pvEnergy", type=EP_TYPE.SITE)
 
-    # "pv": [{"power": 8871.22}], -> we must access this attribute via tuple_idx
+    # "pv": [{"power": 8871.22}], -> we must access this attribute via json_idx
     PV = ApiKey(key="pv", type=EP_TYPE.SITE)
 
     # "gridCurrents": [17.95, 7.71, 1.99],

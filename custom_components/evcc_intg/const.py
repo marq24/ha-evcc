@@ -125,8 +125,7 @@ class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
     suggested_display_precision: int | None = None
     native_unit_of_measurement: str | None = None
 
-    array_idx: str | int | None = None
-    tuple_idx: list | None = None
+    json_idx: list[str|int] | None = None
     factor: int | None = None
     lookup: bool | None = None
     ignore_zero: bool | None = None
@@ -138,8 +137,7 @@ class ExtSensorEntityDescription(SensorEntityDescription):
     idx: int | None = None
     name_addon: str | None = None
 
-    array_idx:  str | int | None = None
-    tuple_idx: list | None = None
+    json_idx: list[str|int] | None = None
     factor: int | None = None
     lookup: bool | None = None
     ignore_zero: bool | None = None
@@ -474,7 +472,7 @@ SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.GRIDCURRENTS,
         key=f"{Tag.GRIDCURRENTS.key}_0",
-        array_idx=0,
+        json_idx=[0],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -484,7 +482,7 @@ SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.GRIDCURRENTS,
         key=f"{Tag.GRIDCURRENTS.key}_1",
-        array_idx=1,
+        json_idx=[1],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -494,7 +492,7 @@ SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.GRIDCURRENTS,
         key=f"{Tag.GRIDCURRENTS.key}_2",
-        array_idx=2,
+        json_idx=[2],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -506,7 +504,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
         key=Tag.GRIDPOWER.key, # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
-        array_idx = GRID_CONTENT.POWER.value,
+        json_idx=[GRID_CONTENT.POWER.value],
         icon="mdi:transmission-tower",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -516,7 +514,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
         key=f"{Tag.GRIDCURRENTS.key}_0", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
-        tuple_idx = [GRID_CONTENT.CURRENTS.value, 0],
+        json_idx=[GRID_CONTENT.CURRENTS.value, 0],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -526,7 +524,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
         key=f"{Tag.GRIDCURRENTS.key}_1", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
-        tuple_idx = [GRID_CONTENT.CURRENTS.value, 1],
+        json_idx=[GRID_CONTENT.CURRENTS.value, 1],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -536,7 +534,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
         key=f"{Tag.GRIDCURRENTS.key}_2", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
-        tuple_idx = [GRID_CONTENT.CURRENTS.value, 2],
+        json_idx=[GRID_CONTENT.CURRENTS.value, 2],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -556,7 +554,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_0_power",
-        tuple_idx = [0, BATTERY_CONTENT.POWER.value],
+        json_idx=[0, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -566,7 +564,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_1_power",
-        tuple_idx = [1, BATTERY_CONTENT.POWER.value],
+        json_idx=[1, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -576,7 +574,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_2_power",
-        tuple_idx = [2, BATTERY_CONTENT.POWER.value],
+        json_idx=[2, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -586,7 +584,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_3_power",
-        tuple_idx = [3, BATTERY_CONTENT.POWER.value],
+        json_idx=[3, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -606,7 +604,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_0_soc",
-        tuple_idx = [0, BATTERY_CONTENT.SOC.value],
+        json_idx=[0, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -617,7 +615,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_1_soc",
-        tuple_idx = [1, BATTERY_CONTENT.SOC.value],
+        json_idx=[1, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -628,7 +626,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_2_soc",
-        tuple_idx = [2, BATTERY_CONTENT.SOC.value],
+        json_idx=[2, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -639,7 +637,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY,
         key="battery_3_soc",
-        tuple_idx = [3, BATTERY_CONTENT.SOC.value],
+        json_idx=[3, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -670,7 +668,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_0_power",
-        tuple_idx = [0, BATTERY_CONTENT.POWER.value],
+        json_idx=[0, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -680,7 +678,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_1_power",
-        tuple_idx = [1, BATTERY_CONTENT.POWER.value],
+        json_idx=[1, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -690,7 +688,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_2_power",
-        tuple_idx = [2, BATTERY_CONTENT.POWER.value],
+        json_idx=[2, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -700,7 +698,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_3_power",
-        tuple_idx = [3, BATTERY_CONTENT.POWER.value],
+        json_idx=[3, BATTERY_CONTENT.POWER.value],
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -720,7 +718,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_0_soc",
-        tuple_idx = [0, BATTERY_CONTENT.SOC.value],
+        json_idx=[0, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -731,7 +729,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_1_soc",
-        tuple_idx = [1, BATTERY_CONTENT.SOC.value],
+        json_idx=[1, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -742,7 +740,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_2_soc",
-        tuple_idx = [2, BATTERY_CONTENT.SOC.value],
+        json_idx=[2, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -753,7 +751,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERY_AS_OBJ,
         key="battery_3_soc",
-        tuple_idx = [3, BATTERY_CONTENT.SOC.value],
+        json_idx=[3, BATTERY_CONTENT.SOC.value],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -816,7 +814,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_0_energy",
-        tuple_idx = [0, PV_CONTENT.ENERGY.value],
+        json_idx=[0, PV_CONTENT.ENERGY.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -827,7 +825,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_1_energy",
-        tuple_idx = [1, PV_CONTENT.ENERGY.value],
+        json_idx=[1, PV_CONTENT.ENERGY.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -838,7 +836,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_2_energy",
-        tuple_idx = [2, PV_CONTENT.ENERGY.value],
+        json_idx=[2, PV_CONTENT.ENERGY.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -849,7 +847,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_3_energy",
-        tuple_idx = [3, PV_CONTENT.ENERGY.value],
+        json_idx=[3, PV_CONTENT.ENERGY.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -869,7 +867,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_0_power",
-        tuple_idx = [0, PV_CONTENT.POWER.value],
+        json_idx=[0, PV_CONTENT.POWER.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -880,7 +878,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_1_power",
-        tuple_idx = [1, PV_CONTENT.POWER.value],
+        json_idx=[1, PV_CONTENT.POWER.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -891,7 +889,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_2_power",
-        tuple_idx = [2, PV_CONTENT.POWER.value],
+        json_idx=[2, PV_CONTENT.POWER.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -902,7 +900,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.PV,
         key="pv_3_power",
-        tuple_idx = [3, PV_CONTENT.POWER.value],
+        json_idx=[3, PV_CONTENT.POWER.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -1113,7 +1111,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.FORECAST_GRID,
         key=Tag.FORECAST_GRID.entity_key,
-        array_idx=FORECAST_CONTENT.GRID.value,
+        json_idx=[FORECAST_CONTENT.GRID.value],
         icon="mdi:cash-multiple",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="@@@",
@@ -1124,7 +1122,7 @@ SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.FORECAST_SOLAR,
         key=Tag.FORECAST_SOLAR.entity_key,
-        array_idx=FORECAST_CONTENT.SOLAR.value,
+        json_idx=[FORECAST_CONTENT.SOLAR.value],
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -1170,7 +1168,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGECURRENTS,
-        array_idx=0,
+        json_idx=[0],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -1179,7 +1177,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGECURRENTS,
-        array_idx=1,
+        json_idx=[1],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
@@ -1188,7 +1186,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGECURRENTS,
-        array_idx=2,
+        json_idx=[2],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
