@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 
 from homeassistant.components.number import NumberEntity
 from homeassistant.components.sensor import SensorDeviceClass
@@ -21,8 +22,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
         if description.tag == Tag.BATTERYGRIDCHARGELIMIT:
             if coordinator._currency != "€":
-                new_val = description.native_max_value * 10
-                description.native_max_value=new_val
+                description = replace(
+                    description,
+                    native_max_value = description.native_max_value * 10
+                )
 
         entity = EvccNumber(coordinator, description)
         entities.append(entity)
@@ -66,17 +69,22 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
                 if a_stub.tag == Tag.SMARTCOSTLIMIT:
                     if coordinator._cost_type == "co2":
-                        description.translation_key = f"{a_stub.tag.key}_co2"
-                        description.icon = "mdi:molecule-co2"
-                        description.native_max_value=500
-                        description.native_min_value=0
-                        description.native_step=5
-                        description.native_unit_of_measurement="g/kWh"
+                        description = replace(
+                            description,
+                            translation_key = f"{a_stub.tag.key}_co2",
+                            icon = "mdi:molecule-co2",
+                            native_max_value=500,
+                            native_min_value=0,
+                            native_step=5,
+                            native_unit_of_measurement="g/kWh"
+                        )
 
                     # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
                     elif coordinator._currency != "€":
-                        new_val = a_stub.native_max_value * 10
-                        description.native_max_value=new_val
+                        description = replace(
+                            description,
+                            native_max_value = a_stub.native_max_value * 10
+                        )
 
                 entity = EvccNumber(coordinator, description)
                 entities.append(entity)

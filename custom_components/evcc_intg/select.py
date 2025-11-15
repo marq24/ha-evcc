@@ -1,5 +1,6 @@
 import asyncio
 import logging
+from dataclasses import replace
 
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
@@ -76,8 +77,11 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
                 # we might need to patch(remove) the 'auto-mode' from the phases selector
                 if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:
-                    description.options = description.options[1:]
-                    description.translation_key = f"{description.translation_key}_fixed"
+                    description = replace(
+                        description,
+                        options = description.options[1:],
+                        translation_key = f"{description.translation_key}_fixed"
+                    )
 
                 entity = EvccSelect(coordinator, description)
 
