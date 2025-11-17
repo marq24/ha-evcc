@@ -14,7 +14,7 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfLength,
     UnitOfTime,
-    PERCENTAGE
+    PERCENTAGE, UnitOfElectricPotential
 )
 
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
@@ -1189,6 +1189,42 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         device_class=SensorDeviceClass.CURRENT,
         entity_registry_enabled_default=False
     ),
+
+
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEVOLTAGES,
+        json_idx=[0],
+        suggested_display_precision=2,
+        icon="mdi:lightning-bolt",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEVOLTAGES,
+        json_idx=[1],
+        suggested_display_precision=2,
+        icon="mdi:lightning-bolt",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CHARGEVOLTAGES,
+        json_idx=[2],
+        suggested_display_precision=2,
+        icon="mdi:lightning-bolt",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        device_class=SensorDeviceClass.VOLTAGE,
+        entity_registry_enabled_default=False
+    ),
+
+
+
+
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGEDURATION,
         icon="mdi:clock-digital",

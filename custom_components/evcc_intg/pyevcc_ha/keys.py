@@ -204,6 +204,9 @@ class Tag(ApiKey, Enum):
     # "chargeCurrents": [0, 0, 0],
     CHARGECURRENTS = ApiKey(key="chargeCurrents", type=EP_TYPE.LOADPOINTS)
 
+    # "chargeVoltages": [231.8800049, 232.8099976, 233.1199951],
+    CHARGEVOLTAGES = ApiKey(key="chargeVoltages", type=EP_TYPE.LOADPOINTS)
+
     # "chargeDuration": 0, -> (in millis) ?! 840000000000 = 14min -> / 1000000
     CHARGEDURATION = ApiKey(key="chargeDuration", type=EP_TYPE.LOADPOINTS)
     CHARGEREMAININGDURATION = ApiKey(key="chargeRemainingDuration", type=EP_TYPE.LOADPOINTS)
