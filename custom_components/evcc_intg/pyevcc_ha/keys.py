@@ -396,8 +396,8 @@ class Tag(ApiKey, Enum):
     )
 
     # values can be written via SERVICE
-    VEHICLEPLANSSOC = ApiKey(key="vehiclePlansSoc", type=EP_TYPE.VEHICLES)
-    VEHICLEPLANSTIME = ApiKey(key="vehiclePlansTime", type=EP_TYPE.VEHICLES)
+    VEHICLEPLANSOC = ApiKey(key="vehiclePlansSoc", type=EP_TYPE.VEHICLES)
+    VEHICLEPLANTIME = ApiKey(key="vehiclePlansTime", type=EP_TYPE.VEHICLES)
     # delete plan button
     VEHICLEPLANSDELETE= ApiKey(key="vehiclePlansDelete", type=EP_TYPE.VEHICLES, writeable=True, write_key="plan/soc")
 

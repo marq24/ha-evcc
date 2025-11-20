@@ -80,7 +80,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                                  a_stub.tag == Tag.VEHICLESOC or
                                  a_stub.tag == Tag.VEHICLEMINSOC or
                                  a_stub.tag == Tag.VEHICLELIMITSOC or
-                                 a_stub.tag == Tag.VEHICLEPLANSSOC)
+                                 a_stub.tag == Tag.VEHICLEPLANSOC)
 
                 # only when the json_idx has a length of 1 we must patch our key & translation_key
                 patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1

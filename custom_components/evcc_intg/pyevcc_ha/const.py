@@ -1,9 +1,9 @@
 from typing import Final
 
-JSONKEY_PLANS: Final = "plans"
+JSONKEY_PLANS_DEPRECATED: Final = "plans"
 JSONKEY_PLAN: Final = "plan"
-JSONKEY_PLANS_SOC: Final = "soc"
-JSONKEY_PLANS_TIME: Final = "time"
+JSONKEY_PLAN_SOC: Final = "soc"
+JSONKEY_PLAN_TIME: Final = "time"
 
 JSONKEY_LOADPOINTS: Final = "loadpoints"
 JSONKEY_VEHICLES: Final = "vehicles"

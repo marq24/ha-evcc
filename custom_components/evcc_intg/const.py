@@ -1406,7 +1406,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
 
     ExtSensorEntityDescriptionStub(
-        tag=Tag.VEHICLEPLANSSOC,
+        tag=Tag.VEHICLEPLANSOC,
         icon="mdi:battery-charging",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1414,7 +1414,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
-        tag=Tag.VEHICLEPLANSTIME,
+        tag=Tag.VEHICLEPLANTIME,
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,

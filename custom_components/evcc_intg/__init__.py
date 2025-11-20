@@ -26,9 +26,9 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_LOADPOINTS,
     JSONKEY_VEHICLES,
     JSONKEY_PLAN,
-    JSONKEY_PLANS,
-    JSONKEY_PLANS_SOC,
-    JSONKEY_PLANS_TIME,
+    JSONKEY_PLANS_DEPRECATED,
+    JSONKEY_PLAN_SOC,
+    JSONKEY_PLAN_TIME,
     JSONKEY_STATISTICS,
     JSONKEY_STATISTICS_TOTAL,
     JSONKEY_STATISTICS_THISYEAR,
@@ -673,22 +673,24 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return None
 
     def read_tag_vehicle_str(self, tag: Tag, vehicle_id: str):
-        is_veh_PLANSSOC = tag == Tag.VEHICLEPLANSSOC
-        is_veh_PLANSTIME = tag == Tag.VEHICLEPLANSTIME
+        is_veh_PLANSSOC = tag == Tag.VEHICLEPLANSOC
+        is_veh_PLANSTIME = tag == Tag.VEHICLEPLANTIME
         if is_veh_PLANSSOC or is_veh_PLANSTIME:
             # yes this is really a hack! [at a certain point the API just returned 'plan' and 'plans' have been removed] ?!
             if JSONKEY_PLAN in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN]) > 0:
                 if is_veh_PLANSSOC:
-                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLANS_SOC]
+                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLAN_SOC]
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLANS_TIME])
-            elif JSONKEY_PLANS in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0:
+                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLAN_TIME])
+
+            elif JSONKEY_PLANS_DEPRECATED in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS_DEPRECATED]) > 0:
                 if is_veh_PLANSSOC:
-                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_SOC]
+                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS_DEPRECATED][0][JSONKEY_PLAN_SOC]
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_TIME])
+                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS_DEPRECATED][0][JSONKEY_PLAN_TIME])
+
             else:
                 return None
         else:
