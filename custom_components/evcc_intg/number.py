@@ -67,7 +67,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     step=a_stub.step,
                 )
 
-                if a_stub.tag == Tag.SMARTCOSTLIMIT:
+                if a_stub.tag == Tag.SMARTCOSTLIMIT or a_stub.tag == Tag.BATTERYGRIDCHARGELIMIT:
                     if coordinator._cost_type == "co2":
                         description = replace(
                             description,
