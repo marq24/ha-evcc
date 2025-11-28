@@ -223,58 +223,62 @@ class EvccApiBridge:
 
                         try:
                             ws_data = msg.json()
-                            for key, value in ws_data.items():
-                                if "." in key:
-                                    key_parts = key.split(".")
-                                    if len(key_parts) > 2:
-                                        domain = key_parts[0]
-                                        idx = int(key_parts[1])
-                                        sub_key = key_parts[2]
-                                        if domain in self._data:
-                                            if len(self._data[domain]) > idx:
-                                                if not sub_key in self._data[domain][idx]:
-                                                    _LOGGER.debug(f"adding '{sub_key}' to {domain}[{idx}]")
-                                                self._data[domain][idx][sub_key] = value
+                            if self._data is None:
+                                _LOGGER.info(f"unhandled {ws_data} - since 'self._data' is NONE")
+                            else:
+                                for key, value in ws_data.items():
+                                    if "." in key:
+                                        key_parts = key.split(".")
+                                        if len(key_parts) > 2:
+                                            domain = key_parts[0]
+                                            idx = int(key_parts[1])
+                                            sub_key = key_parts[2]
+                                            if domain in self._data:
+                                                if len(self._data[domain]) > idx:
+                                                    if not sub_key in self._data[domain][idx]:
+                                                        _LOGGER.debug(f"adding '{sub_key}' to {domain}[{idx}]")
+                                                    self._data[domain][idx][sub_key] = value
+                                                else:
+                                                    # we need to add a new entry to the list... - well
+                                                    # if we get index 4 but length is only 2 we must add multiple
+                                                    # empty entries to the list...
+                                                    while len(self._data[domain]) <= idx:
+                                                        self._data[domain].append({})
+
+                                                    self._data[domain][idx] = {sub_key: value}
+                                                    _LOGGER.debug(f"adding index {idx} to '{domain}' -> {self._data[domain][idx]}")
                                             else:
-                                                # we need to add a new entry to the list... - well
-                                                # if we get index 4 but length is only 2 we must add multiple
-                                                # empty entries to the list...
-                                                while len(self._data[domain]) <= idx:
-                                                    self._data[domain].append({})
-
-                                                self._data[domain][idx] = {sub_key: value}
-                                                _LOGGER.debug(f"adding index {idx} to '{domain}' -> {self._data[domain][idx]}")
+                                                _LOGGER.info(f"unhandled [{domain} not in data] 3part: {key} - ignoring: {value} data: {self._data}")
+                                            # if domain == "loadpoints":
+                                            #     pass
+                                            # elif domain == "vehicles":
+                                            #     pass
+                                        elif len(key_parts) == 2:
+                                            # currently only 'forcast.solar'
+                                            domain = key_parts[0]
+                                            sub_key = key_parts[1]
+                                            if domain in self._data:
+                                                if not sub_key in self._data[domain]:
+                                                    _LOGGER.debug(f"adding '{sub_key}' to {domain}")
+                                                self._data[domain][sub_key] = value
+                                            else:
+                                                _LOGGER.info(f"unhandled [{domain} not in data] 2part: {key} - domain {domain} not in self.data - ignoring: {value}")
                                         else:
-                                            _LOGGER.info(f"unhandled [{domain} not in data] 3part: {key} - ignoring: {value} data: {self._data}")
-                                        # if domain == "loadpoints":
-                                        #     pass
-                                        # elif domain == "vehicles":
-                                        #     pass
-                                    elif len(key_parts) == 2:
-                                        # currently only 'forcast.solar'
-                                        domain = key_parts[0]
-                                        sub_key = key_parts[1]
-                                        if domain in self._data:
-                                            if not sub_key in self._data[domain]:
-                                                _LOGGER.debug(f"adding '{sub_key}' to {domain}")
-                                            self._data[domain][sub_key] = value
-                                        else:
-                                            _LOGGER.info(f"unhandled [{domain} not in data] 2part: {key} - domain {domain} not in self.data - ignoring: {value}")
+                                            _LOGGER.info(f"unhandled [not parsable key] {key} - ignoring: {value}")
                                     else:
-                                        _LOGGER.info(f"unhandled [not parsable key] {key} - ignoring: {value}")
-                                else:
-                                    if key in self._data:
-                                        self._data[key] = value
-                                    else:
-                                        if key != "releaseNotes":
+                                        if key in self._data:
                                             self._data[key] = value
-                                            _LOGGER.info(f"'added {key}' to self._data and assign: {value}")
+                                        else:
+                                            if key != "releaseNotes":
+                                                self._data[key] = value
+                                                _LOGGER.info(f"'added {key}' to self._data and assign: {value}")
 
-                            # END of for loop
-                            # _LOGGER.debug(f"key: {key} value: {value}")
-                            if self._debounced_update_task is not None:
-                                self._debounced_update_task.cancel()
-                            self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
+
+                                # END of for loop
+                                # _LOGGER.debug(f"key: {key} value: {value}")
+                                if self._debounced_update_task is not None:
+                                    self._debounced_update_task.cancel()
+                                self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
 
                         except Exception as e:
                             _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
@@ -323,7 +327,7 @@ class EvccApiBridge:
                     self._TARIFF_LAST_UPDATE_HOUR = current_hour
                 else:
                     # we must copy the previous existing data to the new json_resp!
-                    if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
+                    if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
 
         if request_all or request_sessions:
@@ -334,7 +338,7 @@ class EvccApiBridge:
                 self._SESSIONS_LAST_UPDATE_HOUR = current_hour
             else:
                 # we must copy the previous existing data to the new json_resp!
-                if ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
+                if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
 
         self._data = json_resp
@@ -393,7 +397,7 @@ class EvccApiBridge:
         elif final_type == EP_TYPE.VEHICLES:
             # before we can write something to the vehicle endpoints, we must know the vehicle_id!
             # -> so we have to grab from the loadpoint the current vehicle!
-            if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
+            if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx) - 1
                     vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
@@ -475,7 +479,7 @@ class EvccApiBridge:
         elif final_type == EP_TYPE.VEHICLES:
             # before we can write something to the vehicle endpoints, we must know the vehicle_id!
             # -> so we have to grab from the loadpoint the current vehicle!
-            if len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
+            if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx_str) - 1
                     vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
