@@ -72,7 +72,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
 
                     # the entity type specific values...
-                    options=["null"] + list(coordinator._vehicle.keys()) if a_stub.tag == Tag.VEHICLENAME else a_stub.tag.options,
+                    options=["null"] + list(coordinator._vehicle.keys()) if a_stub.tag == Tag.LP_VEHICLENAME else a_stub.tag.options,
                 )
 
                 # we might need to patch(remove) the 'auto-mode' from the phases selector
@@ -99,7 +99,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
         super().__init__(coordinator=coordinator, description=description)
 
     async def add_to_platform_finish(self) -> None:
-        if self.tag == Tag.VEHICLENAME:
+        if self.tag == Tag.LP_VEHICLENAME:
 
             has_pf_data = hasattr(self.platform, "platform_data")
             has_pf_trans = hasattr(self.platform.platform_data, "platform_translations") if has_pf_data else hasattr(self.platform, "platform_translations")
@@ -107,7 +107,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
             # ok we're going to patch the display strings for the vehicle names... this is quite a HACK!
             for a_key in self.coordinator._vehicle.keys():
-                a_trans_key = f"component.{DOMAIN}.entity.select.{Tag.VEHICLENAME.key.lower()}.state.{a_key.lower()}"
+                a_trans_key = f"component.{DOMAIN}.entity.select.{Tag.LP_VEHICLENAME.key.lower()}.state.{a_key.lower()}"
                 a_value = self.coordinator._vehicle[a_key]["name"]
                 if has_pf_data:
                     if has_pf_trans:
@@ -241,7 +241,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
     @property
     def extra_state_attributes(self):
         """Return select attributes"""
-        if Tag.VEHICLENAME == self.tag:
+        if Tag.LP_VEHICLENAME == self.tag:
             a_key = self.current_option
             if isinstance(a_key, str) and a_key in self.coordinator._vehicle:
                 return {"vehicle": self.coordinator._vehicle[a_key]}
@@ -256,14 +256,14 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
             if value is None or value == "":
                 # we must patch an empty vehicle_id to 'null' to avoid the select option being set to 'unknown'
-                if Tag.VEHICLENAME.key == self.tag.key:
+                if Tag.LP_VEHICLENAME.key == self.tag.key:
                     value = "null"
                 else:
                     value = 'unknown'
             if isinstance(value, (int, float)):
                 value = str(value)
 
-            #if self.tag == Tag.VEHICLENAME and isinstance(value, str):
+            #if self.tag == Tag.LP_VEHICLENAME and isinstance(value, str):
             #    # when we read from the API a value like 'db:12' we MUST convert it
             #    # to our local format 'db_12' ... since HA can't handle the ':'
             #    value = value.replace(':', '_')
@@ -281,7 +281,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             if "null" == str(option):
                 await self.coordinator.async_write_tag(self.tag, None, self.lp_idx, self)
             else:
-                #if Tag.VEHICLENAME == self.tag:
+                #if Tag.LP_VEHICLENAME == self.tag:
                 #    # me must map the value selected in the select.options to the final value
                 #    # that is used in EVCC as identifier (can be a value like 'db:12') - but
                 #    # HA can't deal correctly with the ':'

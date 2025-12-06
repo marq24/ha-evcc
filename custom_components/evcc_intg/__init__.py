@@ -433,6 +433,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             # we need to check for possible NightlyBuild tags in the Version key
             if " (" in _version_info_raw:
                 _version_info = _version_info_raw.split(" (")[0].strip()
+            elif "-" in _version_info_raw:
+                _version_info = _version_info[:_version_info.index('-')]
             else:
                 _version_info = _version_info_raw
 
@@ -651,8 +653,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data and loadpoint_idx is not None:
             try:
                 if len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
-                    if Tag.VEHICLENAME.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
-                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.VEHICLENAME.key]
+                    if Tag.LP_VEHICLENAME.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.LP_VEHICLENAME.key]
                         if vehicle_id is not None:
                             if len(vehicle_id) > 0:
                                 return self.read_tag_vehicle_str(tag=tag, vehicle_id=vehicle_id)
@@ -663,7 +665,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                         else:
                             _LOGGER.debug(f"read_tag_vehicle_int: vehicle_id is None for: {loadpoint_idx}")
                     else:
-                        _LOGGER.debug(f"read_tag_vehicle_int: {Tag.VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
+                        _LOGGER.debug(f"read_tag_vehicle_int: {Tag.LP_VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
                 else:
                     _LOGGER.debug(f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
 

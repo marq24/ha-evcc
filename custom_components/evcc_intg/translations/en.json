@@ -297,6 +297,7 @@
       "connectedduration": {"name": "Connected duration"},
 
       "effectivelimitsoc": {"name": "Effective Charging limit (SOC)"},
+      "vehiclelimitsoc": {"name": "Vehicle Charging limit"},
 
       "phaseaction": {"name": "Phases activity [CODE]"},
       "phaseaction_value": {"name": "Phases activity"},

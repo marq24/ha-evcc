@@ -226,6 +226,7 @@
       "connectedduration": {"name": "Angeschlossen seit"},
 
       "effectivelimitsoc": {"name": "Effektives Ladelimit (SOC)"},
+      "vehiclelimitsoc": {"name": "Fahrzeug Ladelimit"},
 
       "phaseaction": {"name": "Phasen Aktivität [CODE]"},
       "phaseaction_value": {"name": "Phasen Aktivität"},

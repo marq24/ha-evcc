@@ -190,21 +190,21 @@ BINARY_ENTITIES_PER_LOADPOINT = [
         icon_off=None
     ),
     ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.VEHICLEDETECTIONACTIVE,
+        tag=Tag.LP_VEHICLEDETECTIONACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:car-search",
         icon_off="mdi:car-search-outline",
         integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.VEHICLECLIMATERACTIVE,
+        tag=Tag.LP_VEHICLECLIMATERACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:snowflake-thermometer",
-        icon_off="mdi:snowflake-off",
+        icon="mdi:fan",
+        icon_off="mdi:fan-off",
         integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.VEHICLEWELCOMEACTIVE,
+        tag=Tag.LP_VEHICLEWELCOMEACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:gift-outline",
         icon_off="mdi:gift-off-outline",
@@ -245,7 +245,7 @@ BUTTONS_ENTITIES_PER_LOADPOINT = [
         integrated_supported = False
     ),
     ExtButtonEntityDescriptionStub(
-        tag=Tag.DETECTVEHICLE,
+        tag=Tag.LP_DETECTVEHICLE,
         device_class=None,
         icon="mdi:car-search-outline",
         integrated_supported = False
@@ -416,7 +416,7 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         icon="mdi:lightning-bolt-outline"
     ),
     ExtSelectEntityDescriptionStub(
-        tag=Tag.VEHICLENAME,
+        tag=Tag.LP_VEHICLENAME,
         #entity_category=EntityCategory.CONFIG,
         icon="mdi:car-outline",
         integrated_supported=False
@@ -1377,7 +1377,15 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
 
     ExtSensorEntityDescriptionStub(
-        tag=Tag.VEHICLEODOMETER,
+        tag=Tag.LP_VEHICLELIMITSOC,
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.LP_VEHICLEODOMETER,
         icon="mdi:counter",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
@@ -1387,7 +1395,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
-        tag=Tag.VEHICLERANGE,
+        tag=Tag.LP_VEHICLERANGE,
         icon="mdi:ev-station",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
@@ -1396,7 +1404,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
-        tag=Tag.VEHICLESOC,
+        tag=Tag.LP_VEHICLESOC,
         icon="mdi:car-electric-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,

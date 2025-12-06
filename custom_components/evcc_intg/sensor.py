@@ -75,12 +75,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 # well - a hack to show any heating related loadpoints with temperature units...
                 # note: this will not change the label (that still show 'SOC')
                 force_celsius = lp_is_heating  and (
-                                 a_stub.tag == Tag.EFFECTIVEPLANSOC or
-                                 a_stub.tag == Tag.EFFECTIVELIMITSOC or
-                                 a_stub.tag == Tag.VEHICLESOC or
-                                 a_stub.tag == Tag.VEHICLEMINSOC or
-                                 a_stub.tag == Tag.VEHICLELIMITSOC or
-                                 a_stub.tag == Tag.VEHICLEPLANSOC)
+                        a_stub.tag == Tag.EFFECTIVEPLANSOC or
+                        a_stub.tag == Tag.EFFECTIVELIMITSOC or
+                        a_stub.tag == Tag.LP_VEHICLESOC or
+                        a_stub.tag == Tag.LP_VEHICLELIMITSOC or
+                        a_stub.tag == Tag.VEHICLEMINSOC or
+                        a_stub.tag == Tag.VEHICLELIMITSOC or
+                        a_stub.tag == Tag.VEHICLEPLANSOC)
 
                 # only when the json_idx has a length of 1 we must patch our key & translation_key
                 patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
@@ -391,6 +392,11 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         except (IndexError, ValueError, TypeError, KeyError) as err:
             _LOGGER.debug(f"tag: {self.tag} (lp_idx: '{self.lp_idx}') (value: '{value}') caused {err}")
             value = None
+
+
+        # a fallback, if there is no LP_VEHICLELIMITSOC set at the loadpoint
+        if self.tag == Tag.LP_VEHICLELIMITSOC and (value is None or value == 0):
+            value = self.coordinator.read_tag(Tag.EFFECTIVELIMITSOC, self.lp_idx)
 
         # make sure that we do not return unknown or smaller values
         # [see https://github.com/marq24/ha-evcc/discussions/7]

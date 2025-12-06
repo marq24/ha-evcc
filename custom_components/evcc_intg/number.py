@@ -42,7 +42,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in NUMBER_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
-                force_celsius = lp_is_heating  and a_stub.tag == Tag.LIMITSOC
+                force_celsius = lp_is_heating and a_stub.tag == Tag.LIMITSOC
 
                 description = ExtNumberEntityDescription(
                     tag=a_stub.tag,
@@ -108,10 +108,10 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
                 else:
                     value = int(value)
 
-            # thanks for nothing evcc - SOC-Limit can be 0, even if the effectiveLimit is 100 - I assume you want
+            # thanks for nothing evcc - SOC-Limit can be 0, even if the effectiveLimit is set > 0 - I assume you want
             # to tell that the limit is not set...
             if self.tag == Tag.LIMITSOC and value == 0:
-                value = 100
+                value = self.coordinator.read_tag(Tag.EFFECTIVELIMITSOC, self.lp_idx)
 
         except KeyError:
             return "unknown"

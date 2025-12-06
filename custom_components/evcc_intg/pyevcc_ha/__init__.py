@@ -400,7 +400,7 @@ class EvccApiBridge:
             if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx) - 1
-                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
+                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.key]
                     if vehicle_id is not None:
                         ret[tag.key] = await self.press_vehicle_key(vehicle_id, tag.write_key, value)
 
@@ -418,7 +418,7 @@ class EvccApiBridge:
 
         _LOGGER.info(f"going to press a button with payload '{value}' for key '{write_key}' to evcc-loadpoint{lp_idx}@{self.host}")
         if value is None:
-            if write_key == Tag.DETECTVEHICLE.write_key:
+            if write_key == Tag.LP_DETECTVEHICLE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/vehicle"
                 _LOGGER.debug(f"PATCH request: {req}")
                 r_json = await _do_request(method=self.web_session.patch(url=req, ssl=False))
@@ -482,7 +482,7 @@ class EvccApiBridge:
             if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx_str) - 1
-                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.VEHICLENAME.key]
+                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.key]
                     if vehicle_id is not None:
                         ret[tag.key] = await self.write_vehicle_key(vehicle_id, tag.write_key, value)
 

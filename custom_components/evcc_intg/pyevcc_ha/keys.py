@@ -307,31 +307,37 @@ class Tag(ApiKey, Enum):
     # -> USED during startup phase
 
     # "vehicleClimaterActive": null,
-    # ???
-
-    # start Vehicle Detection Button
-    DETECTVEHICLE = ApiKey(key="detectvehicle", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="detectvehicle")
+    LP_VEHICLECLIMATERACTIVE = ApiKey(key="vehicleClimaterActive", type=EP_TYPE.LOADPOINTS)
 
     # "vehicleDetectionActive": false,
-    VEHICLEDETECTIONACTIVE = ApiKey(key="vehicleDetectionActive", type=EP_TYPE.LOADPOINTS)
+    LP_VEHICLEDETECTIONACTIVE = ApiKey(key="vehicleDetectionActive", type=EP_TYPE.LOADPOINTS)
+
+    # start Vehicle Detection Button
+    LP_DETECTVEHICLE = ApiKey(key="detectvehicle", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="detectvehicle")
 
     # "vehicleName": "",
-    VEHICLENAME = ApiKey(key="vehicleName", type=EP_TYPE.LOADPOINTS, writeable=True, write_key = "vehicle")
+    LP_VEHICLENAME = ApiKey(key="vehicleName", type=EP_TYPE.LOADPOINTS, writeable=True, write_key ="vehicle")
 
     # "vehicleOdometer": 0,
-    VEHICLEODOMETER = ApiKey(key="vehicleOdometer", type=EP_TYPE.LOADPOINTS)
+    LP_VEHICLEODOMETER = ApiKey(key="vehicleOdometer", type=EP_TYPE.LOADPOINTS)
 
     # "vehicleRange": 0,
-    VEHICLERANGE = ApiKey(key="vehicleRange", type=EP_TYPE.LOADPOINTS)
+    LP_VEHICLERANGE = ApiKey(key="vehicleRange", type=EP_TYPE.LOADPOINTS)
+
+    # READ-ONLY Sensor
+    # this is the limit configured for the car itself...
+    # typically directly in the App of the vehicle vendor
+    # in my personal case this is the FordPass App
+    # It's a bit strange, that this field is not present
+    # in the vehicle object of evcc?!
+    # "vehicleLimitSoc": 100,
+    LP_VEHICLELIMITSOC = ApiKey(key="vehicleLimitSoc", type=EP_TYPE.LOADPOINTS)
 
     # "vehicleSoc": 0
-    VEHICLESOC = ApiKey(key="vehicleSoc", type=EP_TYPE.LOADPOINTS)
-
-    # "vehicleClimaterActive": null,
-    VEHICLECLIMATERACTIVE = ApiKey(key="vehicleClimaterActive", type=EP_TYPE.LOADPOINTS)
+    LP_VEHICLESOC = ApiKey(key="vehicleSoc", type=EP_TYPE.LOADPOINTS)
 
     #"vehicleWelcomeActive": false
-    VEHICLEWELCOMEACTIVE = ApiKey(key="vehicleWelcomeActive", type=EP_TYPE.LOADPOINTS)
+    LP_VEHICLEWELCOMEACTIVE = ApiKey(key="vehicleWelcomeActive", type=EP_TYPE.LOADPOINTS)
 
     # "mode": "off", -> (off/pv/minpv/now)
     MODE = ApiKey(
