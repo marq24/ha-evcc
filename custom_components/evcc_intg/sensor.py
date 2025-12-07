@@ -206,8 +206,8 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 if a_array is not None:
                     a_array_without_end_values = [
                         {
-                            "start_utc": int(datetime.fromisoformat(entry["start"]).timestamp()),
-                            "value": round(entry["value"], 4) if not float(entry["value"]).is_integer() else entry["value"],
+                            "tsu": int(datetime.fromisoformat(entry["start"]).timestamp()),
+                            "val": round(entry["value"], 3) if not float(entry["value"]).is_integer() else entry["value"],
                         }
                         for entry in a_array
                     ]
@@ -228,8 +228,8 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     if a_array is not None:
                         a_array_without_end_values = [
                             {
-                                "start_utc": int(datetime.fromisoformat(entry["start"]).timestamp()),
-                                "value": round(entry["value"], 4) if not float(entry["value"]).is_integer() else entry["value"],
+                                "tsu": int(datetime.fromisoformat(entry["start"]).timestamp()),
+                                "val": round(entry["value"], 3) if not float(entry["value"]).is_integer() else entry["value"],
                             }
                             for entry in a_array
                         ]
@@ -246,11 +246,11 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     a_object = data[FORECAST_CONTENT.SOLAR.value]
                     if "timeseries" in a_object:
                         a_array = a_object["timeseries"]
-                        if a_array is not None and "ts" in a_array[0]:
+                        if a_array is not None and "ts" in a_array[0] and isinstance(a_array[0]["ts"], str):
                             rounded_array = [
                                 {
-                                    "ts_utc": int(datetime.fromisoformat(entry["ts"]).timestamp()),
-                                    "val": round(entry["val"], 4) if not float(entry["val"]).is_integer() else entry["val"],
+                                    "tsu": int(datetime.fromisoformat(entry["ts"]).timestamp()),
+                                    "val": round(entry["val"], 3) if not float(entry["val"]).is_integer() else entry["val"],
                                 }
                                 for entry in a_array
                             ]
@@ -278,16 +278,21 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         start_dt = datetime.fromisoformat(a_entry["start"]).astimezone(timezone.utc)
                         end_dt = datetime.fromisoformat(a_entry["end"]).astimezone(timezone.utc)
                         if start_dt < current_time < end_dt:
-                            if "value" in a_entry:
+                            if "val" in a_entry:
+                                self._last_calculated_value = a_entry["val"]
+                                break
+                            elif "value" in a_entry:
                                 self._last_calculated_value = a_entry["value"]
                                 break
                             elif "price" in a_entry:
                                 self._last_calculated_value = a_entry["price"]
                                 break
 
-                    elif "ts" in a_entry or "ts_utc" in a_entry:
-                        if "ts_utc" in a_entry:
-                            timestamp_dt = datetime.fromtimestamp(a_entry["ts_utc"], tz=timezone.utc)
+                    elif "ts" in a_entry or "tsu" in a_entry:
+                        if "tsu" in a_entry:
+                            timestamp_dt = datetime.fromtimestamp(a_entry["tsu"], tz=timezone.utc)
+                        elif isinstance(a_entry["ts"], int):
+                            timestamp_dt = datetime.fromtimestamp(a_entry["ts"], tz=timezone.utc)
                         else:
                             timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
 

@@ -7,7 +7,8 @@
     },
     "step": {
       "user": {
-        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.\n-- --\n### Du musst die Addresse Deines EVCC-Servers angeben und nicht die von Deinem Home-Assistent Server!\n-- --\nJeder der seine Home-Assistent Addresse einträgt (weil er das vielleicht so auf YouTube gesehen hat) und sich dann bei mir wegen dem *Fehler* meldet, möge bitte wahlweise in die USA oder nach Russland auswandern (Nordkorea wäre auch noch 'ne Option)!\n-- --\nAn alle anderen: bitte entschuldigt diesen Rant \uD83E\uDD2E - Seit **Monaten** bekomme ich immer wieder die gleiche Support-Anfrage von der Generation TikTok.",
+        "descri_rant": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.\n-- --\n### Du musst die IP-Addresse & Port Deines EVCC-Servers angeben und nicht die IP & Port von Deinem Home-Assistent Server!\n-- --\nJeder der seine Home-Assistent Addresse einträgt (weil er das vielleicht so auf YouTube gesehen hat) und sich dann bei mir wegen dem *Fehler* meldet, möge bitte wahlweise in die USA oder nach Russland auswandern (Nordkorea wäre auch noch 'ne Option)!\n-- --\nAn alle anderen: bitte entschuldigt diesen Rant \uD83E\uDD2E - Seit **Monaten** bekomme ich immer wieder die gleiche Support-Anfrage von der Generation TikTok.",
+        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.\n-- --\n### Du musst die IP-Addresse & Port Deines EVCC-Servers angeben und nicht die IP & Port von Deinem Home-Assistent Server.",
         "data": {
           "host": "Deine lokale EVCC-Server Addresse (einschließlich des Ports)",
           "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
