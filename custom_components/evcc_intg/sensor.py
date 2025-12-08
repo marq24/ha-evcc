@@ -183,6 +183,56 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
     add_entity_cb(entities)
 
+def compress_data(data):
+    return compress_general(data, "start", "value")
+
+def compress_timeseries(data):
+    return compress_general(data, "ts", "val")
+
+def compress_general(data, time_key:str, value_key:str):
+    # Ensure the data is not empty
+    if not data:
+        return {"start_utc": None,
+                "deltas_in_minutes": [],
+                "values": []}
+
+    # Convert the timestamps to UTC and prepare the output
+    start_timestamp_utc = datetime.fromisoformat(data[0][time_key]).astimezone(timezone.utc).isoformat()
+    values = [round(entry[value_key], 4) if not float(entry[value_key]).is_integer() else entry[value_key] for entry in data]
+    deltas = []
+    for i in range(1, len(data)):
+        # Calculate time difference in minutes
+        ts_current = datetime.fromisoformat(data[i][time_key]).astimezone(timezone.utc)
+        ts_previous = datetime.fromisoformat(data[i - 1][time_key]).astimezone(timezone.utc)
+        delta = int((ts_current - ts_previous).total_seconds() // 60.0)
+        deltas.append(delta)
+
+    # {%set json_data=state_attr('sensor.evcc_forecast_grid', 'rates')%}
+    # {% set total_minutes_since_start = (( now() - strptime(json_data['start_utc'], '%Y-%m-%dT%H:%M:%S%z')).total_seconds() // 60)|int %}
+    # {% set tmp = namespace(total=0, index=0) %}
+    # {% for delta in json_data['deltas_in_minutes'] %}
+    #     {% if tmp.total < total_minutes_since_start %}
+    #         {% set tmp.total = tmp.total + delta %}
+    #         {% set tmp.index = tmp.index + 1 %}
+    #     {% else %}
+    #         {% break %}
+    #     {% endif %}
+    # {% endfor %}
+    # {% set relevant_values = json_data['values'][tmp.index:] %}
+    # {% set average_value = (relevant_values|sum) / relevant_values|length if relevant_values|length > 0 else 0 %}
+    # {{ average_value }}
+
+    # VALUE NOW:
+    # {{json_data['values'][tmp.index]}}
+
+    # SIMPLE AVG value
+    # {%set json_data=state_attr('sensor.evcc_forecast_solar', 'timeseries')%}
+    # {{json_data['values']|sum / json_data['values']|length}}
+
+    return {"start_utc":start_timestamp_utc,
+            "deltas_in_minutes": deltas,
+            "values": values}
+
 
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
@@ -204,16 +254,9 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             if a_dict is not None and "rates" in a_dict:
                 a_array = a_dict["rates"]
                 if a_array is not None:
-                    a_array_without_end_values = [
-                        {
-                            "tsu": int(datetime.fromisoformat(entry["start"]).timestamp()),
-                            "val": round(entry["value"], 3) if not float(entry["value"]).is_integer() else entry["value"],
-                        }
-                        for entry in a_array
-                    ]
-                    return {"rates": a_array_without_end_values}
+                    return {"rates": compress_data(a_array)}
                 else:
-                    return a_dict
+                    return {"rates": a_array}
             else:
                 return a_dict
 
@@ -226,51 +269,31 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     # so as workaround we throw away all 'end' values...
                     a_array = data[FORECAST_CONTENT.GRID.value]
                     if a_array is not None:
-                        a_array_without_end_values = [
-                            {
-                                "tsu": int(datetime.fromisoformat(entry["start"]).timestamp()),
-                                "val": round(entry["value"], 3) if not float(entry["value"]).is_integer() else entry["value"],
-                            }
-                            for entry in a_array
-                        ]
-                        return {"rates": a_array_without_end_values}
+                        return {"rates": compress_data(a_array)}
                     else:
                         return {"rates": a_array}
 
                 elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
-                    # wow - these are real vales from the evcc API:
-                    # "val": 102.91332846080002
-                    # how fucking useless this can be? We need even more precision...
-                    # let's round this to 4 digit
-
                     a_object = data[FORECAST_CONTENT.SOLAR.value]
                     if "timeseries" in a_object:
-                        a_array = a_object["timeseries"]
-                        if a_array is not None and "ts" in a_array[0] and isinstance(a_array[0]["ts"], str):
-                            rounded_array = [
-                                {
-                                    "tsu": int(datetime.fromisoformat(entry["ts"]).timestamp()),
-                                    "val": round(entry["val"], 3) if not float(entry["val"]).is_integer() else entry["val"],
-                                }
-                                for entry in a_array
-                            ]
-                            a_object["timeseries"] = rounded_array
+                        a_copy_object = a_object.copy()
+                        a_array = a_copy_object["timeseries"]
+                        if a_array is not None and "ts" in a_array[0]:
+                            a_copy_object["timeseries"] = compress_timeseries(a_array)
                         else:
-                            # we have already rounded the data ?!
-                            pass
+                            a_copy_object["timeseries"] = a_array
 
-                    return a_object
+                        return a_copy_object
+                    else:
+                        # return the original object
+                        return a_object
 
-            #if self.tag == Tag.FORCAST_SOLAR and "timeseries" in data:
-            #    data = data["timeseries"]
-            #_LOGGER.error(f"ATTR: {self.tag} - {data}")
-            #return data
         return None
 
     def get_current_value_from_timeseries(self, data_list):
         if data_list is not None:
             current_time = datetime.now(timezone.utc)
-            a_key = f"{current_time.hour}_{int(current_time.minute/15) if current_time.minute > 0 else 0}"
+            a_key = f"{current_time.hour}_{int(current_time.minute//15) if current_time.minute > 0 else 0}"
             if a_key != self._last_calculated_key:
                 self._last_calculated_key = a_key
                 for a_entry in data_list:
@@ -288,17 +311,11 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                                 self._last_calculated_value = a_entry["price"]
                                 break
 
-                    elif "ts" in a_entry or "tsu" in a_entry:
-                        if "tsu" in a_entry:
-                            timestamp_dt = datetime.fromtimestamp(a_entry["tsu"], tz=timezone.utc)
-                        elif isinstance(a_entry["ts"], int):
-                            timestamp_dt = datetime.fromtimestamp(a_entry["ts"], tz=timezone.utc)
-                        else:
-                            timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
-
+                    elif "ts" in a_entry:
+                        timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
                         if (timestamp_dt.day == current_time.day and
                             timestamp_dt.hour == current_time.hour and
-                            int(timestamp_dt.minute / 15) == int(current_time.minute / 15)
+                            int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
                         ):
                             if "val" in a_entry:
                                 self._last_calculated_value = a_entry["val"]
@@ -308,6 +325,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                                 break
                             elif "price" in a_entry:
                                 self._last_calculated_value = a_entry["price"]
+
             return self._last_calculated_value
         return None
 
