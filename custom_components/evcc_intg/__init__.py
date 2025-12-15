@@ -277,8 +277,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._version = None
         self._grid_data_as_object = False
         self._battery_data_as_object = False
-
         self._watchdog = None
+
+        # a global store for entities that we must manipulate later on...
+        self.select_entities_dict = {}
 
         # when we use the websocket we need to call the super constructor without update_interval...
         if self.use_ws:
