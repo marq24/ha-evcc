@@ -259,12 +259,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # during the initial configuration phase
         self._system_id = slugify(config_entry.title)
 
-        self.lang_map = None
-        if lang in TRANSLATIONS:
-            self.lang_map = TRANSLATIONS[lang]
-        else:
-            self.lang_map = TRANSLATIONS["en"]
-
         # config_entry required to be able to launch watchdog in config_entry context
         self._config_entry = config_entry
 
@@ -436,7 +430,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if " (" in _version_info_raw:
                 _version_info = _version_info_raw.split(" (")[0].strip()
             elif "-" in _version_info_raw:
-                _version_info = _version_info[:_version_info.index('-')]
+                _version_info = _version_info_raw[:_version_info_raw.index('-')]
             else:
                 _version_info = _version_info_raw
 
