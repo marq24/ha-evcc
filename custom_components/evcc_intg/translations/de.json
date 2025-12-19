@@ -307,9 +307,13 @@
       "stat30avgco2": {"name": "Statistik: letzten 30 Tage Ø CO₂"},
 
       "tariff_api_solar": {"name": "Solar Prognose [Tariff-API]"},
-      "tariff_api_grid": {"name": "Strom Tarife [Tariff-API]"},
+      "tariff_api_grid": {"name": "Stromtarife [Tariff-API]"},
+      "tariff_api_feedin": {"name": "Einspeisetarife [Tariff-API]"},
+      "tariff_api_planner": {"name": "Planertarife [Tariff-API]"},
       "forecast_solar": {"name": "Solar Prognose"},
-      "forecast_grid": {"name": "Strom Tarife"},
+      "forecast_grid": {"name": "Stromtarife"},
+      "forecast_feedin": {"name": "Einspeisetarife"},
+      "forecast_planner": {"name": "Planertarife"},
 
       "pvaction": {"name": "PV Aktivität [CODE]"},
       "pvaction_value": {"name": "PV Aktivität"},

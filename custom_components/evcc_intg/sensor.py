@@ -21,6 +21,7 @@ from .const import (
     SENSOR_ENTITIES_BATTERY_AS_OBJECT,
     SENSOR_ENTITIES_PER_LOADPOINT,
     SENSOR_ENTITIES_PER_VEHICLE,
+    TAG_TO_CONTENT_KEY,
     ExtSensorEntityDescription
 )
 from .pyevcc_ha import SESSIONS_KEY_TOTAL
@@ -44,7 +45,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         _LOGGER.debug("evcc 'grid' as prefix")
         the_sensors_list = the_sensors_list + SENSOR_ENTITIES_GRID_AS_PREFIX
 
-    # additionally the battery sensors can be either with prefix (at least till
+    # additionally, the battery sensors can be either with prefix (at least till
     # evcc 0.209.7), or as a separate 'battery' object
     if coordinator.battery_data_as_object:
         _LOGGER.debug("evcc 'battery' data is available in separate object")
@@ -238,7 +239,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
         super().__init__(coordinator=coordinator, description=description)
         self._previous_float_value: float | None = None
-        if self.tag.type == EP_TYPE.TARIFF or self.tag == Tag.FORECAST_GRID or self.tag == Tag.FORECAST_SOLAR:
+        if self.tag.type == EP_TYPE.TARIFF or self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
             self._last_calculated_key = None
             self._last_calculated_value = None
 
@@ -260,18 +261,20 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             else:
                 return a_dict
 
-        elif self.tag == Tag.FORECAST_GRID or self.tag == Tag.FORECAST_SOLAR:
+        elif self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
             data = self.coordinator.read_tag(self.tag)
             if data is not None:
-                if self.tag == Tag.FORECAST_GRID and FORECAST_CONTENT.GRID.value in data:
-                    # thanks - with the extension to 1/4 h forcast data the content of evcc
-                    # is no longer storable in HA database (exceed maximum size of 16384 bytes)
-                    # so as workaround we throw away all 'end' values...
-                    a_array = data[FORECAST_CONTENT.GRID.value]
-                    if a_array is not None:
-                        return {"rates": compress_data(a_array)}
-                    else:
-                        return {"rates": a_array}
+                if self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
+                    if self.tag in TAG_TO_CONTENT_KEY:
+                        content_key = TAG_TO_CONTENT_KEY[self.tag]
+                        if content_key in data:
+                            # evcc 1/4h forecast data exceeds HA database limit (16384 bytes).
+                            # Workaround: compress by stripping 'end' values via compress_data.
+                            a_array = data[content_key]
+                            if a_array is not None:
+                                return {"rates": compress_data(a_array)}
+                            else:
+                                return {"rates": a_array}
 
                 elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
                     a_object = data[FORECAST_CONTENT.SOLAR.value]
@@ -379,7 +382,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         value = None
 
             if isinstance(value, (dict, list)):
-                if self.tag == Tag.FORECAST_GRID:
+                if self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
                     value = self.get_current_value_from_timeseries(value)
                 elif self.tag == Tag.FORECAST_SOLAR:
                     if "timeseries" in value:

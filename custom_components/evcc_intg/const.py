@@ -49,6 +49,13 @@ SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
 SERVICE_DEL_LOADPOINT_PLAN: Final = "del_loadpoint_plan"
 SERVICE_DEL_VEHICLE_PLAN: Final = "del_vehicle_plan"
 
+# Map tags to their content keys
+TAG_TO_CONTENT_KEY: Final = {
+    Tag.FORECAST_GRID: FORECAST_CONTENT.GRID.value,
+    Tag.FORECAST_FEEDIN: FORECAST_CONTENT.FEEDIN.value,
+    Tag.FORECAST_PLANNER: FORECAST_CONTENT.PLANNER.value,
+}
+
 @dataclass(frozen=True)
 class EntityDescriptionStub():
     tag: Tag = None,
@@ -1102,6 +1109,26 @@ SENSOR_ENTITIES = [
         suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIF_FEEDIN,
+        key=Tag.TARIF_FEEDIN.entity_key,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@",
+        device_class=None,
+        suggested_display_precision=3,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIF_PLANNER,
+        key=Tag.TARIF_PLANNER.entity_key,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@",
+        device_class=None,
+        suggested_display_precision=3,
+        entity_registry_enabled_default=False
+    ),
 
     # the new forecast endpoints... [GRID & SOLAR]
     ExtSensorEntityDescription(
@@ -1124,6 +1151,28 @@ SENSOR_ENTITIES = [
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=None,
         suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.FORECAST_FEEDIN,
+        key=Tag.FORECAST_FEEDIN.entity_key,
+        json_idx=[FORECAST_CONTENT.FEEDIN.value],
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@",
+        device_class=None,
+        suggested_display_precision=3,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.FORECAST_PLANNER,
+        key=Tag.FORECAST_PLANNER.entity_key,
+        json_idx=[FORECAST_CONTENT.PLANNER.value],
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@",
+        device_class=None,
+        suggested_display_precision=3,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(

@@ -378,8 +378,12 @@
 
       "tariff_api_solar": {"name": "Solar Prognoses [Tariff-API]"},
       "tariff_api_grid": {"name": "Grid Tariffs [Tariff-API]"},
+      "tariff_api_feedin": {"name": "Feedin Tariffs [Tariff-API]"},
+      "tariff_api_planner": {"name": "Planner Tariffs [Tariff-API]"},
       "forecast_solar": {"name": "Solar Prognoses"},
       "forecast_grid": {"name": "Grid Tariffs"},
+      "forecast_feedin": {"name": "Feedin Tariffs"},
+      "forecast_planner": {"name": "Planner Tariffs"},
 
       "pvaction": {"name": "PV Action [CODE]"},
       "pvaction_value": {"name": "PV Action"},

@@ -58,6 +58,8 @@ class PV_CONTENT(Enum):
 class FORECAST_CONTENT(Enum):
     GRID = "grid"
     SOLAR = "solar"
+    FEEDIN = "feedin"
+    PLANNER = "planner"
 
 class ApiKey(NamedTuple):
     key: str
@@ -73,6 +75,7 @@ class ApiKey(NamedTuple):
     @property
     def snake_case(self) -> str:
         return camel_to_snake(self.key)
+
 
 # see https://docs.evcc.io/docs/reference/api for details
 class Tag(ApiKey, Enum):
@@ -191,6 +194,8 @@ class Tag(ApiKey, Enum):
 
     FORECAST_GRID = ApiKey(entity_key="forecast_grid", key="forecast", type=EP_TYPE.SITE)
     FORECAST_SOLAR = ApiKey(entity_key="forecast_solar", key="forecast", type=EP_TYPE.SITE)
+    FORECAST_FEEDIN = ApiKey(entity_key="forecast_feedin", key="forecast", type=EP_TYPE.SITE)
+    FORECAST_PLANNER = ApiKey(entity_key="forecast_planner", key="forecast", type=EP_TYPE.SITE)
 
     ###################################
     # LOADPOINT-DATA
@@ -433,6 +438,8 @@ class Tag(ApiKey, Enum):
 
     TARIF_GRID = ApiKey(entity_key="tariff_api_grid", key="grid", type=EP_TYPE.TARIFF)
     TARIF_SOLAR = ApiKey(entity_key="tariff_api_solar", key="solar", type=EP_TYPE.TARIFF)
+    TARIF_FEEDIN = ApiKey(entity_key="tariff_api_feedin", key="feedin", type=EP_TYPE.TARIFF)
+    TARIF_PLANNER = ApiKey(entity_key="tariff_api_planner", key="planner", type=EP_TYPE.TARIFF)
 
     CHARGING_SESSIONS = ApiKey(key="charging_sessions", type=EP_TYPE.SESSIONS)
     CHARGING_SESSIONS_VEHICLES = ApiKey(key="charging_sessions_vehicles", type=EP_TYPE.SESSIONS)

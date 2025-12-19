@@ -482,17 +482,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     if hass is not None:
                         registry = entity_registry.async_get(hass)
                         if registry is not None:
-                            entity_id = f"sensor.{self._system_id}_{Tag.TARIF_GRID.entity_key}".lower()
-                            a_entity = registry.async_get(entity_id)
-                            if a_entity is not None and a_entity.disabled_by is None:
-                                _LOGGER.info("***** QUERY_TARIF_GRID ********")
-                                request_tariff_keys.append(Tag.TARIF_GRID.key)
-
-                            entity_id = f"sensor.{self._system_id}_{Tag.TARIF_SOLAR.entity_key}".lower()
-                            a_entity = registry.async_get(entity_id)
-                            if a_entity is not None and a_entity.disabled_by is None:
-                                _LOGGER.info("***** QUERY_TARIF_SOLAR ********")
-                                request_tariff_keys.append(Tag.TARIF_SOLAR.key)
+                            for a_tag in [Tag.TARIF_GRID, Tag.TARIF_SOLAR, Tag.TARIF_FEEDIN, Tag.TARIF_PLANNER]:
+                                entity_id = f"sensor.{self._system_id}_{a_tag.entity_key}".lower()
+                                a_entity = registry.async_get(entity_id)
+                                if a_entity is not None and a_entity.disabled_by is None:
+                                    _LOGGER.info(f"***** QUERY_{a_tag.key.upper()} ********")
+                                    request_tariff_keys.append(a_tag.key)
 
                     if len(request_tariff_keys) > 0:
                         self.bridge.enable_tariff_endpoints(request_tariff_keys)
