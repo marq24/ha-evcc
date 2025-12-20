@@ -286,8 +286,14 @@
       "pv_2_energy": {"name": "Energie PV 3"},
       "pv_3_energy": {"name": "Energie PV 4"},
 
-      "tariffgrid": {"name": "Kosten Netz"},
-      "tariffpricehome": {"name": "Kosten Verbrauch"},
+      "tariffgrid":           {"name": "Kosten Netz [Standort]"},
+      "tariffpricehome":      {"name": "Kosten Verbrauch [Standort]"},
+      "tariffco2":            {"name": "Kosten CO² [Standort]"},
+      "tariffco2home":        {"name": "Kosten CO² Verbrauch [Standort]"},
+      "tariffco2loadpoints":  {"name": "Kosten CO² Ladepunkte [Standort]"},
+      "tarifffeedin":         {"name": "Kosten Einspeisung [Standort]"},
+      "tariffpriceloadpoints":{"name": "Kosten Ladepunkte [Standort]"},
+      "tariffsolar":          {"name": "Solar Prognose [Standort]"},
 
       "stattotalsolarpercentage": {"name": "Statistik: gesamt Sonnenenergie"},
       "stattotalchargedkwh": {"name": "Statistik: gesamt Ladeenergie"},

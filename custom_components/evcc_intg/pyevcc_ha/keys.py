@@ -184,6 +184,25 @@ class Tag(ApiKey, Enum):
     # "tariffPriceHome": 0,
     TARIFFPRICEHOME = ApiKey(key="tariffPriceHome", type=EP_TYPE.SITE)
 
+    # "tariffCo2": 197,
+    TARIFFCO2 = ApiKey(key="tariffCo2", type=EP_TYPE.SITE)
+
+    # "tariffCo2Home": 10.8131775758679,
+    TARIFFCO2HOME = ApiKey(key="tariffCo2Home", type=EP_TYPE.SITE)
+
+    # "tariffCo2Loadpoints": 197,
+    TARIFFCO2LOADPOINTS = ApiKey(key="tariffCo2Loadpoints", type=EP_TYPE.SITE)
+
+    # "tariffFeedIn": 0.078,
+    TARIFFFEEDIN = ApiKey(key="tariffFeedIn", type=EP_TYPE.SITE)
+
+    # "tariffPriceLoadpoints": 0.3584,
+    TARIFFPRICELOADPOINTS = ApiKey(key="tariffPriceLoadpoints", type=EP_TYPE.SITE)
+
+    # "tariffSolar": 595.829,
+    TARIFFSOLAR = ApiKey(key="tariffSolar", type=EP_TYPE.SITE)
+
+
     # -> NONE FREQUENT
     # POST /api/batterydischargecontrol/<status>: enable/disable battery discharge control (true/false)
     # batteryGridChargeActive: false,
@@ -436,10 +455,10 @@ class Tag(ApiKey, Enum):
     STAT30CHARGEDKWH = ApiKey(entity_key="stat30ChargedKWh", key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
     STAT30SOLARPERCENTAGE = ApiKey(entity_key="stat30SolarPercentage", key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
 
-    TARIF_GRID = ApiKey(entity_key="tariff_api_grid", key="grid", type=EP_TYPE.TARIFF)
-    TARIF_SOLAR = ApiKey(entity_key="tariff_api_solar", key="solar", type=EP_TYPE.TARIFF)
-    TARIF_FEEDIN = ApiKey(entity_key="tariff_api_feedin", key="feedin", type=EP_TYPE.TARIFF)
-    TARIF_PLANNER = ApiKey(entity_key="tariff_api_planner", key="planner", type=EP_TYPE.TARIFF)
+    TARIFF_API_GRID = ApiKey(entity_key="tariff_api_grid", key="grid", type=EP_TYPE.TARIFF)
+    TARIFF_API_SOLAR = ApiKey(entity_key="tariff_api_solar", key="solar", type=EP_TYPE.TARIFF)
+    TARIFF_API_FEEDIN = ApiKey(entity_key="tariff_api_feedin", key="feedin", type=EP_TYPE.TARIFF)
+    TARIFF_API_PLANNER = ApiKey(entity_key="tariff_api_planner", key="planner", type=EP_TYPE.TARIFF)
 
     CHARGING_SESSIONS = ApiKey(key="charging_sessions", type=EP_TYPE.SESSIONS)
     CHARGING_SESSIONS_VEHICLES = ApiKey(key="charging_sessions_vehicles", type=EP_TYPE.SESSIONS)

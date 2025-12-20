@@ -356,8 +356,14 @@
       "pv_2_energy": {"name": "Energy Solar 3"},
       "pv_3_energy": {"name": "Energy Solar 4"},
 
-      "tariffgrid": {"name": "Costs Grid"},
-      "tariffpricehome": {"name": "Costs Usage"},
+      "tariffgrid":           {"name": "Costs Grid [Site]"},
+      "tariffpricehome":      {"name": "Costs Usage [Site]"},
+      "tariffco2":            {"name": "Costs CO² [Site]"},
+      "tariffco2home":        {"name": "Costs CO² Usage [Site]"},
+      "tariffco2loadpoints":  {"name": "Costs CO² Loadpoints [Site]"},
+      "tarifffeedin":         {"name": "Costs Feedin [Site]"},
+      "tariffpriceloadpoints":{"name": "Costs Loadpoints [Site]"},
+      "tariffsolar":          {"name": "Solar Prognoses [Site]"},
 
       "stattotalsolarpercentage": {"name": "Statistics: Total Solar"},
       "stattotalchargedkwh": {"name": "Statistics: Total Charge energy"},

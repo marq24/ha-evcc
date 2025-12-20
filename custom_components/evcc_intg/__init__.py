@@ -482,7 +482,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     if hass is not None:
                         registry = entity_registry.async_get(hass)
                         if registry is not None:
-                            for a_tag in [Tag.TARIF_GRID, Tag.TARIF_SOLAR, Tag.TARIF_FEEDIN, Tag.TARIF_PLANNER]:
+                            for a_tag in [Tag.TARIFF_API_GRID, Tag.TARIFF_API_SOLAR, Tag.TARIFF_API_FEEDIN, Tag.TARIFF_API_PLANNER]:
                                 entity_id = f"sensor.{self._system_id}_{a_tag.entity_key}".lower()
                                 a_entity = registry.async_get(entity_id)
                                 if a_entity is not None and a_entity.disabled_by is None:

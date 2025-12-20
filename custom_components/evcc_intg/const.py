@@ -929,7 +929,62 @@ SENSOR_ENTITIES = [
         device_class=None,
         suggested_display_precision=3
     ),
-
+    # ---------------------
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFCO2,
+        key=Tag.TARIFFCO2.key,
+        icon="mdi:molecule-co2",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="g/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFCO2HOME,
+        key=Tag.TARIFFCO2HOME.key,
+        icon="mdi:molecule-co2",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="g/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFCO2LOADPOINTS,
+        key=Tag.TARIFFCO2LOADPOINTS.key,
+        icon="mdi:molecule-co2",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="g/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    # ---------------------
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFFEEDIN,
+        key=Tag.TARIFFFEEDIN.key,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFPRICELOADPOINTS,
+        key=Tag.TARIFFPRICELOADPOINTS.key,
+        icon="mdi:cash-multiple",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement="@@@/kWh",
+        device_class=None,
+        suggested_display_precision=3
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.TARIFFSOLAR,
+        key=Tag.TARIFFSOLAR.key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=None,
+        suggested_display_precision=2,
+    ),
     ExtSensorEntityDescription(
         tag=Tag.STATTOTALSOLARPERCENTAGE,
         key=Tag.STATTOTALSOLARPERCENTAGE.entity_key,
@@ -1090,8 +1145,8 @@ SENSOR_ENTITIES = [
 
     # the new tarif endpoints... [GRID & SOLAR]
     ExtSensorEntityDescription(
-        tag=Tag.TARIF_GRID,
-        key=Tag.TARIF_GRID.entity_key,
+        tag=Tag.TARIFF_API_GRID,
+        key=Tag.TARIFF_API_GRID.entity_key,
         icon="mdi:cash-multiple",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="@@@",
@@ -1100,8 +1155,8 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
-        tag=Tag.TARIF_SOLAR,
-        key=Tag.TARIF_SOLAR.entity_key,
+        tag=Tag.TARIFF_API_SOLAR,
+        key=Tag.TARIFF_API_SOLAR.entity_key,
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -1110,8 +1165,8 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
-        tag=Tag.TARIF_FEEDIN,
-        key=Tag.TARIF_FEEDIN.entity_key,
+        tag=Tag.TARIFF_API_FEEDIN,
+        key=Tag.TARIFF_API_FEEDIN.entity_key,
         icon="mdi:cash-multiple",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="@@@",
@@ -1120,8 +1175,8 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
-        tag=Tag.TARIF_PLANNER,
-        key=Tag.TARIF_PLANNER.entity_key,
+        tag=Tag.TARIFF_API_PLANNER,
+        key=Tag.TARIFF_API_PLANNER.entity_key,
         icon="mdi:cash-multiple",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="@@@",
