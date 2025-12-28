@@ -34,8 +34,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 description = ExtButtonEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.key}",
-                    translation_key=a_stub.tag.key,
+                    key=f"{lp_id_addon}_{a_stub.tag.json_key}",
+                    translation_key=a_stub.tag.json_key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=a_stub.device_class,

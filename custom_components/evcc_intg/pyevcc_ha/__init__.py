@@ -392,7 +392,7 @@ class EvccApiBridge:
             final_type = tag.type
 
         if final_type == EP_TYPE.LOADPOINTS and idx is not None:
-            ret[tag.key] = await self.press_loadpoint_key(idx, tag.write_key, value)
+            ret[tag.json_key] = await self.press_loadpoint_key(idx, tag.write_key, value)
 
         elif final_type == EP_TYPE.VEHICLES:
             # before we can write something to the vehicle endpoints, we must know the vehicle_id!
@@ -400,9 +400,9 @@ class EvccApiBridge:
             if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx) - 1
-                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.key]
+                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.json_key]
                     if vehicle_id is not None:
-                        ret[tag.key] = await self.press_vehicle_key(vehicle_id, tag.write_key, value)
+                        ret[tag.json_key] = await self.press_vehicle_key(vehicle_id, tag.write_key, value)
 
                 except Exception as err:
                     _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx}")
@@ -471,10 +471,10 @@ class EvccApiBridge:
             final_type = tag.type
 
         if final_type == EP_TYPE.SITE:
-            ret[tag.key] = await self.write_site_key(tag.write_key, value)
+            ret[tag.json_key] = await self.write_site_key(tag.write_key, value)
 
         elif final_type == EP_TYPE.LOADPOINTS and idx_str is not None:
-            ret[tag.key] = await self.write_loadpoint_key(idx_str, tag.write_key, value)
+            ret[tag.json_key] = await self.write_loadpoint_key(idx_str, tag.write_key, value)
 
         elif final_type == EP_TYPE.VEHICLES:
             # before we can write something to the vehicle endpoints, we must know the vehicle_id!
@@ -482,9 +482,9 @@ class EvccApiBridge:
             if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
                 try:
                     int_idx = int(idx_str) - 1
-                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.key]
+                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.json_key]
                     if vehicle_id is not None:
-                        ret[tag.key] = await self.write_vehicle_key(vehicle_id, tag.write_key, value)
+                        ret[tag.json_key] = await self.write_vehicle_key(vehicle_id, tag.write_key, value)
 
                 except Exception as err:
                     _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx_str}")

@@ -71,7 +71,8 @@
       "vehicleclimateractive": {"name": "Fahrzeug Klimatisierung"},
       "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"},
       "planactive": {"name": "Plan aktiviert"},
-      "planactivealt": {"name": "Plan aktiviert (alt)"}
+      "planactivealt": {"name": "Plan aktiviert (alt)"},
+      "circuits_dimmed": {"name": "Lastmanagement Begrenzung"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},

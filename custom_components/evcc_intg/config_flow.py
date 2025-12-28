@@ -112,10 +112,10 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             ret = await client.read_all_data()
             if ret is not None and len(ret) > 0:
-                if Tag.VERSION.key in ret:
-                    self._version = ret[Tag.VERSION.key]
-                elif Tag.AVAILABLEVERSION.key in ret:
-                    self._version = ret[Tag.AVAILABLEVERSION.key]
+                if Tag.VERSION.json_key in ret:
+                    self._version = ret[Tag.VERSION.json_key]
+                elif Tag.AVAILABLEVERSION.json_key in ret:
+                    self._version = ret[Tag.AVAILABLEVERSION.json_key]
                 else:
                     _LOGGER.warning("No Version could be detected - ignore for now")
 

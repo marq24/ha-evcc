@@ -5,9 +5,11 @@ JSONKEY_PLAN: Final = "plan"
 JSONKEY_PLAN_SOC: Final = "soc"
 JSONKEY_PLAN_TIME: Final = "time"
 
+JSONKEY_AUXPOWER: Final = "auxPower"
+JSONKEY_CIRCUITS: Final = "circuits"
 JSONKEY_LOADPOINTS: Final = "loadpoints"
 JSONKEY_VEHICLES: Final = "vehicles"
-JSONKEY_AUXPOWER: Final = "auxPower"
+
 JSONKEY_BATTERYMODE: Final = "batteryMode"
 JSONKEY_BATTERYPOWER: Final = "batteryPower"
 #JSONKEY_BATTERYSOC: Final = "batterySoc"

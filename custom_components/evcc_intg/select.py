@@ -58,8 +58,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 description = ExtSelectEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.key}",
-                    translation_key=a_stub.tag.key,
+                    key=f"{lp_id_addon}_{a_stub.tag.json_key}",
+                    translation_key=a_stub.tag.json_key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=a_stub.device_class,
@@ -103,7 +103,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
             # ok we're going to patch the display strings for the vehicle names... this is quite a HACK!
             for a_key in self.coordinator._vehicle.keys():
-                a_trans_key = f"component.{DOMAIN}.entity.select.{Tag.LP_VEHICLENAME.key.lower()}.state.{a_key.lower()}"
+                a_trans_key = f"component.{DOMAIN}.entity.select.{Tag.LP_VEHICLENAME.json_key.lower()}.state.{a_key.lower()}"
                 a_value = self.coordinator._vehicle[a_key]["name"]
                 if has_pf_data:
                     if has_pf_trans:
@@ -243,10 +243,10 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
     def current_option(self) -> str | None:
         try:
             value = self.coordinator.read_tag(self.tag, self.lp_idx)
-            # _LOGGER.error(f"{self.tag.key} {self.lp_idx} {value}")
+            # _LOGGER.error(f"{self.tag.json_key} {self.lp_idx} {value}")
             if value is None or value == "":
                 # we must patch an empty vehicle_id to 'null' to avoid the select option being set to 'unknown'
-                if Tag.LP_VEHICLENAME.key == self.tag.key:
+                if Tag.LP_VEHICLENAME.json_key == self.tag.json_key:
                     value = "null"
                 else:
                     value = 'unknown'

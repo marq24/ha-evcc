@@ -71,7 +71,8 @@
       "vehicleclimateractive": {"name": "Vehicle Air Conditioning"},
       "vehiclewelcomeactive": {"name": "Vehicle Welcome function"},
       "planactive": {"name": "Plan activated"},
-      "planactivealt": {"name": "Plan activated (alt)"}
+      "planactivealt": {"name": "Plan activated (alt)"},
+      "circuits_dimmed": {"name": "Load Management dimmed"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},

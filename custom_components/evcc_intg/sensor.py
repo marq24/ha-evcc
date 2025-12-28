@@ -90,8 +90,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 description = ExtSensorEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.key}" if not patch_keys else f"{lp_id_addon}_{a_stub.tag.key}_{a_stub.json_idx[0]}",
-                    translation_key=a_stub.tag.key if not patch_keys else f"{a_stub.tag.key}_{a_stub.json_idx[0]}",
+                    key=f"{lp_id_addon}_{a_stub.tag.json_key}" if not patch_keys else f"{lp_id_addon}_{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
+                    translation_key=a_stub.tag.json_key if not patch_keys else f"{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
@@ -142,8 +142,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
-                key=f"{veh_id_addon}_{a_stub.tag.key}" if not patch_keys else f"{veh_id_addon}_{a_stub.tag.key}_{a_stub.json_idx[0]}",
-                translation_key=a_stub.tag.key if not patch_keys else f"{a_stub.tag.key}_{a_stub.json_idx[0]}",
+                key=f"{veh_id_addon}_{a_stub.tag.json_key}" if not patch_keys else f"{veh_id_addon}_{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
+                translation_key=a_stub.tag.json_key if not patch_keys else f"{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
                 name_addon=veh_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
@@ -360,6 +360,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             else:
                 _LOGGER.debug(f"no tariff data found for {self.tag}")
                 return None
+
         try:
             value = self.coordinator.read_tag(self.tag, self.lp_idx)
             if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
@@ -400,10 +401,10 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 value = None
             else:
                 if self.entity_description.lookup is not None:
-                    if self.tag.key.lower() in self.coordinator.lang_map:
-                        value = self.coordinator.lang_map[self.tag.key.lower()][value]
+                    if self.tag.json_key.lower() in self.coordinator.lang_map:
+                        value = self.coordinator.lang_map[self.tag.json_key.lower()][value]
                     else:
-                        _LOGGER.warning(f"{self.tag.key} not found in translations")
+                        _LOGGER.warning(f"{self.tag.json_key} not found in translations")
                 elif isinstance(value, bool):
                     if value is True:
                         value = "on"
