@@ -17,6 +17,12 @@ from homeassistant.const import (
     PERCENTAGE, UnitOfElectricPotential
 )
 
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    JSONKEY_EVOPT_RES_BATTERIES,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL
+)
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 
 # Base component constants
@@ -1264,7 +1270,107 @@ SENSOR_ENTITIES = [
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False
-    )
+    ),
+
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_0_charging_power",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_0_discharging_power",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_0_charged_total",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_1_charging_power",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_1_discharging_power",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_1_charged_total",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_2_charging_power",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_2_discharging_power",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        device_class=SensorDeviceClass.POWER,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_RESULT_OBJECT,
+        key="evopt_battery_2_charged_total",
+        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
 ]
 SENSOR_ENTITIES_PER_LOADPOINT = [
 

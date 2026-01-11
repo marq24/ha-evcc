@@ -404,7 +404,17 @@
       "charging_sessions_loadpoints": {"name": "Charging Sessions: #Loadpoints"},
       "charging_sessions_loadpoint_cost": {"name": "Charging Sessions: Costs [LP]"},
       "charging_sessions_loadpoint_chargedenergy": {"name": "Charging Sessions: Energy [LP]"},
-      "charging_sessions_loadpoint_chargeduration": {"name": "Charging Sessions: Duration [LP]"}
+      "charging_sessions_loadpoint_chargeduration": {"name": "Charging Sessions: Duration [LP]"},
+
+      "evopt_battery_0_charging_power": {"name": "Optimizer: Charging Power"},
+      "evopt_battery_0_discharging_power": {"name": "Optimizer: Discharging Power"},
+      "evopt_battery_0_charged_total": {"name": "Optimizer: Total Energy (State of Charge)"},
+      "evopt_battery_1_charging_power": {"name": "Optimizer BAT II: Charging Power"},
+      "evopt_battery_1_discharging_power": {"name": "Optimizer BAT II: Discharging Power"},
+      "evopt_battery_1_charged_total": {"name": "Optimizer BAT II: Total Energy (State of Charge)"},
+      "evopt_battery_2_charging_power": {"name": "Optimizer BAT III: Charging Power"},
+      "evopt_battery_2_discharging_power": {"name": "Optimizer BAT III: Discharging Power"},
+      "evopt_battery_2_charged_total": {"name": "Optimizer BAT III: Total Energy (State of Charge)"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

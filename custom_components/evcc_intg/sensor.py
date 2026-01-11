@@ -291,7 +291,23 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         # return the original object
                         return a_object
 
-        return None
+        elif self.tag.type == EP_TYPE.EVOPT:
+            try:
+                value = self.coordinator.read_tag(self.tag, self.lp_idx)
+                if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
+                    for idx, key in enumerate(self.entity_description.json_idx[:-1]):
+                        try:
+                            value = value[key]
+                        except (IndexError, KeyError, TypeError):
+                            _LOGGER.debug(f"extra_state_attributes(): index {idx+1} ({key}) not found in {value}")
+                            value = {}
+                            break
+
+                    return {"values": value}
+            except (IndexError, ValueError, TypeError, KeyError) as ex:
+                _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
+
+        return {}
 
     def get_current_value_from_timeseries(self, data_list):
         if data_list is not None:
@@ -364,23 +380,13 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
         try:
             value = self.coordinator.read_tag(self.tag, self.lp_idx)
             if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
-                json_keys_len = len(self.entity_description.json_idx)
-                # for sure this could be also done in loop... but this code is IMHO readable...
-                if json_keys_len > 0:
-                    json_idx1 = self.entity_description.json_idx[0]
+                for idx, key in enumerate(self.entity_description.json_idx):
                     try:
-                        value = value[json_idx1]
-                    except (IndexError, KeyError):
-                        _LOGGER.debug(f"index1 {json_idx1} not found in {value}")
+                        value = value[key]
+                    except (IndexError, KeyError, TypeError):
+                        _LOGGER.info(f"native_value(): index {idx+1} ({key}) not found in {value}")
                         value = None
-
-                if json_keys_len > 1:
-                    json_idx2 = self.entity_description.json_idx[1]
-                    try:
-                        value = value[json_idx2]
-                    except (IndexError, KeyError):
-                        _LOGGER.debug(f"index2 {json_idx2} not found in {value}")
-                        value = None
+                        break
 
             if isinstance(value, (dict, list)):
                 if self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:

@@ -11,6 +11,8 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_CIRCUITS,
     JSONKEY_LOADPOINTS,
     JSONKEY_VEHICLES,
+    JSONKEY_EVOPT,
+    JSONKEY_EVOPT_RES,
     JSONKEY_STATISTICS,
     JSONKEY_STATISTICS_TOTAL,
     JSONKEY_STATISTICS_THISYEAR,
@@ -41,6 +43,7 @@ class EP_TYPE(Enum):
     LOADPOINTS = JSONKEY_LOADPOINTS
     VEHICLES = JSONKEY_VEHICLES
     STATISTICS = JSONKEY_STATISTICS
+    EVOPT = JSONKEY_EVOPT
     SITE = "site"
     TARIFF = "tariff"
     SESSIONS = "sessions"
@@ -465,3 +468,8 @@ class Tag(ApiKey, Enum):
     CHARGING_SESSIONS_LOADPOINT_COST = ApiKey(entity_key="charging_sessions_loadpoint_cost", json_key="cost", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_ENERGY = ApiKey(entity_key="charging_sessions_loadpoint_chargedenergy", json_key="chargedEnergy", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_DURATION = ApiKey(entity_key="charging_sessions_loadpoint_chargeduration", json_key="chargeDuration", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
+
+    ###################################
+    # EV-OPTIMIZATION
+    ###################################
+    EVOPT_RESULT_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_RES, type=EP_TYPE.EVOPT)

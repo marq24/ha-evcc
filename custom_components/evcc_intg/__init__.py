@@ -578,14 +578,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if tag.json_key in self.data:
                     ret = self.data[tag.json_key]
 
-                    # checking for possible existing subtypes (so key is just a 'container' for the real value)
-                    # (elsewhere we solve this right now via entity_description.json_idx[0]) -> we must check, if
-                    # this can't be also used here ?!
-                    # if tag.subtype is not None and isinstance(ret, dict):
-                    #    if tag.subtype in ret:
-                    #        ret = ret[tag.subtype]
-                    #    else:
-                    #        ret = None
                 elif tag.json_key_alias is not None and tag.json_key_alias in self.data:
                     ret = self.data[tag.json_key_alias]
 
@@ -596,6 +588,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                             ret = a_obj[tag.json_key]
                         elif tag.json_key_alias is not None and tag.json_key_alias in a_obj:
                             ret = a_obj[tag.json_key_alias]
+
+            elif tag.type == EP_TYPE.EVOPT:
+                ret = self.data.get(EP_TYPE.EVOPT.value, {}).get(tag.json_key, None)
 
             elif tag.type == EP_TYPE.STATISTICS:
                 ret = self.read_tag_statistics(tag=tag)
