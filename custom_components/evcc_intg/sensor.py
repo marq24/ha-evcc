@@ -25,6 +25,12 @@ from .const import (
     ExtSensorEntityDescription
 )
 from .pyevcc_ha import SESSIONS_KEY_TOTAL
+from .pyevcc_ha.const import (
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
+    JSONKEY_EVOPT_DETAILS_BATTERYDETAILS,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -293,8 +299,21 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
 
         elif self.tag.type == EP_TYPE.EVOPT:
             try:
+                # json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
+
                 value = self.coordinator.read_tag(self.tag, self.lp_idx)
                 if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
+                    # the Tag.EVOPT_RESULT_OBJECT is very special - we need also the name from the
+                    # details...
+                    a_details_obj = None
+                    if self.tag == Tag.EVOPT_RESULT_OBJECT and len(self.entity_description.json_idx) > 2:
+                        if self.entity_description.json_idx[2] in [JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
+                                                                   JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
+                                                                   JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER]:
+                            name_index = int(self.entity_description.json_idx[1])
+                            details_obj = self.coordinator.read_tag(Tag.EVOPT_DETAILS_OBJECT, self.lp_idx)
+                            a_details_obj = details_obj[JSONKEY_EVOPT_DETAILS_BATTERYDETAILS][name_index]
+
                     for idx, key in enumerate(self.entity_description.json_idx[:-1]):
                         try:
                             value = value[key]
@@ -303,7 +322,11 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                             value = {}
                             break
 
-                    return {"values": value}
+                    return_obj = {"values": value}
+                    if a_details_obj is not None:
+                        return_obj.update(a_details_obj)
+
+                    return return_obj
             except (IndexError, ValueError, TypeError, KeyError) as ex:
                 _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
 

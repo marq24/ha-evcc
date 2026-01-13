@@ -25,6 +25,7 @@ JSONKEY_EVOPT_RES_OBJECTIVE_VALUE: Final = "objective_value"
 JSONKEY_EVOPT_RES_LIMIT_VIOLATIONS: Final = "limit_violations"
 JSONKEY_EVOPT_RES_STATUS: Final = "status"
 JSONKEY_EVOPT_DETAILS: Final = "details"
+JSONKEY_EVOPT_DETAILS_BATTERYDETAILS: Final = "batteryDetails"
 
 JSONKEY_BATTERYMODE: Final = "batteryMode"
 JSONKEY_BATTERYPOWER: Final = "batteryPower"
