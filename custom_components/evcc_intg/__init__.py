@@ -366,7 +366,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     EVCC_JSON_ORIGIN_OBJECT: a_circuit_object
                 }
         else:
-            _LOGGER.warning(f"read_evcc_config_on_startup(): NO 'circuits' found [{JSONKEY_CIRCUITS}] in the evcc data: {initdata}")
+            _LOGGER.debug(f"read_evcc_config_on_startup(): NO 'circuits' found [{JSONKEY_CIRCUITS}] in the evcc data: {initdata}")
 
 
         # init our vehicles data... [this is a JSON DICT]
