@@ -30,6 +30,7 @@ from .pyevcc_ha.const import (
     JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
     JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
     JSONKEY_EVOPT_DETAILS_BATTERYDETAILS,
+    JSONKEY_EVOPT_DETAILS_TIMESTAMP
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -306,6 +307,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     # the Tag.EVOPT_RESULT_OBJECT is very special - we need also the name from the
                     # details...
                     a_details_obj = None
+                    a_ts = None
                     if self.tag == Tag.EVOPT_RESULT_OBJECT and len(self.entity_description.json_idx) > 2:
                         if self.entity_description.json_idx[2] in [JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
                                                                    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
@@ -313,6 +315,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                             name_index = int(self.entity_description.json_idx[1])
                             details_obj = self.coordinator.read_tag(Tag.EVOPT_DETAILS_OBJECT, self.lp_idx)
                             a_details_obj = details_obj[JSONKEY_EVOPT_DETAILS_BATTERYDETAILS][name_index]
+                            a_ts = details_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP][name_index]
 
                     for idx, key in enumerate(self.entity_description.json_idx[:-1]):
                         try:
@@ -325,6 +328,8 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     return_obj = {"values": value}
                     if a_details_obj is not None:
                         return_obj.update(a_details_obj)
+                    if a_ts is not None:
+                        return_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP] = a_ts
 
                     return return_obj
             except (IndexError, ValueError, TypeError, KeyError) as ex:
