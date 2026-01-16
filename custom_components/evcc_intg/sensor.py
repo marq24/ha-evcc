@@ -312,26 +312,38 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         if self.entity_description.json_idx[2] in [JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
                                                                    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
                                                                    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER]:
+
                             name_index = int(self.entity_description.json_idx[1])
                             details_obj = self.coordinator.read_tag(Tag.EVOPT_DETAILS_OBJECT, self.lp_idx)
-                            a_details_obj = details_obj[JSONKEY_EVOPT_DETAILS_BATTERYDETAILS][name_index]
-                            a_ts = details_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP][name_index]
+                            if len(details_obj[JSONKEY_EVOPT_DETAILS_BATTERYDETAILS]) > name_index:
+                                a_details_obj = details_obj[JSONKEY_EVOPT_DETAILS_BATTERYDETAILS][name_index]
+
+                            if len(details_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP]) > name_index:
+                                a_ts = details_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP][name_index]
+
+                            # *big sigh* - all is an array - but for WHATEVER reason the timestamp info
+                            # is only AVAILABLE as a single entry in the list - yes, I know evopt is 'experimental'
+                            # but this came out of nowhere!
+                            elif len(details_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP]) == 1:
+                                a_ts = details_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP][0]
 
                     for idx, key in enumerate(self.entity_description.json_idx[:-1]):
                         try:
                             value = value[key]
                         except (IndexError, KeyError, TypeError):
-                            _LOGGER.debug(f"extra_state_attributes(): index {idx+1} ({key}) not found in {value}")
-                            value = {}
+                            # we brute force our way through the dict/list and if there is an index error,
+                            # we just return None (and ignoring also all other possible additional attributes)
+                            value = None
                             break
 
-                    return_obj = {"values": value}
-                    if a_details_obj is not None:
-                        return_obj.update(a_details_obj)
-                    if a_ts is not None:
-                        return_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP] = a_ts
+                    if value is not None:
+                        return_obj = {"values": value}
+                        if a_details_obj is not None:
+                            return_obj.update(a_details_obj)
+                        if a_ts is not None:
+                            return_obj[JSONKEY_EVOPT_DETAILS_TIMESTAMP] = a_ts
 
-                    return return_obj
+                        return return_obj
             except (IndexError, ValueError, TypeError, KeyError) as ex:
                 _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
 
@@ -409,12 +421,18 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             value = self.coordinator.read_tag(self.tag, self.lp_idx)
             if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
                 for idx, key in enumerate(self.entity_description.json_idx):
-                    try:
-                        value = value[key]
-                    except (IndexError, KeyError, TypeError):
-                        _LOGGER.info(f"native_value(): index {idx+1} ({key}) not found in {value}")
-                        value = None
-                        break
+                    if isinstance(value, (list, dict)):
+                        if isinstance(key, int) and len(value) > key:
+                            value = value[key]
+                        elif key in value:
+                            value = value[key]
+                    else:
+                        try:
+                            value = value[key]
+                        except (IndexError, KeyError, TypeError):
+                            _LOGGER.info(f"native_value(): index {idx+1} ({key}) not found in {value}")
+                            value = None
+                            break
 
             if isinstance(value, (dict, list)):
                 if self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
