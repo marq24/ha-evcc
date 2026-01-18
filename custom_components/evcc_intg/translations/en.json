@@ -406,15 +406,19 @@
       "charging_sessions_loadpoint_chargedenergy": {"name": "Charging Sessions: Energy [LP]"},
       "charging_sessions_loadpoint_chargeduration": {"name": "Charging Sessions: Duration [LP]"},
 
-      "evopt_battery_0_charging_power": {"name": "Optimizer: Charging Power"},
-      "evopt_battery_0_discharging_power": {"name": "Optimizer: Discharging Power"},
-      "evopt_battery_0_charged_total": {"name": "Optimizer: Total Energy (State of Charge)"},
-      "evopt_battery_1_charging_power": {"name": "Optimizer BAT II: Charging Power"},
-      "evopt_battery_1_discharging_power": {"name": "Optimizer BAT II: Discharging Power"},
-      "evopt_battery_1_charged_total": {"name": "Optimizer BAT II: Total Energy (State of Charge)"},
-      "evopt_battery_2_charging_power": {"name": "Optimizer BAT III: Charging Power"},
-      "evopt_battery_2_discharging_power": {"name": "Optimizer BAT III: Discharging Power"},
-      "evopt_battery_2_charged_total": {"name": "Optimizer BAT III: Total Energy (State of Charge)"}
+      "evopt_time_series_dt":  {"name": "Optimizer: Timeseries Time"},
+      "evopt_battery_0_charging_power": {"name": "Optimizer: Charging Energy"},
+      "evopt_battery_0_discharging_power": {"name": "Optimizer: Discharging Energy"},
+      "evopt_battery_0_charged_total": {"name": "Optimizer: Total Energy Stored"},
+      "evopt_battery_1_charging_power": {"name": "Optimizer BAT II: Charging Energy"},
+      "evopt_battery_1_discharging_power": {"name": "Optimizer BAT II: Discharging Energy"},
+      "evopt_battery_1_charged_total": {"name": "Optimizer BAT II: Total Energy Stored"},
+      "evopt_battery_2_charging_power": {"name": "Optimizer BAT III: Charging Energy"},
+      "evopt_battery_2_discharging_power": {"name": "Optimizer BAT III: Discharging Energy"},
+      "evopt_battery_2_charged_total": {"name": "Optimizer BAT III: Total Energy Stored"},
+      "evopt_battery_3_charging_power": {"name": "Optimizer BAT IV: Charging Energy"},
+      "evopt_battery_3_discharging_power": {"name": "Optimizer BAT IV: Discharging Energy"},
+      "evopt_battery_3_charged_total": {"name": "Optimizer BAT IV: Total Energy Stored"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

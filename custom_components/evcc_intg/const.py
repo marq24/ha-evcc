@@ -1,6 +1,15 @@
 from dataclasses import dataclass
 from typing import Final
 
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    JSONKEY_EVOPT_RES_BATTERIES,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
+    JSONKEY_EVOPT_REQ_TIME_SERIES,
+    JSONKEY_EVOPT_REQ_TIME_SERIES_DT,
+)
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
@@ -16,14 +25,6 @@ from homeassistant.const import (
     UnitOfTime,
     PERCENTAGE, UnitOfElectricPotential
 )
-
-from custom_components.evcc_intg.pyevcc_ha.const import (
-    JSONKEY_EVOPT_RES_BATTERIES,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL
-)
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 
 # Base component constants
 MANUFACTURER: Final = "marq24"
@@ -1272,14 +1273,27 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
 
+    # OPTIMIZER SENSORS
+    ExtSensorEntityDescription(
+        tag=Tag.EVOPT_REQUEST_OBJECT,
+        key="evopt_time_series_dt",
+        json_idx=[JSONKEY_EVOPT_REQ_TIME_SERIES, JSONKEY_EVOPT_REQ_TIME_SERIES_DT, 0],
+        icon="mdi:home-battery-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTime.SECONDS,
+        suggested_unit_of_measurement=UnitOfTime.MINUTES,
+        device_class=SensorDeviceClass.DURATION,
+        suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
     ExtSensorEntityDescription(
         tag=Tag.EVOPT_RESULT_OBJECT,
         key="evopt_battery_0_charging_power",
         json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
@@ -1289,8 +1303,8 @@ SENSOR_ENTITIES = [
         json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
@@ -1311,8 +1325,8 @@ SENSOR_ENTITIES = [
         json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
@@ -1322,8 +1336,8 @@ SENSOR_ENTITIES = [
         json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
@@ -1344,8 +1358,8 @@ SENSOR_ENTITIES = [
         json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),
@@ -1355,8 +1369,8 @@ SENSOR_ENTITIES = [
         json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=SensorDeviceClass.POWER,
+        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=2,
         entity_registry_enabled_default=False
     ),

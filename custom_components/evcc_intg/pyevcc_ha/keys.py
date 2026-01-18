@@ -12,6 +12,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_LOADPOINTS,
     JSONKEY_VEHICLES,
     JSONKEY_EVOPT,
+    JSONKEY_EVOPT_REQ,
     JSONKEY_EVOPT_RES,
     JSONKEY_EVOPT_DETAILS,
     JSONKEY_STATISTICS,
@@ -473,5 +474,6 @@ class Tag(ApiKey, Enum):
     ###################################
     # EV-OPTIMIZATION
     ###################################
+    EVOPT_REQUEST_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_REQ, type=EP_TYPE.EVOPT)
     EVOPT_RESULT_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_RES, type=EP_TYPE.EVOPT)
     EVOPT_DETAILS_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_DETAILS, type=EP_TYPE.EVOPT)
