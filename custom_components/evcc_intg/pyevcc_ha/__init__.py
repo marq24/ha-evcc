@@ -6,7 +6,7 @@ from numbers import Number
 from typing import Callable
 
 import aiohttp
-from aiohttp import ClientResponseError, ClientConnectorError, ClientError
+from aiohttp import ClientResponseError, ClientConnectionError, ClientError
 from dateutil import parser
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
@@ -291,7 +291,7 @@ class EvccApiBridge:
 
         except asyncio.exceptions.CancelledError as cancel:
             _LOGGER.info(f"CancelledError@websocket cause by: {cancel}")
-        except ClientConnectorError as con:
+        except ClientConnectionError as con:
             _LOGGER.error(f"Could not connect to websocket: {con}")
         except BaseException as ex:
             _LOGGER.error(f"BaseException@websocket: {type(ex).__name__} - {ex}")

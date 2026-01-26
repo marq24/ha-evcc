@@ -5,7 +5,7 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Final
 
 import aiohttp
-from aiohttp import ClientConnectorError
+from aiohttp import ClientConnectionError
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
@@ -552,8 +552,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         except UpdateFailed as exception:
             _LOGGER.warning(f"UpdateFailed: {exception}")
             raise UpdateFailed() from exception
-        except ClientConnectorError as exception:
-            _LOGGER.warning(f"UpdateFailed cause of ClientConnectorError: {exception}")
+        except ClientConnectionError as exception:
+            _LOGGER.warning(f"UpdateFailed cause of ClientConnectionError: {exception}")
             raise UpdateFailed() from exception
         except Exception as other:
             _LOGGER.warning(f"UpdateFailed unexpected: {type(other)} - {other}")
