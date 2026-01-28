@@ -147,7 +147,6 @@ requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_
 
 ```json
 {
-  "result": {
     "capacity": {
       "value": 84.68,
       "error": ""
@@ -164,7 +163,6 @@ requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_
       "value": 39.5,
       "error": ""
     }
-  }
 }
 ```
 
@@ -185,10 +183,10 @@ Add in the `command_line` section of your `configuration.yaml` file the followin
         data='{"password":"[CHANGE_ME:YourEVCCPassword]"}'; ip='http://[CHANGE_ME:YourEVCCServerIP]:7070';\
         c=$(curl -H 'Content-Type: application/json' -d $data -ksc - $ip/api/auth/login -o /dev/null);\
         echo "${c}" | curl -ksb - $ip/api/config/devices/vehicle/[CHANGE_ME:YourVehicleId]/status
-      json_attributes_path: '$.result.range'
+      json_attributes_path: '$.range'
       json_attributes:
         - value
-      value_template: '{{ value_json.result.soc.value | float }}'
+      value_template: '{{ value_json.soc.value | float }}'
       unit_of_measurement: '%'
       # the scan_interval will be specified in seconds...
       # for update every 5min use 300 (60sec * 5min = 300sec)
@@ -212,10 +210,10 @@ and you want to capture the __soc__ as main entity information and the `range` a
         data='{"password":"myEvCCPwd"}'; ip='http://192.168.2.213:7070';\
         c=$(curl -H 'Content-Type: application/json' -d $data -ksc - $ip/api/auth/login -o /dev/null);\
         echo "${c}" | curl -ksb - $ip/api/config/devices/vehicle/ford_mach_e/status
-      json_attributes_path: '$.result.range'
+      json_attributes_path: '$.range'
       json_attributes:
         - value
-      value_template: '{{ value_json.result.soc.value | float }}'
+      value_template: '{{ value_json.soc.value | float }}'
       unit_of_measurement: '%'
       scan_interval: 300
 ```
