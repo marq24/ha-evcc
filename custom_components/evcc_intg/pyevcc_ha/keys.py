@@ -224,11 +224,12 @@ class Tag(ApiKey, Enum):
     ###################################
     # CIRCUITS-DATA
     ###################################
-    # CIRCUITS_POWER = ApiKey(entity_key="circuits_power", json_key="power", type=EP_TYPE.CIRCUITS)
-    # CIRCUITS_CURRENT = ApiKey(entity_key="circuits_current", json_key="current", type=EP_TYPE.CIRCUITS)
+    CIRCUITS_POWER = ApiKey(entity_key="circuits_power", json_key="power", type=EP_TYPE.CIRCUITS)
+    CIRCUITS_CURRENT = ApiKey(entity_key="circuits_current", json_key="current", type=EP_TYPE.CIRCUITS)
     # CIRCUITS_MAXPOWER = ApiKey(entity_key="circuits_maxPower", json_key="maxPower", type=EP_TYPE.CIRCUITS)
     # CIRCUITS_MAXCURRENT = ApiKey(entity_key="circuits_maxCurrent", json_key="maxCurrent", type=EP_TYPE.CIRCUITS)
     CIRCUITS_DIMMED = ApiKey(entity_key="circuits_dimmed", json_key="dimmed", type=EP_TYPE.CIRCUITS)
+    CIRCUITS_CURTAILED = ApiKey(entity_key="circuits_curtailed", json_key="curtailed", type=EP_TYPE.CIRCUITS)
 
     ###################################
     # LOADPOINT-DATA

@@ -21,6 +21,7 @@ from .const import (
     SENSOR_ENTITIES_BATTERY_AS_OBJECT,
     SENSOR_ENTITIES_PER_LOADPOINT,
     SENSOR_ENTITIES_PER_VEHICLE,
+    SENSOR_ENTITIES_PER_CIRCUIT,
     TAG_TO_CONTENT_KEY,
     ExtSensorEntityDescription
 )
@@ -188,6 +189,37 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
             entity = EvccSensor(coordinator, description)
             entities.append(entity)
+
+    # the additional circuit entities...
+    if coordinator._circuit is not None and len(coordinator._circuit) > 0:
+        for a_circuit_key in coordinator._circuit:
+            # a_circuit_config = coordinator._circuit[a_circuit_key]
+            for a_stub in SENSOR_ENTITIES_PER_CIRCUIT:
+                if a_stub.integrated_supported:
+                    the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
+                    description = ExtSensorEntityDescription(
+                        tag=a_stub.tag,
+                        #key=a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key,
+                        key=f"{a_circuit_key}_{the_key}",
+                        translation_key=the_key,
+                        lp_idx=a_circuit_key,
+                        name_addon=f"'{a_circuit_key.upper()}'",
+                        icon=a_stub.icon,
+                        entity_category=a_stub.entity_category,
+                        entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+
+                        # the entity type specific values...
+                        state_class=a_stub.state_class,
+                        native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                        suggested_display_precision=a_stub.suggested_display_precision,
+                        json_idx=a_stub.json_idx,
+                        factor=a_stub.factor,
+                        lookup=a_stub.lookup,
+                        ignore_zero=a_stub.ignore_zero
+                    )
+
+                    entity = EvccSensor(coordinator, description)
+                    entities.append(entity)
 
     add_entity_cb(entities)
 

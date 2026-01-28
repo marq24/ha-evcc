@@ -72,7 +72,8 @@
       "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"},
       "planactive": {"name": "Plan aktiviert"},
       "planactivealt": {"name": "Plan aktiviert (alt)"},
-      "circuits_dimmed": {"name": "Lastmanagement Begrenzung"}
+      "circuits_dimmed": {"name": "Lastmanagement Begrenzung"},
+      "circuits_curtailed": {"name": "Lastmanagement 'gekürzt'"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
@@ -334,7 +335,10 @@
       "charging_sessions_loadpoints": {"name": "Ladevorgänge: Anzahl Ladepunkte"},
       "charging_sessions_loadpoint_cost": {"name": "Ladevorgänge: Kosten [LP]"},
       "charging_sessions_loadpoint_chargedenergy": {"name": "Ladevorgänge: Energie [LP]"},
-      "charging_sessions_loadpoint_chargeduration": {"name": "Ladevorgänge: Dauer [LP]"}
+      "charging_sessions_loadpoint_chargeduration": {"name": "Ladevorgänge: Dauer [LP]"},
+
+      "circuits_power": {"name": "Lastmanagement Leistung"},
+      "circuits_current": {"name": "Lastmanagement Strom"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

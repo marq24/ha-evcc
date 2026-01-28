@@ -72,7 +72,8 @@
       "vehiclewelcomeactive": {"name": "Vehicle Welcome function"},
       "planactive": {"name": "Plan activated"},
       "planactivealt": {"name": "Plan activated (alt)"},
-      "circuits_dimmed": {"name": "Load Management dimmed"}
+      "circuits_dimmed": {"name": "Load Management dimmed"},
+      "circuits_curtailed": {"name": "Load Management curtailed"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
@@ -418,7 +419,10 @@
       "evopt_battery_2_charged_total": {"name": "Optimizer BAT III: Total Energy Stored"},
       "evopt_battery_3_charging_power": {"name": "Optimizer BAT IV: Charging Energy"},
       "evopt_battery_3_discharging_power": {"name": "Optimizer BAT IV: Discharging Energy"},
-      "evopt_battery_3_charged_total": {"name": "Optimizer BAT IV: Total Energy Stored"}
+      "evopt_battery_3_charged_total": {"name": "Optimizer BAT IV: Total Energy Stored"},
+
+      "circuits_power": {"name": "Load Management Power"},
+      "circuits_current": {"name": "Load Management Current"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

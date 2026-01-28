@@ -56,7 +56,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entity = EvccBinarySensor(coordinator, description)
                 entities.append(entity)
 
-    # the additional circuit entities (currently just the 'dimmed')...
+    # the additional circuit entities...
     if coordinator._circuit is not None and len(coordinator._circuit) > 0:
         for a_circuit_key in coordinator._circuit:
             # a_circuit_config = coordinator._circuit[a_circuit_key]

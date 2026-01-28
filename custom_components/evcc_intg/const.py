@@ -185,6 +185,13 @@ BINARY_ENTITIES_PER_CIRCUIT = [
         icon="mdi:transmission-tower-off",
         icon_off="mdi:transmission-tower",
     ),
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.CIRCUITS_CURTAILED,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:transmission-tower-off",
+        icon_off="mdi:transmission-tower",
+        entity_registry_enabled_default=False
+    ),
 ]
 BINARY_ENTITIES_PER_LOADPOINT = [
     ExtBinarySensorEntityDescriptionStub(
@@ -807,7 +814,7 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.BATTERYMODE,
-        key=f"{Tag.BATTERYMODE.json_key}",
+        key=Tag.BATTERYMODE.json_key,
         icon="mdi:state-machine",
         entity_registry_enabled_default=False
     ),
@@ -1802,6 +1809,42 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         suggested_display_precision=1,
         entity_registry_enabled_default=True
     ),
+]
+SENSOR_ENTITIES_PER_CIRCUIT = [
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CIRCUITS_POWER,
+        icon="mdi:transmission-tower",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.POWER,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.CIRCUITS_CURRENT,
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.CURRENT,
+        entity_registry_enabled_default=False
+    ),
+    # ExtSensorEntityDescriptionStub(
+    #     tag=Tag.GRID,
+    #     icon="mdi:current-ac",
+    #     state_class=SensorStateClass.MEASUREMENT,
+    #     native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+    #     device_class=SensorDeviceClass.CURRENT,
+    #     entity_registry_enabled_default=False
+    # ),
+    # ExtSensorEntityDescriptionStub(
+    #     tag=Tag.GRID,
+    #     icon="mdi:current-ac",
+    #     state_class=SensorStateClass.MEASUREMENT,
+    #     native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+    #     device_class=SensorDeviceClass.CURRENT,
+    #     entity_registry_enabled_default=False
+    # ),
 ]
 
 # SENSOR_SENSORS_PER_VEHICLE = [
