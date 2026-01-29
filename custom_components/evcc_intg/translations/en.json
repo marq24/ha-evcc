@@ -7,7 +7,7 @@
     },
     "step": {
       "user": {
-        "description": "If you need help with the setup, you can find it here: https://github.com/marq24/ha-evcc.\n-- --\n### An evcc server installation is required\n-- --\n__Before__ you can set up and use this integration, you __must have evcc itself installed__!\nThis can be done, for example, by installing the HA _evcc AddOn's_ or by installing evcc in a separate Docker container or on another server in your network.\nPlease only install the integration if you know the URL of your evcc server – that is, the URL you enter in your browser to directly access the evcc web interface.\n-- --\nTherefore, you must enter the IP address and port of your evcc server here (and not the IP address and port of your Home Assistant server)!",
+        "description": "If you need help with the setup, you can find it here: {repo}.\n-- --\n### An evcc server installation is required\n-- --\n__Before__ you can set up and use this integration, you __must have evcc itself installed__!\nThis can be done, for example, by installing the HA _evcc AddOn's_ or by installing evcc in a separate Docker container or on another server in your network.\nPlease only install the integration if you know the URL of your evcc server – that is, the URL you enter in your browser to directly access the evcc web interface.\n-- --\nTherefore, you must enter the IP address and port of your evcc server here (and not the IP address and port of your Home Assistant server)!",
         "data": {
           "host": "Your local EVCC-Server URL (including the port)",
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",

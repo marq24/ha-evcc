@@ -30,6 +30,13 @@ Please be aware that we are developing this integration to the best of our knowl
   
 - Supporting most of the other loadpoint and vehicle data that is available via the API - please let me know, if you miss some data - probably it just slipped through my attention during testing.
 
+
+### evcc-Configuration objects are **not supported**
+With the release of _0.3.x_, evcc is now fully configurable via the graphical user interface (GUI). Since to be able to access the evcc-configuration GUI section requires a user authorization (for good reasons) is required, __THIS INTEGRATION DOES NOT OFFER ANY ENTITIES OF THE CONFIGURATION SECTION of EVCC!__ Please don't ask me to add them to _this_ integration. There is __no plan to support__ the evcc-configuration GUI entities in __the future__. This would require storing the evcc user credentials in the integration configuration, and the variety of possible objects is just too big.
+
+If you want/need to adjust the evcc configuration via home assistant, __make use of the HA-REST integration__ and create the required API calls yourself. Here in this readme you will find an example of what needs to be done.
+
+
 ### Example Dashboard
 
 Take a look at this sample Dashboard (showing Sensors from one load point):
