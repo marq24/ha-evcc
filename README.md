@@ -2,7 +2,7 @@
 
 ![ha-logo](https://github.com/marq24/ha-evcc/raw/main/logo-ha.png)&nbsp;&nbsp;![evcc-logo](https://github.com/marq24/ha-evcc/raw/main/logo.png)
 
-I was surprised that looks like that there does not exist a simple Home Assistant integration for the very popular evcc. So before my first EV spawned at my driveway, I want to contribute a very simple & basic integration which allow you to control evcc objects simply via the default HA gui and use sensors and switches in your automations.
+I was surprised that it looks like that there does not exist a simple Home Assistant integration for the very popular evcc. So before my first EV spawned at my driveway, I wanted to contribute a very simple and basic integration that allows you to control evcc objects simply via the default HA gui and use sensors and switches in your automations.
 
 __Please note__, _that this Home Assistant integration is not official and not supported by the evcc developers. I am not affiliated with evcc in any way. This integration is based on the evcc API and the evcc API documentation._
 
@@ -28,7 +28,7 @@ Please be aware that we are developing this integration to the best of our knowl
   - Adjust home-battery settings
   - Adjust/create Vehicle & Loadpoint charging plan via HA-Services [http://[YOUR-HA-INSTANCE]:8123/developer-tools/service](http://[YOUR-HA-INSTANCE]:8123/developer-tools/service)
   
-- Supporting most of the other loadpoint and vehicle data that is available via the API - please let me know, if you miss some data - probably it just slipped through my attention during testing.
+- Supporting most of the other loadpoint and vehicle data that is available via the API – please let me know if you miss some data – probably it just slipped through my attention during testing.
 
 
 ### evcc-Configuration objects are **not supported**
@@ -51,9 +51,9 @@ Take a look at this sample Dashboard (showing Sensors from one load point):
 2.  You **must know the URL** from which your HA-Instance can reach your evcc instance.
     - This is usually the IP address of your evcc server and the port on which the evcc server is running (default is `7070`).
     - If you are using a reverse proxy, you need to know the URL that your HA instance can use to reach your evcc instance.
-    - When you are using docker (or docker-compose), you must ensure that the containers can communicate with each other. This means that the network and the port must be configured & exposed correctly. It's not enough that you can reach your evcc instance via a browser — your HA container must be also able to reach it!
+    - When you are using docker (or docker-compose), you must ensure that the containers can communicate with each other. This means that the network and the port must be configured and exposed correctly. It's not enough that you can reach your evcc instance via a browser — your HA container must be also able to reach it!
 
-[^1]: There is a known issue when using HASS-IO - For what ever reason it has been reported, that the startup sequence of the containers (the different installed AddOns) _might not match the requirements_ of this Integration: Your evcc-server __must be up and running before the Integration can be initialized__ in HA. This is because during the initial start of the Integration your evcc configuration (active loadpoints and configured vehicles) will be evaluated in order to create the corresponding HA entities.<br/><br/>So when you restart your HASS-IO server it _can happen_ that HA already starting to initialize this Integration before the HASS-OS have started the evcc-instance. __This will lead to the situation that the Integration is not started correctly__.<br/><br/>I am sorry that my HA developer skills are not sufficient to find a solution that work in this scenario - nor did I found other integrations with similar challenges (to find inspiration). If you know one (that's actively maintained), please let me know. Of course, I am also open to any PR solving this issue for AddOn users that will work in the different scenarios (deactivating/activating the integration, with WebSocket support and without).<br/><br/>As a personal note on this: IMHO restarts of HA Servers should only happen under observation, and should not be automated in any kind - but I might be alone with my opinion. 
+[^1]: There is a known issue when using HASS-IO - For whatever reason it has been reported that the startup sequence of the containers (the different installed AddOns) _might not match the requirements_ of this Integration: Your evcc-server __must be up and running before the Integration can be initialized__ in HA. This is because during the initial start of the Integration your evcc configuration (active loadpoints and configured vehicles) will be evaluated in order to create the corresponding HA entities.<br/><br/>So when you restart your HASS-IO server, it _can happen_ that HA already starting to initialize this Integration before the HASS-OS has started the evcc-instance. __This will lead to the situation that the Integration is not started correctly__.<br/><br/>I am sorry that my HA developer skills are not sufficient to find a solution that works in this scenario – nor did I found other integrations with similar challenges (to find inspiration). If you know one (that's actively maintained), please let me know. Of course, I am also open to any PR solving this issue for AddOn users that work in the different scenarios (deactivating/activating the integration, with WebSocket support and without).<br/><br/>As a personal note on this: IMHO restarts of HA Servers should only happen under observation, and should not be automated in any kind – but I might be alone with my opinion. 
 
 ### Step I: Install the integration
 
@@ -61,13 +61,11 @@ Take a look at this sample Dashboard (showing Sensors from one load point):
 
 [![Open your Home Assistant instance and adding repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=marq24&repository=ha-evcc&category=integration)
 
-1. ~~Add a custom **integration** repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)<br/>**Let me repeat**: This is an **HACS _integration_**, not an **HASS-IO _AddOn_**, so you need to have HACS installed, and you need to add this as custom **integration repository** to HACS.~~
-2. ~~Once the repository is added,~~ use the search bar and type `evcc☀️🚘- Solar Charging`
-3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration — the latest release version is automatically selected. Only select a different version if you have specific reasons.
-4. After you press download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
-5. Setup the evcc custom integration as described below (see _Step II: Adding or enabling the integration_)
+1. Use the search bar and type `evcc☀️🚘- Solar Charging`
+2. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration — the latest release version is automatically selected. Only select a different version if you have specific reasons.
+3. After you press download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
+4. Setup the evcc custom integration as described below (see _Step II: Adding or enabling the integration_)
 
-  <!--1. In HACS Store, search for [***marq24/ha-evcc***]-->
 
 #### Option 2: manual steps
 
@@ -120,17 +118,14 @@ Using the maximum out of your solar panels to charge your EV is great, but what 
 
 You can use evcc to control any Home Assistant entity that has implemented the `turn_on` and `turn_off` services. This means you can control devices like smart plugs, or even Home Assistant automations (which is IMHO the door to PV surplus handling heaven).
 
-Since the setup & configuration of this evcc feature might not be straight forward, I have created a separate document where you can find examples [Master PV surplus handling with evcc & Home Assistent](https://github.com/marq24/ha-evcc/blob/main/HA_CONTROLLED_BY_EVCC.md).
-
+Since the setup and configuration of this evcc feature might not be straight forward, I have created a separate document where you can find examples [Master PV surplus handling with evcc & Home Assistent](https://github.com/marq24/ha-evcc/blob/main/HA_CONTROLLED_BY_EVCC.md).
 
 I use this feature to control the hot-water temperature of my waterkotte heat pump.
-
 
 
 ## Are you are go-eCharger V3 (or higher) User?
 
 Do you know, that as owners of a go-eCharger (V3+) there is no need to use evcc for solar surplus charging? Even without any additional hardware! Home Assistant and the __go-eCharger APIv2 Connect__ Integration is all you need. Get all details from [https://github.com/marq24/ha-goecharger-api2](https://github.com/marq24/ha-goecharger-api2).
-
 
 
 ## Accessing your vehicle SOC & Range when the vehicle is not connected to a loadpoint
@@ -173,7 +168,7 @@ requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_
 }
 ```
 
-Check if you have already a `command_line` section in your `configuration.yaml` file - if there is none - create one on as top level entry like this (the line '  - sensor: ...' must (obviously) be replaced with the complete sections shown further below):
+Check if you have already a `command_line` section in your `configuration.yaml` file - if there is none - create one on as top level entry like this (the line ' - sensor: ...' must (obviously) be replaced with the complete sections shown further below):
 
 ```yaml
 command_line:
@@ -224,6 +219,7 @@ and you want to capture the __soc__ as main entity information and the `range` a
       unit_of_measurement: '%'
       scan_interval: 300
 ```
+
 ### Don't want to store your evcc password in the ha configuration.yaml?
 [@BDBAfH was so kind to post an alternative example here](https://github.com/marq24/ha-evcc/discussions/137), showing the way how to store and use the evcc password from a separate file.
 
