@@ -878,7 +878,7 @@ class EvccBaseEntity(Entity):
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{entity_type}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
+        self.entity_id = f"{entity_type}.{self.coordinator.system_id}_{camel_to_snake(description.key)}".lower()
 
     def _name_internal(self, device_class_name: str | None, platform_translations: dict[str, Any]) -> str | UndefinedType | None:
         tmp = super()._name_internal(device_class_name, platform_translations)
