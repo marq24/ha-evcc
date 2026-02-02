@@ -23,7 +23,9 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfLength,
     UnitOfTime,
-    PERCENTAGE, UnitOfElectricPotential
+    UnitOfElectricPotential,
+    PERCENTAGE,
+    Platform
 )
 
 # Base component constants
@@ -166,8 +168,7 @@ class ExtSwitchEntityDescription(SwitchEntityDescription):
 
     icon_off: str | None = None
 
-
-PLATFORMS: Final = ["binary_sensor", "button", "number", "select", "sensor", "switch"]
+PLATFORMS: Final = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 
 BINARY_ENTITIES = [
     ExtBinarySensorEntityDescription(

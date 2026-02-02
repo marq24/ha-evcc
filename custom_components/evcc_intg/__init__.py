@@ -6,18 +6,6 @@ from typing import Any, Final
 
 import aiohttp
 from aiohttp import ClientConnectionError
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
-from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
-from homeassistant.exceptions import ConfigEntryNotReady
-from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
-from homeassistant.helpers.entity import Entity, EntityDescription
-from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.helpers.typing import UNDEFINED, UndefinedType
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
-from homeassistant.loader import async_get_integration
-from homeassistant.util import slugify
 from packaging.version import Version
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
@@ -40,6 +28,18 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_VEHICLES, JSONKEY_CIRCUITS
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
+from homeassistant.exceptions import ConfigEntryNotReady
+from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
+from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.entity import Entity, EntityDescription
+from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.typing import UNDEFINED, UndefinedType
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
+from homeassistant.loader import async_get_integration
+from homeassistant.util import slugify
 from .const import (
     NAME,
     NAME_SHORT,
@@ -847,7 +847,7 @@ class EvccBaseEntity(Entity):
     _attr_has_entity_name = True
     _attr_name_addon = None
 
-    def __init__(self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
+    def __init__(self, entity_type:str, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
         if hasattr(description, "tag"):
             self.tag = description.tag
         else:
@@ -878,7 +878,7 @@ class EvccBaseEntity(Entity):
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
+        self.entity_id = f"{entity_type}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
 
     def _name_internal(self, device_class_name: str | None, platform_translations: dict[str, Any]) -> str | UndefinedType | None:
         tmp = super()._name_internal(device_class_name, platform_translations)

@@ -3,14 +3,13 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from numbers import Number
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import UnitOfTemperature, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
-
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import (
     DOMAIN,
@@ -276,7 +275,7 @@ def compress_general(data, time_key:str, value_key:str):
 
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
-        super().__init__(coordinator=coordinator, description=description)
+        super().__init__(entity_type=Platform.SENSOR, coordinator=coordinator, description=description)
         self._previous_float_value: float | None = None
         if self.tag.type == EP_TYPE.TARIFF or self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
             self._last_calculated_key = None

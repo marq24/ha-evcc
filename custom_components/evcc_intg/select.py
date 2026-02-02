@@ -2,13 +2,13 @@ import asyncio
 import logging
 from dataclasses import replace
 
-from homeassistant.components.select import SelectEntity
-from homeassistant.config_entries import ConfigEntry
-from homeassistant.core import HomeAssistant
-from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
 from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
+from homeassistant.components.select import SelectEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import Platform
+from homeassistant.core import HomeAssistant
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SELECT_ENTITIES, SELECT_ENTITIES_PER_LOADPOINT, ExtSelectEntityDescription
 
@@ -92,7 +92,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 class EvccSelect(EvccBaseEntity, SelectEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSelectEntityDescription):
-        super().__init__(coordinator=coordinator, description=description)
+        super().__init__(entity_type=Platform.SELECT, coordinator=coordinator, description=description)
 
     async def add_to_platform_finish(self) -> None:
         if self.tag == Tag.LP_VEHICLENAME:

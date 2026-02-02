@@ -1,12 +1,11 @@
 import logging
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.binary_sensor import BinarySensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_OFF
+from homeassistant.const import STATE_OFF, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import (
     DOMAIN,
@@ -86,7 +85,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 class EvccBinarySensor(EvccBaseEntity, BinarySensorEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtBinarySensorEntityDescription):
-        super().__init__(coordinator=coordinator, description=description)
+        super().__init__(entity_type=Platform.BINARY_SENSOR, coordinator=coordinator, description=description)
         self._attr_icon_off = self.entity_description.icon_off
 
     @property

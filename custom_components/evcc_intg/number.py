@@ -1,14 +1,13 @@
 import logging
 from dataclasses import replace
 
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.number import NumberEntity
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature
+from homeassistant.const import UnitOfTemperature, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, NUMBER_ENTITIES, ExtNumberEntityDescription, NUMBER_ENTITIES_PER_LOADPOINT
 
@@ -94,7 +93,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 class EvccNumber(EvccBaseEntity, NumberEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtNumberEntityDescription):
-        super().__init__(coordinator=coordinator, description=description)
+        super().__init__(entity_type=Platform.NUMBER, coordinator=coordinator, description=description)
 
     @property
     def native_value(self):
