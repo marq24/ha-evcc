@@ -910,7 +910,7 @@ class EvccBaseEntity(Entity):
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return self.entity_id
+        return f"{DOMAIN}.{self.entity_id.split('.')[1]}"
 
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""
