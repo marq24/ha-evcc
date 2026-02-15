@@ -299,36 +299,6 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             else:
                 return a_dict
 
-        elif self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
-            data = self.coordinator.read_tag(self.tag)
-            if data is not None:
-                if self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
-                    if self.tag in TAG_TO_CONTENT_KEY:
-                        content_key = TAG_TO_CONTENT_KEY[self.tag]
-                        if content_key in data:
-                            # evcc 1/4h forecast data exceeds HA database limit (16384 bytes).
-                            # Workaround: compress by stripping 'end' values via compress_data.
-                            a_array = data[content_key]
-                            if a_array is not None:
-                                return {"rates": compress_data(a_array)}
-                            else:
-                                return {"rates": a_array}
-
-                elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
-                    a_object = data[FORECAST_CONTENT.SOLAR.value]
-                    if "timeseries" in a_object:
-                        a_copy_object = a_object.copy()
-                        a_array = a_copy_object["timeseries"]
-                        if a_array is not None and "ts" in a_array[0]:
-                            a_copy_object["timeseries"] = compress_timeseries(a_array)
-                        else:
-                            a_copy_object["timeseries"] = a_array
-
-                        return a_copy_object
-                    else:
-                        # return the original object
-                        return a_object
-
         elif self.tag.type == EP_TYPE.EVOPT:
             try:
                 # json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
@@ -377,6 +347,49 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         return return_obj
             except (IndexError, ValueError, TypeError, KeyError) as ex:
                 _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
+
+        elif self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
+            data = self.coordinator.read_tag(self.tag)
+            if data is not None:
+                if self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
+                    if self.tag in TAG_TO_CONTENT_KEY:
+                        content_key = TAG_TO_CONTENT_KEY[self.tag]
+                        if content_key in data:
+                            # evcc 1/4h forecast data exceeds HA database limit (16384 bytes).
+                            # Workaround: compress by stripping 'end' values via compress_data.
+                            a_array = data[content_key]
+                            if a_array is not None:
+                                return {"rates": compress_data(a_array)}
+                            else:
+                                return {"rates": a_array}
+
+                elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
+                    a_object = data[FORECAST_CONTENT.SOLAR.value]
+                    if "timeseries" in a_object:
+                        a_copy_object = a_object.copy()
+                        a_array = a_copy_object["timeseries"]
+                        if a_array is not None and "ts" in a_array[0]:
+                            a_copy_object["timeseries"] = compress_timeseries(a_array)
+                        else:
+                            a_copy_object["timeseries"] = a_array
+
+                        return a_copy_object
+                    else:
+                        # return the original object
+                        return a_object
+
+        elif self.tag == Tag.PV:
+            # we check if there is a 'title' (at the given index)
+            value = self.coordinator.read_tag(self.tag, self.lp_idx)
+            if value is not None and hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
+                try:
+                    # we just need the first entry of the 'json_idx'
+                    array_idx = self.entity_description.json_idx[0]
+                    a_title = value[array_idx].get("title", None)
+                    if a_title is not None:
+                        return {"title": a_title}
+                except (IndexError, ValueError, TypeError, KeyError) as ex:
+                    _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
 
         return {}
 
