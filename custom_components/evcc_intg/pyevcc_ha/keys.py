@@ -401,6 +401,9 @@ class Tag(ApiKey, Enum):
     # enable/disable BatteryBoost (per Loadpoint)
     BATTERYBOOST = ApiKey(json_key="batteryBoost", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="batteryboost")
 
+    # enable/disable BatteryBoost (per Loadpoint)
+    BATTERYBOOSTLIMIT = ApiKey(json_key="batteryBoostLimit", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="batteryboostlimit", options=BATTERY_LIST)
+
     # "disableThreshold": 0, -> write 'disable/threshold' (in W)
     DISABLETHRESHOLD = ApiKey(json_key="disableThreshold", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="disable/threshold")
 

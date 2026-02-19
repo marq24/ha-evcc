@@ -483,6 +483,16 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         #unit_of_measurement=PERCENTAGE,
         #device_class= NumberDeviceClass.BATTERY,
         integrated_supported=False
+    ),
+
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.BATTERYBOOSTLIMIT,
+        icon="mdi:battery-plus-outline",
+        # we render the states via translations - so we can render '0 %' as '---'
+        #unit_of_measurement=PERCENTAGE,
+        #device_class= NumberDeviceClass.BATTERY,
+        options=Tag.BATTERYBOOSTLIMIT.options,
+        integrated_supported=False
     )
 ]
 

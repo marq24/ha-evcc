@@ -172,6 +172,32 @@
           "0": "charge only with enough surplus"
         }
       },
+      "batteryboostlimit": {
+        "name": "Boost from Home-Battery Limit",
+        "state": {
+          "0": "till 0 %",
+          "5": "till 5 %",
+          "10": "till 10 %",
+          "15": "till 15 %",
+          "20": "till 20 %",
+          "25": "till 25 %",
+          "30": "till 30 %",
+          "35": "till 35 %",
+          "40": "till 40 %",
+          "45": "till 45 %",
+          "50": "till 50 %",
+          "55": "till 55 %",
+          "60": "till 60 %",
+          "65": "till 65 %",
+          "70": "till 70 %",
+          "75": "till 75 %",
+          "80": "till 80 %",
+          "85": "till 85 %",
+          "90": "till 90 %",
+          "95": "till 95 %",
+          "100": "deactivated"
+        }
+      },
       "vehiclename": {
         "name": "Vehicle",
         "state": {

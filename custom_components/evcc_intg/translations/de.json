@@ -172,6 +172,32 @@
           "0": "nur mit genug PV-Überschuss laden"
         }
       },
+      "batteryboostlimit": {
+        "name": "Schnell aus Hausbatterie laden Limit",
+        "state": {
+          "0": "bis zur Vollentladung",
+          "5": "bis 5 %",
+          "10": "bis 10 %",
+          "15": "bis 15 %",
+          "20": "bis 20 %",
+          "25": "bis 25 %",
+          "30": "bis 30 %",
+          "35": "bis 35 %",
+          "40": "bis 40 %",
+          "45": "bis 45 %",
+          "50": "bis 50 %",
+          "55": "bis 55 %",
+          "60": "bis 60 %",
+          "65": "bis 65 %",
+          "70": "bis 70 %",
+          "75": "bis 75 %",
+          "80": "bis 80 %",
+          "85": "bis 85 %",
+          "90": "bis 90 %",
+          "95": "bis 95 %",
+          "100": "deaktiviert"
+        }
+      },
       "vehiclename": {
         "name": "Fahrzeug",
         "state": {
