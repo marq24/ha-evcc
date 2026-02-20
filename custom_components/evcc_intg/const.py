@@ -405,6 +405,13 @@ NUMBER_ENTITIES_PER_LOADPOINT = [
 
 SELECT_ENTITIES = [
     ExtSelectEntityDescription(
+        tag=Tag.BATTERYMODE,
+        key=Tag.BATTERYMODE.json_key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:battery-sync-outline",
+        options=Tag.BATTERYMODE.options
+    ),
+    ExtSelectEntityDescription(
         tag=Tag.PRIORITYSOC,
         key=Tag.PRIORITYSOC.json_key,
         entity_category=EntityCategory.CONFIG,
