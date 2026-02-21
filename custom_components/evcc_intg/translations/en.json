@@ -7,7 +7,7 @@
     },
     "step": {
       "user": {
-        "description": "If you need help with the setup, you can find it here: {repo}.\n-- --\n### An evcc server installation is required\n-- --\n__Before__ you can set up and use this integration, you __must have evcc itself installed__!\nThis can be done, for example, by installing the HA _evcc AddOn's_ or by installing evcc in a separate Docker container or on another server in your network.\nPlease only install the integration if you know the URL of your evcc server – that is, the URL you enter in your browser to directly access the evcc web interface.\n-- --\nTherefore, you must enter the IP address and port of your evcc server here (and not the IP address and port of your Home Assistant server)!",
+        "description": "If you need help setting it up, you can find it here: https://github.com/marq24/ha-evcc.",
         "data": {
           "host": "Your local EVCC-Server URL (including the port)",
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",
@@ -71,9 +71,7 @@
       "vehicleclimateractive": {"name": "Vehicle Air Conditioning"},
       "vehiclewelcomeactive": {"name": "Vehicle Welcome function"},
       "planactive": {"name": "Plan activated"},
-      "planactivealt": {"name": "Plan activated (alt)"},
-      "circuits_dimmed": {"name": "Load Management dimmed"},
-      "circuits_curtailed": {"name": "Load Management curtailed"}
+      "planactivealt": {"name": "Plan activated (alt)"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
@@ -95,14 +93,6 @@
       "priority": {"name": "Priority"}
     },
     "select": {
-      "batterymode": {
-        "name": "Battery mode",
-        "state": {
-          "normal": "Normal",
-          "hold": "Hold",
-          "charge": "Charge"
-        }
-      },
       "prioritysoc": {
         "name": "Home-Battery: Home has priority",
         "state": {
@@ -178,32 +168,6 @@
           "95": "when above 95 %",
           "100": "when at 100 %",
           "0": "charge only with enough surplus"
-        }
-      },
-      "batteryboostlimit": {
-        "name": "Boost from Home-Battery Limit",
-        "state": {
-          "0": "till 0 %",
-          "5": "till 5 %",
-          "10": "till 10 %",
-          "15": "till 15 %",
-          "20": "till 20 %",
-          "25": "till 25 %",
-          "30": "till 30 %",
-          "35": "till 35 %",
-          "40": "till 40 %",
-          "45": "till 45 %",
-          "50": "till 50 %",
-          "55": "till 55 %",
-          "60": "till 60 %",
-          "65": "till 65 %",
-          "70": "till 70 %",
-          "75": "till 75 %",
-          "80": "till 80 %",
-          "85": "till 85 %",
-          "90": "till 90 %",
-          "95": "till 95 %",
-          "100": "deactivated"
         }
       },
       "vehiclename": {
@@ -320,9 +284,6 @@
       "chargecurrents_0": {"name": "Charge current P1"},
       "chargecurrents_1": {"name": "Charge current P2"},
       "chargecurrents_2": {"name": "Charge current P3"},
-      "chargevoltages_0": {"name": "Charge voltage P1"},
-      "chargevoltages_1": {"name": "Charge voltage P2"},
-      "chargevoltages_2": {"name": "Charge voltage P3"},
       "chargeduration": {"name": "Charge duration"},
       "chargeremainingduration": {"name": "Charge remaining time"},
       "chargepower": {"name": "Charge power"},
@@ -333,7 +294,6 @@
       "connectedduration": {"name": "Connected duration"},
 
       "effectivelimitsoc": {"name": "Effective Charging limit (SOC)"},
-      "vehiclelimitsoc": {"name": "Vehicle Charging limit"},
 
       "phaseaction": {"name": "Phases activity [CODE]"},
       "phaseaction_value": {"name": "Phases activity"},
@@ -376,9 +336,9 @@
       "battery_1_soc": {"name": "Battery SOC 2"},
       "battery_2_soc": {"name": "Battery SOC 3"},
       "battery_3_soc": {"name": "Battery SOC 4"},
-      "gridcurrents_0": {"name": "Grid Current P1"},
-      "gridcurrents_1": {"name": "Grid Current P2"},
-      "gridcurrents_2": {"name": "Grid Current P3"},
+      "gridcurrents_0": {"name": "Grid Phase 1"},
+      "gridcurrents_1": {"name": "Grid Phase 2"},
+      "gridcurrents_2": {"name": "Grid Phase 3"},
       "gridpower": {"name": "Power Grid"},
       "homepower": {"name": "Power Home"},
       "pvpower": {"name": "Power Solar"},
@@ -392,14 +352,8 @@
       "pv_2_energy": {"name": "Energy Solar 3"},
       "pv_3_energy": {"name": "Energy Solar 4"},
 
-      "tariffgrid":           {"name": "Costs Grid [Site]"},
-      "tariffpricehome":      {"name": "Costs Usage [Site]"},
-      "tariffco2":            {"name": "Costs CO² [Site]"},
-      "tariffco2home":        {"name": "Costs CO² Usage [Site]"},
-      "tariffco2loadpoints":  {"name": "Costs CO² Loadpoints [Site]"},
-      "tarifffeedin":         {"name": "Costs Feedin [Site]"},
-      "tariffpriceloadpoints":{"name": "Costs Loadpoints [Site]"},
-      "tariffsolar":          {"name": "Solar Prognoses [Site]"},
+      "tariffgrid": {"name": "Costs Grid"},
+      "tariffpricehome": {"name": "Costs Usage"},
 
       "stattotalsolarpercentage": {"name": "Statistics: Total Solar"},
       "stattotalchargedkwh": {"name": "Statistics: Total Charge energy"},
@@ -420,12 +374,8 @@
 
       "tariff_api_solar": {"name": "Solar Prognoses [Tariff-API]"},
       "tariff_api_grid": {"name": "Grid Tariffs [Tariff-API]"},
-      "tariff_api_feedin": {"name": "Feedin Tariffs [Tariff-API]"},
-      "tariff_api_planner": {"name": "Planner Tariffs [Tariff-API]"},
       "forecast_solar": {"name": "Solar Prognoses"},
       "forecast_grid": {"name": "Grid Tariffs"},
-      "forecast_feedin": {"name": "Feedin Tariffs"},
-      "forecast_planner": {"name": "Planner Tariffs"},
 
       "pvaction": {"name": "PV Action [CODE]"},
       "pvaction_value": {"name": "PV Action"},
@@ -439,24 +389,7 @@
       "charging_sessions_loadpoints": {"name": "Charging Sessions: #Loadpoints"},
       "charging_sessions_loadpoint_cost": {"name": "Charging Sessions: Costs [LP]"},
       "charging_sessions_loadpoint_chargedenergy": {"name": "Charging Sessions: Energy [LP]"},
-      "charging_sessions_loadpoint_chargeduration": {"name": "Charging Sessions: Duration [LP]"},
-
-      "evopt_time_series_dt":  {"name": "Optimizer: Timeseries Time"},
-      "evopt_battery_0_charging_power": {"name": "Optimizer: Charging Energy"},
-      "evopt_battery_0_discharging_power": {"name": "Optimizer: Discharging Energy"},
-      "evopt_battery_0_charged_total": {"name": "Optimizer: Total Energy Stored"},
-      "evopt_battery_1_charging_power": {"name": "Optimizer BAT II: Charging Energy"},
-      "evopt_battery_1_discharging_power": {"name": "Optimizer BAT II: Discharging Energy"},
-      "evopt_battery_1_charged_total": {"name": "Optimizer BAT II: Total Energy Stored"},
-      "evopt_battery_2_charging_power": {"name": "Optimizer BAT III: Charging Energy"},
-      "evopt_battery_2_discharging_power": {"name": "Optimizer BAT III: Discharging Energy"},
-      "evopt_battery_2_charged_total": {"name": "Optimizer BAT III: Total Energy Stored"},
-      "evopt_battery_3_charging_power": {"name": "Optimizer BAT IV: Charging Energy"},
-      "evopt_battery_3_discharging_power": {"name": "Optimizer BAT IV: Discharging Energy"},
-      "evopt_battery_3_charged_total": {"name": "Optimizer BAT IV: Total Energy Stored"},
-
-      "circuits_power": {"name": "Load Management Power"},
-      "circuits_current": {"name": "Load Management Current"}
+      "charging_sessions_loadpoint_chargeduration": {"name": "Charging Sessions: Duration [LP]"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

@@ -2,9 +2,9 @@ import logging
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, BUTTONS_ENTITIES, BUTTONS_ENTITIES_PER_LOADPOINT, ExtButtonEntityDescription
 
@@ -34,8 +34,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 description = ExtButtonEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.json_key}",
-                    translation_key=a_stub.tag.json_key,
+                    key=f"{lp_id_addon}_{a_stub.tag.key}",
+                    translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=a_stub.device_class,
@@ -55,7 +55,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 class EvccButton(EvccBaseEntity, ButtonEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtButtonEntityDescription):
-        super().__init__(entity_type=Platform.BUTTON, coordinator=coordinator, description=description)
+        super().__init__(coordinator=coordinator, description=description)
 
     async def async_press(self, **kwargs):
         try:

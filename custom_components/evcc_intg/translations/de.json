@@ -7,8 +7,7 @@
     },
     "step": {
       "user": {
-        "descri_rant": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: {repo}.\n-- --\n### Du musst die IP-Addresse & Port Deines EVCC-Servers angeben und nicht die IP & Port von Deinem Home-Assistent Server!\n-- --\nJeder der seine Home-Assistent Addresse einträgt (weil er das vielleicht so auf YouTube gesehen hat) und sich dann bei mir wegen dem *Fehler* meldet, möge bitte wahlweise in die USA oder nach Russland auswandern (Nordkorea wäre auch noch 'ne Option)!\n-- --\nAn alle anderen: bitte entschuldigt diesen Rant \uD83E\uDD2E - Seit **Monaten** bekomme ich immer wieder die gleiche Support-Anfrage von der Generation TikTok.",
-        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: {repo}.\n-- --\n### Es wird eine evcc Server Installation benötigt\n-- --\nBevor Du diese Integration einrichten und verwenden kannst, musst Du __zuvor__ evcc selbst installiert haben!\nDies geht z.B. über die Installation des HA _evcc AddOn's_ oder aber die Installation von evcc in einen separaten Docker Container oder auf einem anderen Server in Deinem Netzwerk.\nBitte installiere die Integration nur dann, wenn Du die URL Deines evcc Servers kennst – also die URL die Du in Deinem Browser angibst, um das evcc Weboberfläche direkt zu erreichen.\n-- --\nDu musst hier also die IP-Addresse & Port Deines evcc Servers angeben (und nicht die IP & Port von Deinem Home-Assistent Server)!",
+        "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: https://github.com/marq24/ha-evcc.\n-- --\n### Du musst die Addresse Deines EVCC-Servers angeben und nicht die von Deinem Home-Assistent Server!\n-- --\nJeder der seine Home-Assistent Addresse einträgt (weil er das vielleicht so auf YouTube gesehen hat) und sich dann bei mir wegen dem *Fehler* meldet, möge bitte wahlweise in die USA oder nach Russland auswandern (Nordkorea wäre auch noch 'ne Option)!\n-- --\nAn alle anderen: bitte entschuldigt diesen Rant \uD83E\uDD2E - Seit **Monaten** bekomme ich immer wieder die gleiche Support-Anfrage von der Generation TikTok.",
         "data": {
           "host": "Deine lokale EVCC-Server Addresse (einschließlich des Ports)",
           "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
@@ -71,9 +70,7 @@
       "vehicleclimateractive": {"name": "Fahrzeug Klimatisierung"},
       "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"},
       "planactive": {"name": "Plan aktiviert"},
-      "planactivealt": {"name": "Plan aktiviert (alt)"},
-      "circuits_dimmed": {"name": "Lastmanagement Begrenzung"},
-      "circuits_curtailed": {"name": "Lastmanagement 'gekürzt'"}
+      "planactivealt": {"name": "Plan aktiviert (alt)"}
     },
     "button": {
       "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
@@ -95,14 +92,6 @@
       "priority": {"name": "Priorität"}
     },
     "select": {
-      "batterymode": {
-        "name": "Batterie Modus",
-        "state": {
-          "normal": "Normal",
-          "hold": "Halten",
-          "charge": "Laden"
-        }
-      },
       "prioritysoc": {
         "name": "Hausbatterie: Haus hat Priorität",
         "state": {
@@ -180,32 +169,6 @@
           "0": "nur mit genug PV-Überschuss laden"
         }
       },
-      "batteryboostlimit": {
-        "name": "Schnell aus Hausbatterie laden Limit",
-        "state": {
-          "0": "bis zur Vollentladung",
-          "5": "bis 5 %",
-          "10": "bis 10 %",
-          "15": "bis 15 %",
-          "20": "bis 20 %",
-          "25": "bis 25 %",
-          "30": "bis 30 %",
-          "35": "bis 35 %",
-          "40": "bis 40 %",
-          "45": "bis 45 %",
-          "50": "bis 50 %",
-          "55": "bis 55 %",
-          "60": "bis 60 %",
-          "65": "bis 65 %",
-          "70": "bis 70 %",
-          "75": "bis 75 %",
-          "80": "bis 80 %",
-          "85": "bis 85 %",
-          "90": "bis 90 %",
-          "95": "bis 95 %",
-          "100": "deaktiviert"
-        }
-      },
       "vehiclename": {
         "name": "Fahrzeug",
         "state": {
@@ -250,9 +213,6 @@
       "chargecurrents_0": {"name": "Ladestrom P1"},
       "chargecurrents_1": {"name": "Ladestrom P2"},
       "chargecurrents_2": {"name": "Ladestrom P3"},
-      "chargevoltages_0": {"name": "Ladespannung P1"},
-      "chargevoltages_1": {"name": "Ladespannung P2"},
-      "chargevoltages_2": {"name": "Ladespannung P3"},
       "chargeduration": {"name": "Ladedauer"},
       "chargeremainingduration": {"name": "Laderestzeit"},
       "chargepower": {"name": "Ladeleistung"},
@@ -263,7 +223,6 @@
       "connectedduration": {"name": "Angeschlossen seit"},
 
       "effectivelimitsoc": {"name": "Effektives Ladelimit (SOC)"},
-      "vehiclelimitsoc": {"name": "Fahrzeug Ladelimit"},
 
       "phaseaction": {"name": "Phasen Aktivität [CODE]"},
       "phaseaction_value": {"name": "Phasen Aktivität"},
@@ -306,9 +265,9 @@
       "battery_1_soc": {"name": "Batterie Ladezustand 2"},
       "battery_2_soc": {"name": "Batterie Ladezustand 3"},
       "battery_3_soc": {"name": "Batterie Ladezustand 4"},
-      "gridcurrents_0": {"name": "Netzstrom P1"},
-      "gridcurrents_1": {"name": "Netzstrom P2"},
-      "gridcurrents_2": {"name": "Netzstrom P3"},
+      "gridcurrents_0": {"name": "Netz Phase 1"},
+      "gridcurrents_1": {"name": "Netz Phase 2"},
+      "gridcurrents_2": {"name": "Netz Phase 3"},
       "gridpower": {"name": "Leistung Netz"},
       "homepower": {"name": "Leistung Heim"},
       "pvpower": {"name": "Leistung PV"},
@@ -322,14 +281,8 @@
       "pv_2_energy": {"name": "Energie PV 3"},
       "pv_3_energy": {"name": "Energie PV 4"},
 
-      "tariffgrid":           {"name": "Kosten Netz [Standort]"},
-      "tariffpricehome":      {"name": "Kosten Verbrauch [Standort]"},
-      "tariffco2":            {"name": "Kosten CO² [Standort]"},
-      "tariffco2home":        {"name": "Kosten CO² Verbrauch [Standort]"},
-      "tariffco2loadpoints":  {"name": "Kosten CO² Ladepunkte [Standort]"},
-      "tarifffeedin":         {"name": "Kosten Einspeisung [Standort]"},
-      "tariffpriceloadpoints":{"name": "Kosten Ladepunkte [Standort]"},
-      "tariffsolar":          {"name": "Solar Prognose [Standort]"},
+      "tariffgrid": {"name": "Kosten Netz"},
+      "tariffpricehome": {"name": "Kosten Verbrauch"},
 
       "stattotalsolarpercentage": {"name": "Statistik: gesamt Sonnenenergie"},
       "stattotalchargedkwh": {"name": "Statistik: gesamt Ladeenergie"},
@@ -349,13 +302,9 @@
       "stat30avgco2": {"name": "Statistik: letzten 30 Tage Ø CO₂"},
 
       "tariff_api_solar": {"name": "Solar Prognose [Tariff-API]"},
-      "tariff_api_grid": {"name": "Stromtarife [Tariff-API]"},
-      "tariff_api_feedin": {"name": "Einspeisetarife [Tariff-API]"},
-      "tariff_api_planner": {"name": "Planertarife [Tariff-API]"},
+      "tariff_api_grid": {"name": "Strom Tarife [Tariff-API]"},
       "forecast_solar": {"name": "Solar Prognose"},
-      "forecast_grid": {"name": "Stromtarife"},
-      "forecast_feedin": {"name": "Einspeisetarife"},
-      "forecast_planner": {"name": "Planertarife"},
+      "forecast_grid": {"name": "Strom Tarife"},
 
       "pvaction": {"name": "PV Aktivität [CODE]"},
       "pvaction_value": {"name": "PV Aktivität"},
@@ -369,10 +318,7 @@
       "charging_sessions_loadpoints": {"name": "Ladevorgänge: Anzahl Ladepunkte"},
       "charging_sessions_loadpoint_cost": {"name": "Ladevorgänge: Kosten [LP]"},
       "charging_sessions_loadpoint_chargedenergy": {"name": "Ladevorgänge: Energie [LP]"},
-      "charging_sessions_loadpoint_chargeduration": {"name": "Ladevorgänge: Dauer [LP]"},
-
-      "circuits_power": {"name": "Lastmanagement Leistung"},
-      "circuits_current": {"name": "Lastmanagement Strom"}
+      "charging_sessions_loadpoint_chargeduration": {"name": "Ladevorgänge: Dauer [LP]"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

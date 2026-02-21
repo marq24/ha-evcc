@@ -2,13 +2,13 @@ import logging
 from typing import Any
 
 import voluptuous as vol
-
-from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant import config_entries
 from homeassistant.config_entries import ConfigFlowResult, SOURCE_RECONFIGURE
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, ATTR_SW_VERSION, CONF_NAME
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
+
+from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from .const import (
     DOMAIN,
     CONF_INCLUDE_EVCC,
@@ -101,7 +101,6 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
                 vol.Optional(CONF_PURGE_ALL, default=user_input.get(CONF_PURGE_ALL)): bool,
             }),
-            description_placeholders={"repo": "https://github.com/marq24/ha-evcc"},
             last_step=True,
             errors=self._errors
         )
@@ -113,10 +112,10 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
             ret = await client.read_all_data()
             if ret is not None and len(ret) > 0:
-                if Tag.VERSION.json_key in ret:
-                    self._version = ret[Tag.VERSION.json_key]
-                elif Tag.AVAILABLEVERSION.json_key in ret:
-                    self._version = ret[Tag.AVAILABLEVERSION.json_key]
+                if Tag.VERSION.key in ret:
+                    self._version = ret[Tag.VERSION.key]
+                elif Tag.AVAILABLEVERSION.key in ret:
+                    self._version = ret[Tag.AVAILABLEVERSION.key]
                 else:
                     _LOGGER.warning("No Version could be detected - ignore for now")
 

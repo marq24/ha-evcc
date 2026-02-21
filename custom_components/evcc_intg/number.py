@@ -1,13 +1,13 @@
 import logging
-from dataclasses import replace
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.number import NumberEntity
 from homeassistant.components.sensor import SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import UnitOfTemperature, Platform
+from homeassistant.const import UnitOfTemperature
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, NUMBER_ENTITIES, ExtNumberEntityDescription, NUMBER_ENTITIES_PER_LOADPOINT
 
@@ -21,10 +21,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
         if description.tag == Tag.BATTERYGRIDCHARGELIMIT:
             if coordinator._currency != "€":
-                description = replace(
-                    description,
-                    native_max_value = description.native_max_value * 10
-                )
+                new_val = description.native_max_value * 10
+                description.native_max_value=new_val
 
         entity = EvccNumber(coordinator, description)
         entities.append(entity)
@@ -41,13 +39,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in NUMBER_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
-                force_celsius = lp_is_heating and a_stub.tag == Tag.LIMITSOC
+                force_celsius = lp_is_heating  and a_stub.tag == Tag.LIMITSOC
 
                 description = ExtNumberEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.json_key}",
-                    translation_key=a_stub.tag.json_key,
+                    key=f"{lp_id_addon}_{a_stub.tag.key}",
+                    translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
@@ -66,24 +64,19 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     step=a_stub.step,
                 )
 
-                if a_stub.tag == Tag.SMARTCOSTLIMIT or a_stub.tag == Tag.BATTERYGRIDCHARGELIMIT:
+                if a_stub.tag == Tag.SMARTCOSTLIMIT:
                     if coordinator._cost_type == "co2":
-                        description = replace(
-                            description,
-                            translation_key = f"{a_stub.tag.json_key}_co2",
-                            icon = "mdi:molecule-co2",
-                            native_max_value=500,
-                            native_min_value=0,
-                            native_step=5,
-                            native_unit_of_measurement="g/kWh"
-                        )
+                        description.translation_key = f"{a_stub.tag.key}_co2"
+                        description.icon = "mdi:molecule-co2"
+                        description.native_max_value=500
+                        description.native_min_value=0
+                        description.native_step=5
+                        description.native_unit_of_measurement="g/kWh"
 
                     # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
                     elif coordinator._currency != "€":
-                        description = replace(
-                            description,
-                            native_max_value = a_stub.native_max_value * 10
-                        )
+                        new_val = a_stub.native_max_value * 10
+                        description.native_max_value=new_val
 
                 entity = EvccNumber(coordinator, description)
                 entities.append(entity)
@@ -93,7 +86,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 class EvccNumber(EvccBaseEntity, NumberEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtNumberEntityDescription):
-        super().__init__(entity_type=Platform.NUMBER, coordinator=coordinator, description=description)
+        super().__init__(coordinator=coordinator, description=description)
 
     @property
     def native_value(self):
@@ -107,10 +100,10 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
                 else:
                     value = int(value)
 
-            # thanks for nothing evcc - SOC-Limit can be 0, even if the effectiveLimit is set > 0 - I assume you want
+            # thanks for nothing evcc - SOC-Limit can be 0, even if the effectiveLimit is 100 - I assume you want
             # to tell that the limit is not set...
             if self.tag == Tag.LIMITSOC and value == 0:
-                value = self.coordinator.read_tag(Tag.EFFECTIVELIMITSOC, self.lp_idx)
+                value = 100
 
         except KeyError:
             return "unknown"

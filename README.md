@@ -2,11 +2,11 @@
 
 ![ha-logo](https://github.com/marq24/ha-evcc/raw/main/logo-ha.png)&nbsp;&nbsp;![evcc-logo](https://github.com/marq24/ha-evcc/raw/main/logo.png)
 
-I was surprised that it looks like that there does not exist a simple Home Assistant integration for the very popular evcc. So before my first EV spawned at my driveway, I wanted to contribute a very simple and basic integration that allows you to control evcc objects simply via the default HA gui and use sensors and switches in your automations.
+I was surprised that looks like that there does not exist a simple Home Assistant integration for the very popular evcc. So before my first EV spawned at my driveway, I want to contribute a very simple & basic integration which allow you to control evcc objects simply via the default HA gui and use sensors and switches in your automations.
 
 __Please note__, _that this Home Assistant integration is not official and not supported by the evcc developers. I am not affiliated with evcc in any way. This integration is based on the evcc API and the evcc API documentation._
 
-[![hacs_badge][hacsbadge]][hacs] [![hainstall][hainstallbadge]][hainstall] [![Wero][werobadge]][wero] [![Revolut][revolutbadge]][revolut] [![PayPal][paypalbadge]][paypal] [![github][ghsbadge]][ghs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
+[![hacs_badge][hacsbadge]][hacs] [![github][ghsbadge]][ghs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![PayPal][paypalbadge]][paypal] [![hainstall][hainstallbadge]][hainstall]
 
 ## Disclaimer
 
@@ -28,14 +28,7 @@ Please be aware that we are developing this integration to the best of our knowl
   - Adjust home-battery settings
   - Adjust/create Vehicle & Loadpoint charging plan via HA-Services [http://[YOUR-HA-INSTANCE]:8123/developer-tools/service](http://[YOUR-HA-INSTANCE]:8123/developer-tools/service)
   
-- Supporting most of the other loadpoint and vehicle data that is available via the API – please let me know if you miss some data – probably it just slipped through my attention during testing.
-
-
-### evcc-Configuration objects are **not supported**
-With the release of _0.3.x_, evcc is now fully configurable via the graphical user interface (GUI). Since to be able to access the evcc-configuration GUI section requires a user authorization (for good reasons) is required, __THIS INTEGRATION DOES NOT OFFER ANY ENTITIES OF THE CONFIGURATION SECTION of EVCC!__ Please don't ask me to add them to _this_ integration. There is __no plan to support__ the evcc-configuration GUI entities in __the future__. This would require storing the evcc user credentials in the integration configuration, and the variety of possible objects is just too big.
-
-If you want/need to adjust the evcc configuration via home assistant, __make use of the HA-REST integration__ and create the required API calls yourself. Here in this readme you will find an example of what needs to be done.
-
+- Supporting most of the other loadpoint and vehicle data that is available via the API - please let me know, if you miss some data - probably it just slipped through my attention during testing.
 
 ### Example Dashboard
 
@@ -51,9 +44,9 @@ Take a look at this sample Dashboard (showing Sensors from one load point):
 2.  You **must know the URL** from which your HA-Instance can reach your evcc instance.
     - This is usually the IP address of your evcc server and the port on which the evcc server is running (default is `7070`).
     - If you are using a reverse proxy, you need to know the URL that your HA instance can use to reach your evcc instance.
-    - When you are using docker (or docker-compose), you must ensure that the containers can communicate with each other. This means that the network and the port must be configured and exposed correctly. It's not enough that you can reach your evcc instance via a browser — your HA container must be also able to reach it!
+    - When you are using docker (or docker-compose), you must ensure that the containers can communicate with each other. This means that the network and the port must be configured & exposed correctly. It's not enough that you can reach your evcc instance via a browser — your HA container must be also able to reach it!
 
-[^1]: There is a known issue when using HASS-IO - For whatever reason it has been reported that the startup sequence of the containers (the different installed AddOns) _might not match the requirements_ of this Integration: Your evcc-server __must be up and running before the Integration can be initialized__ in HA. This is because during the initial start of the Integration your evcc configuration (active loadpoints and configured vehicles) will be evaluated in order to create the corresponding HA entities.<br/><br/>So when you restart your HASS-IO server, it _can happen_ that HA already starting to initialize this Integration before the HASS-OS has started the evcc-instance. __This will lead to the situation that the Integration is not started correctly__.<br/><br/>I am sorry that my HA developer skills are not sufficient to find a solution that works in this scenario – nor did I found other integrations with similar challenges (to find inspiration). If you know one (that's actively maintained), please let me know. Of course, I am also open to any PR solving this issue for AddOn users that work in the different scenarios (deactivating/activating the integration, with WebSocket support and without).<br/><br/>As a personal note on this: IMHO restarts of HA Servers should only happen under observation, and should not be automated in any kind – but I might be alone with my opinion. 
+[^1]: There is a known issue when using HASS-IO - For what ever reason it has been reported, that the startup sequence of the containers (the different installed AddOns) _might not match the requirements_ of this Integration: Your evcc-server __must be up and running before the Integration can be initialized__ in HA. This is because during the initial start of the Integration your evcc configuration (active loadpoints and configured vehicles) will be evaluated in order to create the corresponding HA entities.<br/><br/>So when you restart your HASS-IO server it _can happen_ that HA already starting to initialize this Integration before the HASS-OS have started the evcc-instance. __This will lead to the situation that the Integration is not started correctly__.<br/><br/>I am sorry that my HA developer skills are not sufficient to find a solution that work in this scenario - nor did I found other integrations with similar challenges (to find inspiration). If you know one (that's actively maintained), please let me know. Of course, I am also open to any PR solving this issue for AddOn users that will work in the different scenarios (deactivating/activating the integration, with WebSocket support and without).<br/><br/>As a personal note on this: IMHO restarts of HA Servers should only happen under observation, and should not be automated in any kind - but I might be alone with my opinion. 
 
 ### Step I: Install the integration
 
@@ -61,11 +54,13 @@ Take a look at this sample Dashboard (showing Sensors from one load point):
 
 [![Open your Home Assistant instance and adding repository to HACS.](https://my.home-assistant.io/badges/hacs_repository.svg)](https://my.home-assistant.io/redirect/hacs_repository/?owner=marq24&repository=ha-evcc&category=integration)
 
-1. Use the search bar and type `evcc☀️🚘- Solar Charging`
-2. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration — the latest release version is automatically selected. Only select a different version if you have specific reasons.
-3. After you press download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
-4. Setup the evcc custom integration as described below (see _Step II: Adding or enabling the integration_)
+1. ~~Add a custom **integration** repository to HACS: [https://github.com/marq24/ha-evcc](https://github.com/marq24/ha-evcc)<br/>**Let me repeat**: This is an **HACS _integration_**, not an **HASS-IO _AddOn_**, so you need to have HACS installed, and you need to add this as custom **integration repository** to HACS.~~
+2. ~~Once the repository is added,~~ use the search bar and type `evcc☀️🚘- Solar Charging`
+3. Use the 3-dots at the right of the list entry (not at the top bar!) to download/install the custom integration — the latest release version is automatically selected. Only select a different version if you have specific reasons.
+4. After you press download and the process has completed, you must __Restart Home Assistant__ to install all dependencies
+5. Setup the evcc custom integration as described below (see _Step II: Adding or enabling the integration_)
 
+  <!--1. In HACS Store, search for [***marq24/ha-evcc***]-->
 
 #### Option 2: manual steps
 
@@ -118,14 +113,17 @@ Using the maximum out of your solar panels to charge your EV is great, but what 
 
 You can use evcc to control any Home Assistant entity that has implemented the `turn_on` and `turn_off` services. This means you can control devices like smart plugs, or even Home Assistant automations (which is IMHO the door to PV surplus handling heaven).
 
-Since the setup and configuration of this evcc feature might not be straight forward, I have created a separate document where you can find examples [Master PV surplus handling with evcc & Home Assistent](https://github.com/marq24/ha-evcc/blob/main/HA_CONTROLLED_BY_EVCC.md).
+Since the setup & configuration of this evcc feature might not be straight forward, I have created a separate document where you can find examples [Master PV surplus handling with evcc & Home Assistent](https://github.com/marq24/ha-evcc/blob/main/HA_CONTROLLED_BY_EVCC.md).
+
 
 I use this feature to control the hot-water temperature of my waterkotte heat pump.
+
 
 
 ## Are you are go-eCharger V3 (or higher) User?
 
 Do you know, that as owners of a go-eCharger (V3+) there is no need to use evcc for solar surplus charging? Even without any additional hardware! Home Assistant and the __go-eCharger APIv2 Connect__ Integration is all you need. Get all details from [https://github.com/marq24/ha-goecharger-api2](https://github.com/marq24/ha-goecharger-api2).
+
 
 
 ## Accessing your vehicle SOC & Range when the vehicle is not connected to a loadpoint
@@ -149,6 +147,7 @@ requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_
 
 ```json
 {
+  "result": {
     "capacity": {
       "value": 84.68,
       "error": ""
@@ -165,10 +164,11 @@ requesting `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle/[YOUR_VEHICLE_
       "value": 39.5,
       "error": ""
     }
+  }
 }
 ```
 
-Check if you have already a `command_line` section in your `configuration.yaml` file - if there is none - create one on as top level entry like this (the line ' - sensor: ...' must (obviously) be replaced with the complete sections shown further below):
+Check if you have already a `command_line` section in your `configuration.yaml` file - if there is none - create one on as top level entry like this (the line '  - sensor: ...' must (obviously) be replaced with the complete sections shown further below):
 
 ```yaml
 command_line:
@@ -185,10 +185,10 @@ Add in the `command_line` section of your `configuration.yaml` file the followin
         data='{"password":"[CHANGE_ME:YourEVCCPassword]"}'; ip='http://[CHANGE_ME:YourEVCCServerIP]:7070';\
         c=$(curl -H 'Content-Type: application/json' -d $data -ksc - $ip/api/auth/login -o /dev/null);\
         echo "${c}" | curl -ksb - $ip/api/config/devices/vehicle/[CHANGE_ME:YourVehicleId]/status
-      json_attributes_path: '$.range'
+      json_attributes_path: '$.result.range'
       json_attributes:
         - value
-      value_template: '{{ value_json.soc.value | float }}'
+      value_template: '{{ value_json.result.soc.value | float }}'
       unit_of_measurement: '%'
       # the scan_interval will be specified in seconds...
       # for update every 5min use 300 (60sec * 5min = 300sec)
@@ -212,14 +212,13 @@ and you want to capture the __soc__ as main entity information and the `range` a
         data='{"password":"myEvCCPwd"}'; ip='http://192.168.2.213:7070';\
         c=$(curl -H 'Content-Type: application/json' -d $data -ksc - $ip/api/auth/login -o /dev/null);\
         echo "${c}" | curl -ksb - $ip/api/config/devices/vehicle/ford_mach_e/status
-      json_attributes_path: '$.range'
+      json_attributes_path: '$.result.range'
       json_attributes:
         - value
-      value_template: '{{ value_json.soc.value | float }}'
+      value_template: '{{ value_json.result.soc.value | float }}'
       unit_of_measurement: '%'
       scan_interval: 300
 ```
-
 ### Don't want to store your evcc password in the ha configuration.yaml?
 [@BDBAfH was so kind to post an alternative example here](https://github.com/marq24/ha-evcc/discussions/137), showing the way how to store and use the evcc password from a separate file.
 
@@ -227,7 +226,7 @@ and you want to capture the __soc__ as main entity information and the `range` a
 
 Please use the [GitHub Issues](https://github.com/marq24/ha-evcc/issues) for reporting any issues you encounter with this integration. Please be so kind before creating a new issues, check the closed ones if your problem has been already reported (& solved).
 
-To speed up the support process, you might like to already prepare and provide DEBUG log output. In the case of a technical issue, I would need this DEBUG log output to be able to help/fix the issue. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/main/docs/HA_DEBUG.md) — please take the time to quickly go through it.
+To speed up the support process, you might like to already prepare and provide DEBUG log output. In the case of a technical issue, I would need this DEBUG log output to be able to help/fix the issue. There is a short [tutorial/guide 'How to provide DEBUG log' here](https://github.com/marq24/ha-senec-v3/blob/master/docs/HA_DEBUG.md) — please take the time to quickly go through it.
 
 For this integration, you need to add:
 ```
@@ -264,17 +263,8 @@ Please consider [using my personal Tibber invitation link to join Tibber today](
 [buymecoffee]: https://www.buymeacoffee.com/marquardt24
 [buymecoffeebadge]: https://img.shields.io/badge/buy%20me%20a-coffee-blue.svg?style=for-the-badge&logo=buymeacoffee&logoColor=ccc
 
-[buymecoffee2]: https://buymeacoffee.com/marquardt24/membership
-[buymecoffeebadge2]: https://img.shields.io/badge/coffee-subs-blue.svg?style=for-the-badge&logo=buymeacoffee&logoColor=ccc
-
 [paypal]: https://paypal.me/marq24
 [paypalbadge]: https://img.shields.io/badge/paypal-me-blue.svg?style=for-the-badge&logo=paypal&logoColor=ccc
-
-[wero]: https://share.weropay.eu/p/1/c/6O371wjUW5
-[werobadge]: https://img.shields.io/badge/_wero-me_-blue.svg?style=for-the-badge&logo=data:image/svg%2bxml;base64,PHN2ZwogICByb2xlPSJpbWciCiAgIHZpZXdCb3g9IjAgMCA0Mi4wNDY1MDEgNDAuODg2NyIKICAgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIgo+CiAgPGcKICAgICBjbGlwLXBhdGg9InVybCgjY2xpcDApIgogICAgIHRyYW5zZm9ybT0idHJhbnNsYXRlKC01Ny4zODE4KSI+CiAgICA8cGF0aAogICAgICAgZD0ibSA3OC40MDUxLDMwLjM1NzQgYyAwLDAgLTAuMDE4NSwwIC0wLjAyNzgsMCAtNC4zMTg0LDAgLTcuMzQ2MiwtMi41NzY5IC04LjY0NjEsLTUuOTg4NyBIIDk5LjA2OTggQyA5OS4zMDU3LDIzLjA4NDkgOTkuNDI4MywyMS43NzExIDk5LjQyODMsMjAuNDQxIDk5LjQyODMsOS43NTY3MyA5MS43Mzc1LDAuMDEzODc4NyA3OC40MDUxLDAgdiAxMC41MjcgYyA0LjM0MzksMC4wMTE2IDcuMzQxNiwyLjU4MzcgOC42Mjc2LDUuOTg4NyBoIC0yOS4yOTcgYyAtMC4yMzM2LDEuMjgzNyAtMC4zNTM5LDIuNTk3NiAtMC4zNTM5LDMuOTI3NiAwLDEwLjY5MTMgNy43MDAyLDIwLjQ0MzQgMjAuOTk1NSwyMC40NDM0IDAuMDA5MywwIDAuMDE4NSwwIDAuMDI3OCwwIHYgLTEwLjUyNyB6IgogICAgICAgZmlsbD0iI0NDQ0NDQyIvPgogICAgPHBhdGgKICAgICAgIGQ9Im0gNzguMzc3NCw0MC44ODQ0IGMgMC40NTEsMCAwLjg5NTEsLTAuMDEzOSAxLjMzNDYsLTAuMDM0NyAyLjcwMTcsLTAuMTM2NSA1LjE1MzUsLTAuNjgwMSA3LjMzOTMsLTEuNTU2NyAyLjE4NTgsLTAuODc2NyA0LjEwNTcsLTIuMDgxOCA1LjczODcsLTMuNTM5MSAxLjYzMywtMS40NTczIDIuOTgxNSwtMy4xNjQzIDQuMDI3LC01LjA0NDkgMC45NTA2LC0xLjcwOTQgMS42NDQ1LC0zLjU1OTkgMi4wNzk0LC01LjQ5MTMgSCA4Ni42NzIgYyAtMC4yNDk4LDAuNTE1OCAtMC41NDEzLDEuMDA4NSAtMC44NzQ0LDEuNDY4OCAtMC40NTU2LDAuNjI5MSAtMC45ODk5LDEuMjAwNSAtMS41OTYsMS42OTMyIC0wLjYwNiwwLjQ5MjcgLTEuMjg2LDAuOTA5IC0yLjAzNTQsMS4yMzA2IC0wLjc0OTUsMC4zMjE1IC0xLjU2NiwwLjU0ODIgLTIuNDQ5NSwwLjY2MTUgLTAuNDMwMywwLjA1NTUgLTAuODc0NCwwLjA4NzkgLTEuMzM0NywwLjA4NzkgLTIuNzUwMiwwIC00Ljk3NzYsLTEuMDQ3OCAtNi41NjY3LC0yLjY4NzggbCAtNy45NDc2LDcuOTQ3OCBjIDMuNTM2NiwzLjIyOTIgOC40NDI2LDUuMjY0NyAxNC41MTY2LDUuMjY0NyB6IgogICAgICAgZmlsbD0idXJsKCNwYWludDApIgogICAgICAgc3R5bGU9ImZpbGw6dXJsKCNwYWludDApIiAvPgogICAgPHBhdGgKICAgICAgIGQ9Ik0gNzguMzc3NywwIEMgNjcuMTAxNiwwIDU5Ljg1MDIsNy4wMTMzNyA1Ny45MDcyLDE1LjY2OTEgSCA3MC4wOTcgYyAxLjQ1NzIsLTIuOTgxNyA0LjMyNzcsLTUuMTQyMSA4LjI4MDcsLTUuMTQyMSAzLjE1MDMsMCA1LjU5NTIsMS4zNDYyIDcuMTkzNSwzLjM4MTggTCA5My41OTA1LDUuODg5MiBDIDkwLjAwNzYsMi4zMDE1NSA4NC44NTY1LDAuMDAyMzEzMTIgNzguMzc1MywwLjAwMjMxMzEyIFoiCiAgICAgICBmaWxsPSJ1cmwoI3BhaW50MSkiCiAgICAgICBzdHlsZT0iZmlsbDp1cmwoI3BhaW50MSkiIC8+CiAgPC9nPgogIDxkZWZzPgogICAgPGxpbmVhckdyYWRpZW50CiAgICAgICBpZD0icGFpbnQwIgogICAgICAgeDE9IjkyLjc0MzY5OCIKICAgICAgIHkxPSIxOC4wMjYxOTkiCiAgICAgICB4Mj0iNzQuNzU0NTAxIgogICAgICAgeTI9IjQwLjMxMDIiCiAgICAgICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wCiAgICAgICAgIG9mZnNldD0iMC4wMiIKICAgICAgICAgc3RvcC1jb2xvcj0iI0NDQ0NDQyIKICAgICAgICAgc3RvcC1vcGFjaXR5PSIwIi8+CiAgICAgIDxzdG9wCiAgICAgICAgIG9mZnNldD0iMC4zOSIKICAgICAgICAgc3RvcC1jb2xvcj0iI0NDQ0NDQyIKICAgICAgICAgc3RvcC1vcGFjaXR5PSIwLjY2Ii8+CiAgICAgIDxzdG9wCiAgICAgICAgIG9mZnNldD0iMC42OCIKICAgICAgICAgc3RvcC1jb2xvcj0iI0NDQ0NDQyIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxsaW5lYXJHcmFkaWVudAogICAgICAgaWQ9InBhaW50MSIKICAgICAgIHgxPSI2MS4yNzA0MDEiCiAgICAgICB5MT0iMjMuMDE3Nzk5IgogICAgICAgeDI9Ijc5Ljc1NDUwMSIKICAgICAgIHkyPSI0LjUzNDI5OTkiCiAgICAgICBncmFkaWVudFVuaXRzPSJ1c2VyU3BhY2VPblVzZSI+CiAgICAgIDxzdG9wCiAgICAgICAgIG9mZnNldD0iMC4wMiIKICAgICAgICAgc3RvcC1jb2xvcj0iI0NDQ0NDQyIKICAgICAgICAgc3RvcC1vcGFjaXR5PSIwIi8+CiAgICAgIDxzdG9wCiAgICAgICAgIG9mZnNldD0iMC4zOSIKICAgICAgICAgc3RvcC1jb2xvcj0iI0NDQ0NDQyIKICAgICAgICAgc3RvcC1vcGFjaXR5PSIwLjY2Ii8+CiAgICAgIDxzdG9wCiAgICAgICAgIG9mZnNldD0iMC42OCIKICAgICAgICAgc3RvcC1jb2xvcj0iI0NDQ0NDQyIvPgogICAgPC9saW5lYXJHcmFkaWVudD4KICAgIDxjbGlwUGF0aAogICAgICAgaWQ9ImNsaXAwIj4KICAgICAgPHJlY3QKICAgICAgICAgd2lkdGg9IjE3Ny45MSIKICAgICAgICAgaGVpZ2h0PSI0MSIKICAgICAgICAgZmlsbD0iI2ZmZmZmZiIKICAgICAgICAgeD0iMCIKICAgICAgICAgeT0iMCIgLz4KICAgIDwvY2xpcFBhdGg+CiAgPC9kZWZzPgo8L3N2Zz4=
-
-[revolut]: https://revolut.me/marq24
-[revolutbadge]: https://img.shields.io/badge/_revolut-me_-blue.svg?style=for-the-badge&logo=revolut&logoColor=ccc
 
 [hainstall]: https://my.home-assistant.io/redirect/config_flow_start/?domain=evcc_intg
 [hainstallbadge]: https://img.shields.io/badge/dynamic/json?style=for-the-badge&logo=home-assistant&logoColor=ccc&label=usage&suffix=%20installs&cacheSeconds=15600&url=https://analytics.home-assistant.io/custom_integrations.json&query=$.evcc_intg.total

@@ -3,9 +3,10 @@ from typing import Literal
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import STATE_ON, STATE_OFF, Platform
+from homeassistant.const import STATE_ON, STATE_OFF
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SWITCH_ENTITIES, SWITCH_ENTITIES_PER_LOADPOINT, ExtSwitchEntityDescription
 
@@ -35,8 +36,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 description = ExtSwitchEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.json_key}",
-                    translation_key=a_stub.tag.json_key,
+                    key=f"{lp_id_addon}_{a_stub.tag.key}",
+                    translation_key=a_stub.tag.key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=a_stub.device_class,
@@ -56,7 +57,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 class EvccSwitch(EvccBaseEntity, SwitchEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSwitchEntityDescription):
-        super().__init__(entity_type=Platform.SWITCH, coordinator=coordinator, description=description)
+        super().__init__(coordinator=coordinator, description=description)
         self._attr_icon_off = self.entity_description.icon_off
 
     async def async_turn_on(self, **kwargs):
@@ -81,7 +82,7 @@ class EvccSwitch(EvccBaseEntity, SwitchEntity):
             value = self.coordinator.read_tag(self.tag, self.lp_idx)
 
         except KeyError:
-            _LOGGER.info(f"is_on caused KeyError for: {self.tag.json_key}")
+            _LOGGER.info(f"is_on caused KeyError for: {self.tag.key}")
             value = None
         except TypeError:
             return None

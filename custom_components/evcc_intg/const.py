@@ -1,15 +1,6 @@
 from dataclasses import dataclass
 from typing import Final
 
-from custom_components.evcc_intg.pyevcc_ha.const import (
-    JSONKEY_EVOPT_RES_BATTERIES,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
-    JSONKEY_EVOPT_REQ_TIME_SERIES,
-    JSONKEY_EVOPT_REQ_TIME_SERIES_DT,
-)
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
@@ -23,10 +14,10 @@ from homeassistant.const import (
     UnitOfEnergy,
     UnitOfLength,
     UnitOfTime,
-    UnitOfElectricPotential,
-    PERCENTAGE,
-    Platform
+    PERCENTAGE
 )
+
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 
 # Base component constants
 MANUFACTURER: Final = "marq24"
@@ -51,20 +42,12 @@ CONF_INCLUDE_EVCC: Final = "include_evcc"
 CONF_PURGE_ALL: Final = "purge_all_devices"
 CONF_USE_WS= "use_websocket"
 
-EVCC_JSON_KEY_NAME: Final = "evccName"
-EVCC_JSON_ORIGIN_OBJECT = "originObject"
+EVCC_JSON_VEH_NAME: Final = "evccName"
 
 SERVICE_SET_LOADPOINT_PLAN: Final = "set_loadpoint_plan"
 SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
 SERVICE_DEL_LOADPOINT_PLAN: Final = "del_loadpoint_plan"
 SERVICE_DEL_VEHICLE_PLAN: Final = "del_vehicle_plan"
-
-# Map tags to their content keys
-TAG_TO_CONTENT_KEY: Final = {
-    Tag.FORECAST_GRID: FORECAST_CONTENT.GRID.value,
-    Tag.FORECAST_FEEDIN: FORECAST_CONTENT.FEEDIN.value,
-    Tag.FORECAST_PLANNER: FORECAST_CONTENT.PLANNER.value,
-}
 
 @dataclass(frozen=True)
 class EntityDescriptionStub():
@@ -84,7 +67,7 @@ class ExtBinarySensorEntityDescriptionStub(EntityDescriptionStub):
 @dataclass(frozen=True)
 class ExtBinarySensorEntityDescription(BinarySensorEntityDescription):
     tag: Tag = None
-    lp_idx: int | str | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
     icon_off: str | None = None
@@ -97,7 +80,7 @@ class ExtButtonEntityDescriptionStub(EntityDescriptionStub):
 @dataclass(frozen=True)
 class ExtButtonEntityDescription(ButtonEntityDescription):
     tag: Tag = None
-    lp_idx: int | str | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
     payload: str | None = None
@@ -117,7 +100,7 @@ class ExtNumberEntityDescriptionStub(EntityDescriptionStub):
 @dataclass(frozen=True)
 class ExtNumberEntityDescription(NumberEntityDescription):
     tag: Tag = None
-    lp_idx: int | str | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
 
@@ -128,7 +111,7 @@ class ExtSelectEntityDescriptionStub(EntityDescriptionStub):
 @dataclass(frozen=True)
 class ExtSelectEntityDescription(SelectEntityDescription):
     tag: Tag = None
-    lp_idx: int | str | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
 
@@ -147,7 +130,7 @@ class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
 @dataclass(frozen=True)
 class ExtSensorEntityDescription(SensorEntityDescription):
     tag: Tag = None
-    lp_idx: int | str | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
     json_idx: list[str|int] | None = None
@@ -163,35 +146,21 @@ class ExtSwitchEntityDescriptionStub(EntityDescriptionStub):
 @dataclass(frozen=True)
 class ExtSwitchEntityDescription(SwitchEntityDescription):
     tag: Tag = None
-    lp_idx: int | str | None = None
+    lp_idx: int | None = None
     name_addon: str | None = None
 
     icon_off: str | None = None
 
-PLATFORMS: Final = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
+
+PLATFORMS: Final = ["binary_sensor", "button", "number", "select", "sensor", "switch"]
 
 BINARY_ENTITIES = [
     ExtBinarySensorEntityDescription(
         tag=Tag.BATTERYGRIDCHARGEACTIVE,
-        key=Tag.BATTERYGRIDCHARGEACTIVE.json_key,
+        key=Tag.BATTERYGRIDCHARGEACTIVE.key,
         icon="mdi:battery-charging-outline",
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=None
-    ),
-]
-BINARY_ENTITIES_PER_CIRCUIT = [
-    ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.CIRCUITS_DIMMED,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:transmission-tower-off",
-        icon_off="mdi:transmission-tower",
-    ),
-    ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.CIRCUITS_CURTAILED,
-        entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:transmission-tower-off",
-        icon_off="mdi:transmission-tower",
-        entity_registry_enabled_default=False
     ),
 ]
 BINARY_ENTITIES_PER_LOADPOINT = [
@@ -221,21 +190,21 @@ BINARY_ENTITIES_PER_LOADPOINT = [
         icon_off=None
     ),
     ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.LP_VEHICLEDETECTIONACTIVE,
+        tag=Tag.VEHICLEDETECTIONACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:car-search",
         icon_off="mdi:car-search-outline",
         integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.LP_VEHICLECLIMATERACTIVE,
+        tag=Tag.VEHICLECLIMATERACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
-        icon="mdi:fan",
-        icon_off="mdi:fan-off",
+        icon="mdi:snowflake-thermometer",
+        icon_off="mdi:snowflake-off",
         integrated_supported=False
     ),
     ExtBinarySensorEntityDescriptionStub(
-        tag=Tag.LP_VEHICLEWELCOMEACTIVE,
+        tag=Tag.VEHICLEWELCOMEACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:gift-outline",
         icon_off="mdi:gift-off-outline",
@@ -276,7 +245,7 @@ BUTTONS_ENTITIES_PER_LOADPOINT = [
         integrated_supported = False
     ),
     ExtButtonEntityDescriptionStub(
-        tag=Tag.LP_DETECTVEHICLE,
+        tag=Tag.DETECTVEHICLE,
         device_class=None,
         icon="mdi:car-search-outline",
         integrated_supported = False
@@ -294,7 +263,7 @@ BUTTONS_ENTITIES_PER_LOADPOINT = [
 NUMBER_ENTITIES = [
     ExtNumberEntityDescription(
         tag=Tag.RESIDUALPOWER,
-        key=Tag.RESIDUALPOWER.json_key,
+        key=Tag.RESIDUALPOWER.key,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:home-lightning-bolt-outline",
         mode = NumberMode.BOX,
@@ -306,7 +275,7 @@ NUMBER_ENTITIES = [
     ),
     ExtNumberEntityDescription(
         tag=Tag.BATTERYGRIDCHARGELIMIT,
-        key=Tag.BATTERYGRIDCHARGELIMIT.json_key,
+        key=Tag.BATTERYGRIDCHARGELIMIT.key,
         entity_category=EntityCategory.CONFIG,
         icon = "mdi:cash-multiple",
         mode = NumberMode.BOX,
@@ -405,15 +374,8 @@ NUMBER_ENTITIES_PER_LOADPOINT = [
 
 SELECT_ENTITIES = [
     ExtSelectEntityDescription(
-        tag=Tag.BATTERYMODE,
-        key=Tag.BATTERYMODE.json_key,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:battery-sync-outline",
-        options=Tag.BATTERYMODE.options
-    ),
-    ExtSelectEntityDescription(
         tag=Tag.PRIORITYSOC,
-        key=Tag.PRIORITYSOC.json_key,
+        key=Tag.PRIORITYSOC.key,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:home-battery-outline",
         options=Tag.PRIORITYSOC.options
@@ -423,7 +385,7 @@ SELECT_ENTITIES = [
     ),
     ExtSelectEntityDescription(
         tag=Tag.BUFFERSOC,
-        key=Tag.BUFFERSOC.json_key,
+        key=Tag.BUFFERSOC.key,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:home-battery-outline",
         options=Tag.BUFFERSOC.options
@@ -433,7 +395,7 @@ SELECT_ENTITIES = [
     ),
     ExtSelectEntityDescription(
         tag=Tag.BUFFERSTARTSOC,
-        key=Tag.BUFFERSTARTSOC.json_key,
+        key=Tag.BUFFERSTARTSOC.key,
         entity_category=EntityCategory.CONFIG,
         icon="mdi:home-battery-outline",
         options=Tag.BUFFERSTARTSOC.options
@@ -454,7 +416,7 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         icon="mdi:lightning-bolt-outline"
     ),
     ExtSelectEntityDescriptionStub(
-        tag=Tag.LP_VEHICLENAME,
+        tag=Tag.VEHICLENAME,
         #entity_category=EntityCategory.CONFIG,
         icon="mdi:car-outline",
         integrated_supported=False
@@ -490,23 +452,13 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         #unit_of_measurement=PERCENTAGE,
         #device_class= NumberDeviceClass.BATTERY,
         integrated_supported=False
-    ),
-
-    ExtSelectEntityDescriptionStub(
-        tag=Tag.BATTERYBOOSTLIMIT,
-        icon="mdi:battery-plus-outline",
-        # we render the states via translations - so we can render '0 %' as '---'
-        #unit_of_measurement=PERCENTAGE,
-        #device_class= NumberDeviceClass.BATTERY,
-        options=Tag.BATTERYBOOSTLIMIT.options,
-        integrated_supported=False
     )
 ]
 
 SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.GRIDPOWER,
-        key=Tag.GRIDPOWER.json_key,
+        key=Tag.GRIDPOWER.key,
         icon="mdi:transmission-tower",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -515,7 +467,7 @@ SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.GRIDCURRENTS,
-        key=f"{Tag.GRIDCURRENTS.json_key}_0",
+        key=f"{Tag.GRIDCURRENTS.key}_0",
         json_idx=[0],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
@@ -525,7 +477,7 @@ SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.GRIDCURRENTS,
-        key=f"{Tag.GRIDCURRENTS.json_key}_1",
+        key=f"{Tag.GRIDCURRENTS.key}_1",
         json_idx=[1],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
@@ -535,7 +487,7 @@ SENSOR_ENTITIES_GRID_AS_PREFIX = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.GRIDCURRENTS,
-        key=f"{Tag.GRIDCURRENTS.json_key}_2",
+        key=f"{Tag.GRIDCURRENTS.key}_2",
         json_idx=[2],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
@@ -547,7 +499,7 @@ SENSOR_ENTITIES_GRID_AS_PREFIX = [
 SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ExtSensorEntityDescription(
         tag=Tag.GRID,
-        key=Tag.GRIDPOWER.json_key, # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        key=Tag.GRIDPOWER.key, # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
         json_idx=[GRID_CONTENT.POWER.value],
         icon="mdi:transmission-tower",
         state_class=SensorStateClass.MEASUREMENT,
@@ -557,7 +509,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.GRID,
-        key=f"{Tag.GRIDCURRENTS.json_key}_0", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        key=f"{Tag.GRIDCURRENTS.key}_0", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
         json_idx=[GRID_CONTENT.CURRENTS.value, 0],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
@@ -567,7 +519,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.GRID,
-        key=f"{Tag.GRIDCURRENTS.json_key}_1", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        key=f"{Tag.GRIDCURRENTS.key}_1", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
         json_idx=[GRID_CONTENT.CURRENTS.value, 1],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
@@ -577,7 +529,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.GRID,
-        key=f"{Tag.GRIDCURRENTS.json_key}_2", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
+        key=f"{Tag.GRIDCURRENTS.key}_2", # we keep here the KEY from the GRID_AS_PREFIX_SENSORS!
         json_idx=[GRID_CONTENT.CURRENTS.value, 2],
         icon="mdi:current-ac",
         state_class=SensorStateClass.MEASUREMENT,
@@ -589,7 +541,7 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
 SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(
         tag=Tag.BATTERYPOWER,
-        key=Tag.BATTERYPOWER.json_key,
+        key=Tag.BATTERYPOWER.key,
         icon="mdi:battery-charging",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -638,7 +590,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
 
     ExtSensorEntityDescription(
         tag=Tag.BATTERYSOC,
-        key=Tag.BATTERYSOC.json_key,
+        key=Tag.BATTERYSOC.key,
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -692,7 +644,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
 
     ExtSensorEntityDescription(
         tag=Tag.BATTERYCAPACITY,
-        key=Tag.BATTERYCAPACITY.json_key,
+        key=Tag.BATTERYCAPACITY.key,
         icon="mdi:battery",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -817,7 +769,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
 SENSOR_ENTITIES = [
     ExtSensorEntityDescription(
         tag=Tag.AUXPOWER,
-        key=Tag.AUXPOWER.json_key,
+        key=Tag.AUXPOWER.key,
         icon="mdi:home-circle-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -826,20 +778,20 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.BATTERYMODE,
-        key=f"{Tag.BATTERYMODE.json_key}_value",
+        key=f"{Tag.BATTERYMODE.key}_value",
         icon="mdi:state-machine",
         lookup=True
     ),
     ExtSensorEntityDescription(
         tag=Tag.BATTERYMODE,
-        key=Tag.BATTERYMODE.json_key,
+        key=f"{Tag.BATTERYMODE.key}",
         icon="mdi:state-machine",
         entity_registry_enabled_default=False
     ),
 
     ExtSensorEntityDescription(
         tag=Tag.HOMEPOWER,
-        key=Tag.HOMEPOWER.json_key,
+        key=Tag.HOMEPOWER.key,
         icon="mdi:home-lightning-bolt",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -848,7 +800,7 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.PVENERGY,
-        key=Tag.PVENERGY.json_key,
+        key=Tag.PVENERGY.key,
         icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
@@ -901,7 +853,7 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.PVPOWER,
-        key=Tag.PVPOWER.json_key,
+        key=Tag.PVPOWER.key,
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
@@ -954,7 +906,7 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.TARIFFGRID,
-        key=Tag.TARIFFGRID.json_key,
+        key=Tag.TARIFFGRID.key,
         icon="mdi:cash-multiple",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="@@@/kWh",
@@ -963,69 +915,14 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.TARIFFPRICEHOME,
-        key=Tag.TARIFFPRICEHOME.json_key,
+        key=Tag.TARIFFPRICEHOME.key,
         icon="mdi:cash-multiple",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="@@@/kWh",
         device_class=None,
         suggested_display_precision=3
     ),
-    # ---------------------
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFFCO2,
-        key=Tag.TARIFFCO2.json_key,
-        icon="mdi:molecule-co2",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="g/kWh",
-        device_class=None,
-        suggested_display_precision=3
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFFCO2HOME,
-        key=Tag.TARIFFCO2HOME.json_key,
-        icon="mdi:molecule-co2",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="g/kWh",
-        device_class=None,
-        suggested_display_precision=3
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFFCO2LOADPOINTS,
-        key=Tag.TARIFFCO2LOADPOINTS.json_key,
-        icon="mdi:molecule-co2",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="g/kWh",
-        device_class=None,
-        suggested_display_precision=3
-    ),
-    # ---------------------
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFFFEEDIN,
-        key=Tag.TARIFFFEEDIN.json_key,
-        icon="mdi:cash-multiple",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="@@@/kWh",
-        device_class=None,
-        suggested_display_precision=3
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFFPRICELOADPOINTS,
-        key=Tag.TARIFFPRICELOADPOINTS.json_key,
-        icon="mdi:cash-multiple",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="@@@/kWh",
-        device_class=None,
-        suggested_display_precision=3
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFFSOLAR,
-        key=Tag.TARIFFSOLAR.json_key,
-        icon="mdi:solar-power",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        device_class=None,
-        suggested_display_precision=2,
-    ),
+
     ExtSensorEntityDescription(
         tag=Tag.STATTOTALSOLARPERCENTAGE,
         key=Tag.STATTOTALSOLARPERCENTAGE.entity_key,
@@ -1186,8 +1083,8 @@ SENSOR_ENTITIES = [
 
     # the new tarif endpoints... [GRID & SOLAR]
     ExtSensorEntityDescription(
-        tag=Tag.TARIFF_API_GRID,
-        key=Tag.TARIFF_API_GRID.entity_key,
+        tag=Tag.TARIF_GRID,
+        key=Tag.TARIF_GRID.entity_key,
         icon="mdi:cash-multiple",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement="@@@",
@@ -1196,33 +1093,13 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
-        tag=Tag.TARIFF_API_SOLAR,
-        key=Tag.TARIFF_API_SOLAR.entity_key,
+        tag=Tag.TARIF_SOLAR,
+        key=Tag.TARIF_SOLAR.entity_key,
         icon="mdi:solar-power",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
         device_class=None,
         suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFF_API_FEEDIN,
-        key=Tag.TARIFF_API_FEEDIN.entity_key,
-        icon="mdi:cash-multiple",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="@@@",
-        device_class=None,
-        suggested_display_precision=3,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.TARIFF_API_PLANNER,
-        key=Tag.TARIFF_API_PLANNER.entity_key,
-        icon="mdi:cash-multiple",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="@@@",
-        device_class=None,
-        suggested_display_precision=3,
         entity_registry_enabled_default=False
     ),
 
@@ -1250,30 +1127,8 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
-        tag=Tag.FORECAST_FEEDIN,
-        key=Tag.FORECAST_FEEDIN.entity_key,
-        json_idx=[FORECAST_CONTENT.FEEDIN.value],
-        icon="mdi:cash-multiple",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="@@@",
-        device_class=None,
-        suggested_display_precision=3,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.FORECAST_PLANNER,
-        key=Tag.FORECAST_PLANNER.entity_key,
-        json_idx=[FORECAST_CONTENT.PLANNER.value],
-        icon="mdi:cash-multiple",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement="@@@",
-        device_class=None,
-        suggested_display_precision=3,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
         tag=Tag.CHARGING_SESSIONS,
-        key=Tag.CHARGING_SESSIONS.json_key,
+        key=Tag.CHARGING_SESSIONS.key,
         icon="mdi:chart-box-multiple-outline",
         device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1281,7 +1136,7 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.CHARGING_SESSIONS_VEHICLES,
-        key=Tag.CHARGING_SESSIONS_VEHICLES.json_key,
+        key=Tag.CHARGING_SESSIONS_VEHICLES.key,
         icon="mdi:chart-box-outline",
         device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1290,126 +1145,13 @@ SENSOR_ENTITIES = [
     ),
     ExtSensorEntityDescription(
         tag=Tag.CHARGING_SESSIONS_LOADPOINTS,
-        key=Tag.CHARGING_SESSIONS_LOADPOINTS.json_key,
+        key=Tag.CHARGING_SESSIONS_LOADPOINTS.key,
         icon="mdi:chart-box-outline",
         device_class=None,
         state_class=SensorStateClass.MEASUREMENT,
         entity_category=EntityCategory.DIAGNOSTIC,
         entity_registry_enabled_default=False
-    ),
-
-    # OPTIMIZER SENSORS
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_REQUEST_OBJECT,
-        key="evopt_time_series_dt",
-        json_idx=[JSONKEY_EVOPT_REQ_TIME_SERIES, JSONKEY_EVOPT_REQ_TIME_SERIES_DT, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfTime.SECONDS,
-        suggested_unit_of_measurement=UnitOfTime.MINUTES,
-        device_class=SensorDeviceClass.DURATION,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_0_charging_power",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_0_discharging_power",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_0_charged_total",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 0, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_1_charging_power",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_1_discharging_power",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_1_charged_total",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 1, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_2_charging_power",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_2_discharging_power",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.EVOPT_RESULT_OBJECT,
-        key="evopt_battery_2_charged_total",
-        json_idx=[JSONKEY_EVOPT_RES_BATTERIES, 2, JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL, 0],
-        icon="mdi:home-battery-outline",
-        state_class=SensorStateClass.TOTAL,
-        native_unit_of_measurement=UnitOfEnergy.WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2,
-        entity_registry_enabled_default=False
-    ),
+    )
 ]
 SENSOR_ENTITIES_PER_LOADPOINT = [
 
@@ -1447,42 +1189,6 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         device_class=SensorDeviceClass.CURRENT,
         entity_registry_enabled_default=False
     ),
-
-
-    ExtSensorEntityDescriptionStub(
-        tag=Tag.CHARGEVOLTAGES,
-        json_idx=[0],
-        suggested_display_precision=2,
-        icon="mdi:lightning-bolt",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-        device_class=SensorDeviceClass.VOLTAGE,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescriptionStub(
-        tag=Tag.CHARGEVOLTAGES,
-        json_idx=[1],
-        suggested_display_precision=2,
-        icon="mdi:lightning-bolt",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-        device_class=SensorDeviceClass.VOLTAGE,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescriptionStub(
-        tag=Tag.CHARGEVOLTAGES,
-        json_idx=[2],
-        suggested_display_precision=2,
-        icon="mdi:lightning-bolt",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
-        device_class=SensorDeviceClass.VOLTAGE,
-        entity_registry_enabled_default=False
-    ),
-
-
-
-
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGEDURATION,
         icon="mdi:clock-digital",
@@ -1635,15 +1341,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
 
     ExtSensorEntityDescriptionStub(
-        tag=Tag.LP_VEHICLELIMITSOC,
-        icon="mdi:battery-charging",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=PERCENTAGE,
-        device_class=None,
-        suggested_display_precision=0,
-    ),
-    ExtSensorEntityDescriptionStub(
-        tag=Tag.LP_VEHICLEODOMETER,
+        tag=Tag.VEHICLEODOMETER,
         icon="mdi:counter",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
@@ -1653,7 +1351,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
-        tag=Tag.LP_VEHICLERANGE,
+        tag=Tag.VEHICLERANGE,
         icon="mdi:ev-station",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
@@ -1662,7 +1360,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
-        tag=Tag.LP_VEHICLESOC,
+        tag=Tag.VEHICLESOC,
         icon="mdi:car-electric-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
@@ -1672,7 +1370,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
 
     ExtSensorEntityDescriptionStub(
-        tag=Tag.VEHICLEPLANSOC,
+        tag=Tag.VEHICLEPLANSSOC,
         icon="mdi:battery-charging",
         entity_category=EntityCategory.DIAGNOSTIC,
         state_class=SensorStateClass.MEASUREMENT,
@@ -1680,7 +1378,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
         integrated_supported=False
     ),
     ExtSensorEntityDescriptionStub(
-        tag=Tag.VEHICLEPLANTIME,
+        tag=Tag.VEHICLEPLANSTIME,
         icon="mdi:calendar-arrow-right",
         entity_category=EntityCategory.DIAGNOSTIC,
         #state_class=SensorStateClass.MEASUREMENT,
@@ -1828,42 +1526,6 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         entity_registry_enabled_default=True
     ),
 ]
-SENSOR_ENTITIES_PER_CIRCUIT = [
-    ExtSensorEntityDescriptionStub(
-        tag=Tag.CIRCUITS_POWER,
-        icon="mdi:transmission-tower",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfPower.WATT,
-        suggested_display_precision=2,
-        device_class=SensorDeviceClass.POWER,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescriptionStub(
-        tag=Tag.CIRCUITS_CURRENT,
-        icon="mdi:current-ac",
-        state_class=SensorStateClass.MEASUREMENT,
-        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-        suggested_display_precision=2,
-        device_class=SensorDeviceClass.CURRENT,
-        entity_registry_enabled_default=False
-    ),
-    # ExtSensorEntityDescriptionStub(
-    #     tag=Tag.GRID,
-    #     icon="mdi:current-ac",
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-    #     device_class=SensorDeviceClass.CURRENT,
-    #     entity_registry_enabled_default=False
-    # ),
-    # ExtSensorEntityDescriptionStub(
-    #     tag=Tag.GRID,
-    #     icon="mdi:current-ac",
-    #     state_class=SensorStateClass.MEASUREMENT,
-    #     native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
-    #     device_class=SensorDeviceClass.CURRENT,
-    #     entity_registry_enabled_default=False
-    # ),
-]
 
 # SENSOR_SENSORS_PER_VEHICLE = [
 #
@@ -1888,7 +1550,7 @@ SENSOR_ENTITIES_PER_CIRCUIT = [
 SWITCH_ENTITIES = [
     ExtSwitchEntityDescription(
         tag=Tag.BATTERYDISCHARGECONTROL,
-        key=Tag.BATTERYDISCHARGECONTROL.json_key,
+        key=Tag.BATTERYDISCHARGECONTROL.key,
         icon="mdi:battery-off-outline",
         entity_category=EntityCategory.CONFIG,
         device_class=None
