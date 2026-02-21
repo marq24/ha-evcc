@@ -5,7 +5,29 @@ from datetime import datetime, timedelta, timezone
 from typing import Any, Final
 
 import aiohttp
-from aiohttp import ClientConnectorError
+from aiohttp import ClientConnectionError
+from packaging.version import Version
+
+from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    TRANSLATIONS,
+    JSONKEY_LOADPOINTS,
+    JSONKEY_VEHICLES,
+    JSONKEY_PLAN,
+    JSONKEY_PLANS_DEPRECATED,
+    JSONKEY_PLAN_SOC,
+    JSONKEY_PLAN_TIME,
+    JSONKEY_STATISTICS,
+    JSONKEY_STATISTICS_TOTAL,
+    JSONKEY_STATISTICS_THISYEAR,
+    JSONKEY_STATISTICS_365D,
+    JSONKEY_STATISTICS_30D,
+    ADDITIONAL_ENDPOINTS_DATA_TARIFF,
+    ADDITIONAL_ENDPOINTS_DATA_SESSIONS,
+    SESSIONS_KEY_LOADPOINTS,
+    SESSIONS_KEY_VEHICLES, JSONKEY_CIRCUITS
+)
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
 from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
@@ -18,28 +40,6 @@ from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.loader import async_get_integration
 from homeassistant.util import slugify
-from packaging.version import Version
-
-from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
-from custom_components.evcc_intg.pyevcc_ha.const import (
-    TRANSLATIONS,
-    JSONKEY_LOADPOINTS,
-    JSONKEY_VEHICLES,
-    JSONKEY_PLAN,
-    JSONKEY_PLANS,
-    JSONKEY_PLANS_SOC,
-    JSONKEY_PLANS_TIME,
-    JSONKEY_STATISTICS,
-    JSONKEY_STATISTICS_TOTAL,
-    JSONKEY_STATISTICS_THISYEAR,
-    JSONKEY_STATISTICS_365D,
-    JSONKEY_STATISTICS_30D,
-    ADDITIONAL_ENDPOINTS_DATA_TARIFF,
-    ADDITIONAL_ENDPOINTS_DATA_SESSIONS,
-    SESSIONS_KEY_LOADPOINTS,
-    SESSIONS_KEY_VEHICLES
-)
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from .const import (
     NAME,
     NAME_SHORT,
@@ -56,7 +56,8 @@ from .const import (
     CONF_PURGE_ALL,
     CONFIG_VERSION,
     CONFIG_MINOR_VERSION,
-    EVCC_JSON_VEH_NAME,
+    EVCC_JSON_KEY_NAME,
+    EVCC_JSON_ORIGIN_OBJECT
 )
 from .service import EvccService
 
@@ -255,15 +256,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         self.include_evcc_prefix = config_entry.data.get(CONF_INCLUDE_EVCC, False)
 
-        # we want a some sort of unique identifier that can be selected by the user
+        # we want some sort of unique identifier that can be selected by the user
         # during the initial configuration phase
         self._system_id = slugify(config_entry.title)
-
-        self.lang_map = None
-        if lang in TRANSLATIONS:
-            self.lang_map = TRANSLATIONS[lang]
-        else:
-            self.lang_map = TRANSLATIONS["en"]
 
         # config_entry required to be able to launch watchdog in config_entry context
         self._config_entry = config_entry
@@ -272,13 +267,16 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._cost_type = None
         self._currency = "€"
         self._device_info_dict = {}
+        self._circuit = {}
         self._loadpoint = {}
         self._vehicle = {}
         self._version = None
         self._grid_data_as_object = False
         self._battery_data_as_object = False
-
         self._watchdog = None
+
+        # a global store for entities that we must manipulate later on...
+        self.select_entities_dict = {}
 
         # when we use the websocket we need to call the super constructor without update_interval...
         if self.use_ws:
@@ -331,7 +329,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # b) vehicles
         # a) how many loadpoints
         # c) load point configuration (like 1/3 phase options)
-        if self.bridge._data is None or (len(self.bridge._data) == 0 or Tag.VERSION.key not in self.bridge._data or JSONKEY_LOADPOINTS not in self.bridge._data or JSONKEY_VEHICLES not in self.bridge._data):
+        if self.bridge._data is None or (len(self.bridge._data) == 0 or Tag.VERSION.json_key not in self.bridge._data or JSONKEY_LOADPOINTS not in self.bridge._data or JSONKEY_VEHICLES not in self.bridge._data):
             await self.bridge.read_all_data()
 
         initdata = self.bridge._data
@@ -340,8 +338,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.warning("read_evcc_config_on_startup(): could not init evcc_intg - no data available from evcc!")
             return False
 
-        if Tag.VERSION.key in initdata:
-            self._version = initdata[Tag.VERSION.key]
+        if Tag.VERSION.json_key in initdata:
+            self._version = initdata[Tag.VERSION.json_key]
         else:
             self._version = "UNKNOWN"
 
@@ -359,62 +357,79 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "sw_version": self._version
         }
 
+        # init our circuits data... [this is a JSON DICT]
+        if JSONKEY_CIRCUITS in initdata:
+            for a_evcc_circuit_name in initdata[JSONKEY_CIRCUITS]:
+                a_circuit_object = initdata[JSONKEY_CIRCUITS][a_evcc_circuit_name]
+                self._circuit[a_evcc_circuit_name] = {
+                    EVCC_JSON_KEY_NAME: a_evcc_circuit_name,
+                    EVCC_JSON_ORIGIN_OBJECT: a_circuit_object
+                }
+        else:
+            _LOGGER.debug(f"read_evcc_config_on_startup(): NO 'circuits' found [{JSONKEY_CIRCUITS}] in the evcc data: {initdata}")
+
+
+        # init our vehicles data... [this is a JSON DICT]
         if JSONKEY_VEHICLES in initdata:
             for a_evcc_veh_name in initdata[JSONKEY_VEHICLES]:
-                a_veh_object = initdata[JSONKEY_VEHICLES][a_evcc_veh_name]
+                a_vehicle_object = initdata[JSONKEY_VEHICLES][a_evcc_veh_name]
 
                 # we must remove all possible ':' chars (like from 'db:12' - since HA can't handle them
                 # in the translation keys - be careful with this self._vehicle dict keys!
                 # self._vehicle[a_evcc_veh_name.replace(':', '_')] = {
                 self._vehicle[a_evcc_veh_name] = {
-                    EVCC_JSON_VEH_NAME: a_evcc_veh_name,
-                    "name": a_veh_object["title"],
-                    "id": slugify(a_veh_object["title"]),
-                    "capacity": a_veh_object["capacity"] if "capacity" in a_veh_object else None,
-                    "minSoc": a_veh_object["minSoc"] if "minSoc" in a_veh_object else None,
-                    "limitSoc": a_veh_object["limitSoc"] if "limitSoc" in a_veh_object else None
+                    EVCC_JSON_KEY_NAME: a_evcc_veh_name,
+                    EVCC_JSON_ORIGIN_OBJECT: a_vehicle_object,
+                    "name": a_vehicle_object["title"],
+                    "id": slugify(a_vehicle_object["title"]),
+                    "capacity": a_vehicle_object["capacity"] if "capacity" in a_vehicle_object else None,
+                    "minSoc": a_vehicle_object["minSoc"] if "minSoc" in a_vehicle_object else None,
+                    "limitSoc": a_vehicle_object["limitSoc"] if "limitSoc" in a_vehicle_object else None
                 }
         else:
-            _LOGGER.warning(f"NO vehicles found [{JSONKEY_VEHICLES}] in the evcc data: {initdata}")
+            _LOGGER.warning(f"read_evcc_config_on_startup(): NO 'vehicles' found [{JSONKEY_VEHICLES}] in the evcc data: {initdata}")
 
+        # init our loadpoints data... [but this is a LIST in JSON!!!]
         api_index = 1
         if JSONKEY_LOADPOINTS in initdata:
-            for a_loadpoint in initdata[JSONKEY_LOADPOINTS]:
+            for a_loadpoint_object in initdata[JSONKEY_LOADPOINTS]:
                 single_phase_only = False
-                if "chargerSinglePhase" in a_loadpoint:
-                    single_phase_only = a_loadpoint["chargerSinglePhase"]
+                if "chargerSinglePhase" in a_loadpoint_object:
+                    single_phase_only = a_loadpoint_object["chargerSinglePhase"]
 
                 phase_switching_supported = False
-                if "chargerPhases1p3p" in a_loadpoint:
-                    phase_switching_supported = a_loadpoint["chargerPhases1p3p"]
-                elif "chargerPhaseSwitching" in a_loadpoint:
-                    phase_switching_supported = a_loadpoint["chargerPhaseSwitching"]
+                if "chargerPhases1p3p" in a_loadpoint_object:
+                    phase_switching_supported = a_loadpoint_object["chargerPhases1p3p"]
+                elif "chargerPhaseSwitching" in a_loadpoint_object:
+                    phase_switching_supported = a_loadpoint_object["chargerPhaseSwitching"]
 
                 # we need to check if the charger is a heater or not...
                 # effective_limit_soc, vehicle_soc, effective_plan_soc and others
                 # currently only used in sensor.py
                 is_heating = False
-                if "chargerFeatureHeating" in a_loadpoint:
-                    is_heating = a_loadpoint["chargerFeatureHeating"]
+                if "chargerFeatureHeating" in a_loadpoint_object:
+                    is_heating = a_loadpoint_object["chargerFeatureHeating"]
 
                 is_integrated = False
-                if "chargerFeatureIntegratedDevice" in a_loadpoint:
-                    is_integrated = a_loadpoint["chargerFeatureIntegratedDevice"]
+                if "chargerFeatureIntegratedDevice" in a_loadpoint_object:
+                    is_integrated = a_loadpoint_object["chargerFeatureIntegratedDevice"]
 
                 self._loadpoint[f"{api_index}"] = {
-                    "name": a_loadpoint["title"],
-                    "id": slugify(a_loadpoint["title"]),
+                    EVCC_JSON_KEY_NAME: f"{api_index}",
+                    EVCC_JSON_ORIGIN_OBJECT: a_loadpoint_object,
+                    "name": a_loadpoint_object["title"],
+                    "id": slugify(a_loadpoint_object["title"]),
                     "has_phase_auto_option": phase_switching_supported,
                     "only_single_phase": single_phase_only,
                     "is_heating": is_heating,
                     "is_integrated": is_integrated,
-                    "vehicle_key": a_loadpoint["vehicleName"],
-                    "obj": a_loadpoint
+                    "vehicle_key": a_loadpoint_object["vehicleName"]
                 }
 
                 api_index += 1
         else:
-            _LOGGER.warning(f"read_evcc_config_on_startup(): NO loadpoints found [{JSONKEY_LOADPOINTS}] in the evcc data: {initdata}")
+            _LOGGER.warning(f"read_evcc_config_on_startup(): NO 'loadpoints' found [{JSONKEY_LOADPOINTS}] in the evcc data: {initdata}")
+
 
         if "smartCostType" in initdata:
             self._cost_type = initdata["smartCostType"]
@@ -428,11 +443,13 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         _version_info = None
         _version_info_raw = None
-        if Tag.VERSION.key in initdata:
-            _version_info_raw = initdata[Tag.VERSION.key]
+        if Tag.VERSION.json_key in initdata:
+            _version_info_raw = initdata[Tag.VERSION.json_key]
             # we need to check for possible NightlyBuild tags in the Version key
             if " (" in _version_info_raw:
                 _version_info = _version_info_raw.split(" (")[0].strip()
+            elif "-" in _version_info_raw:
+                _version_info = _version_info_raw[:_version_info_raw.index('-')]
             else:
                 _version_info = _version_info_raw
 
@@ -484,17 +501,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     if hass is not None:
                         registry = entity_registry.async_get(hass)
                         if registry is not None:
-                            entity_id = f"sensor.{self._system_id}_{Tag.TARIF_GRID.entity_key}".lower()
-                            a_entity = registry.async_get(entity_id)
-                            if a_entity is not None and a_entity.disabled_by is None:
-                                _LOGGER.info("***** QUERY_TARIF_GRID ********")
-                                request_tariff_keys.append(Tag.TARIF_GRID.key)
-
-                            entity_id = f"sensor.{self._system_id}_{Tag.TARIF_SOLAR.entity_key}".lower()
-                            a_entity = registry.async_get(entity_id)
-                            if a_entity is not None and a_entity.disabled_by is None:
-                                _LOGGER.info("***** QUERY_TARIF_SOLAR ********")
-                                request_tariff_keys.append(Tag.TARIF_SOLAR.key)
+                            for a_tag in [Tag.TARIFF_API_GRID, Tag.TARIFF_API_SOLAR, Tag.TARIFF_API_FEEDIN, Tag.TARIFF_API_PLANNER]:
+                                entity_id = f"sensor.{self._system_id}_{a_tag.entity_key}".lower()
+                                a_entity = registry.async_get(entity_id)
+                                if a_entity is not None and a_entity.disabled_by is None:
+                                    _LOGGER.info(f"***** QUERY_{a_tag.json_key.upper()} ********")
+                                    request_tariff_keys.append(a_tag.json_key)
 
                     if len(request_tariff_keys) > 0:
                         self.bridge.enable_tariff_endpoints(request_tariff_keys)
@@ -540,8 +552,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         except UpdateFailed as exception:
             _LOGGER.warning(f"UpdateFailed: {exception}")
             raise UpdateFailed() from exception
-        except ClientConnectorError as exception:
-            _LOGGER.warning(f"UpdateFailed cause of ClientConnectorError: {exception}")
+        except ClientConnectionError as exception:
+            _LOGGER.warning(f"UpdateFailed cause of ClientConnectionError: {exception}")
             raise UpdateFailed() from exception
         except Exception as other:
             _LOGGER.warning(f"UpdateFailed unexpected: {type(other)} - {other}")
@@ -552,33 +564,37 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if self.data is not None:
             if tag.type == EP_TYPE.LOADPOINTS:
                 ret = self.read_tag_loadpoint(tag=tag, loadpoint_idx=idx)
+
             elif tag.type == EP_TYPE.VEHICLES:
                 ret = self.read_tag_vehicle_int(tag=tag, loadpoint_idx=idx)
-            elif tag.type == EP_TYPE.SITE:
-                if tag.key in self.data:
-                    ret = self.data[tag.key]
 
-                    # checking for possible existing subtypes (so key is just a 'container' for the real value)
-                    # (elsewhere we solve this right now via entity_description.json_idx[0]) -> we must check, if
-                    # this can't be also used here ?!
-                    # if tag.subtype is not None and isinstance(ret, dict):
-                    #    if tag.subtype in ret:
-                    #        ret = ret[tag.subtype]
-                    #    else:
-                    #        ret = None
-                elif tag.key_alias is not None and tag.key_alias in self.data:
-                    ret = self.data[tag.key_alias]
+            # in the case of circuits, the 'idx' is not a int - it is a str and this
+            # str is the key in the circuits dict...
+            elif tag.type == EP_TYPE.CIRCUITS and idx is not None:
+                circuit_data = self.data.get(JSONKEY_CIRCUITS, {}).get(idx, {})
+                ret = circuit_data.get(tag.json_key, None) if tag.json_key in circuit_data else None
+
+            elif tag.type == EP_TYPE.SITE:
+                if tag.json_key in self.data:
+                    ret = self.data[tag.json_key]
+
+                elif tag.json_key_alias is not None and tag.json_key_alias in self.data:
+                    ret = self.data[tag.json_key_alias]
 
                 elif tag.subtype is not None and tag.subtype in self.data:
                     a_obj = self.data[tag.subtype]
                     if isinstance(a_obj, dict) and len(a_obj) > 0:
-                        if tag.key in a_obj:
-                            ret = a_obj[tag.key]
-                        elif tag.key_alias is not None and tag.key_alias in a_obj:
-                            ret = a_obj[tag.key_alias]
+                        if tag.json_key in a_obj:
+                            ret = a_obj[tag.json_key]
+                        elif tag.json_key_alias is not None and tag.json_key_alias in a_obj:
+                            ret = a_obj[tag.json_key_alias]
+
+            elif tag.type == EP_TYPE.EVOPT:
+                ret = self.data.get(EP_TYPE.EVOPT.value, {}).get(tag.json_key, None)
 
             elif tag.type == EP_TYPE.STATISTICS:
                 ret = self.read_tag_statistics(tag=tag)
+
             elif tag.type == EP_TYPE.TARIFF:
                 ret = self.read_tag_tariff(tag=tag)
         # _LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
@@ -586,10 +602,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
     def read_tag_tariff(self, tag: Tag):
         if ADDITIONAL_ENDPOINTS_DATA_TARIFF in self.data:
-            if tag.key in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
-                return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key]
-            elif tag.key_alias is not None and tag.key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
-                return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.key_alias]
+            if tag.json_key in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
+                return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.json_key]
+            elif tag.json_key_alias is not None and tag.json_key_alias in self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
+                return self.data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][tag.json_key_alias]
 
     def read_tag_sessions(self, tag: Tag, additional_key: str = None):
         if ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self.data:
@@ -604,17 +620,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 # vehicles or loadpoints sub-tag ?
                 a_dict = self.data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][tag.subtype]
                 if additional_key is not None and additional_key in a_dict:
-                    return a_dict[additional_key].get(tag.key, None)
+                    return a_dict[additional_key].get(tag.json_key, None)
                 else:
-                    return a_dict.get(tag.key, None)
+                    return a_dict.get(tag.json_key, None)
 
     def read_tag_statistics(self, tag: Tag):
         if JSONKEY_STATISTICS in self.data:
             if tag.subtype in self.data[JSONKEY_STATISTICS]:
-                if tag.key in self.data[JSONKEY_STATISTICS][tag.subtype]:
-                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key]
-                elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_STATISTICS]:
-                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.key_alias]
+                if tag.json_key in self.data[JSONKEY_STATISTICS][tag.subtype]:
+                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.json_key]
+                elif tag.json_key_alias is not None and tag.json_key_alias in self.data[JSONKEY_STATISTICS]:
+                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.json_key_alias]
 
     def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
         if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
@@ -623,10 +639,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             #    _LOGGER.error(f"valB? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]}")
 
             value = None
-            if tag.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
-                value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]
-            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
-                value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key_alias]
+            if tag.json_key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.json_key]
+            elif tag.json_key_alias is not None and tag.json_key_alias in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.json_key_alias]
 
             if value is not None:
                 if tag == Tag.PLANTIME or tag == Tag.EFFECTIVEPLANTIME:
@@ -651,8 +667,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data and loadpoint_idx is not None:
             try:
                 if len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
-                    if Tag.VEHICLENAME.key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
-                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.VEHICLENAME.key]
+                    if Tag.LP_VEHICLENAME.json_key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.LP_VEHICLENAME.json_key]
                         if vehicle_id is not None:
                             if len(vehicle_id) > 0:
                                 return self.read_tag_vehicle_str(tag=tag, vehicle_id=vehicle_id)
@@ -663,7 +679,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                         else:
                             _LOGGER.debug(f"read_tag_vehicle_int: vehicle_id is None for: {loadpoint_idx}")
                     else:
-                        _LOGGER.debug(f"read_tag_vehicle_int: {Tag.VEHICLENAME.key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
+                        _LOGGER.debug(f"read_tag_vehicle_int: {Tag.LP_VEHICLENAME.json_key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
                 else:
                     _LOGGER.debug(f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
 
@@ -673,29 +689,31 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return None
 
     def read_tag_vehicle_str(self, tag: Tag, vehicle_id: str):
-        is_veh_PLANSSOC = tag == Tag.VEHICLEPLANSSOC
-        is_veh_PLANSTIME = tag == Tag.VEHICLEPLANSTIME
+        is_veh_PLANSSOC = tag == Tag.VEHICLEPLANSOC
+        is_veh_PLANSTIME = tag == Tag.VEHICLEPLANTIME
         if is_veh_PLANSSOC or is_veh_PLANSTIME:
             # yes this is really a hack! [at a certain point the API just returned 'plan' and 'plans' have been removed] ?!
             if JSONKEY_PLAN in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN]) > 0:
                 if is_veh_PLANSSOC:
-                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLANS_SOC]
+                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLAN_SOC]
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLANS_TIME])
-            elif JSONKEY_PLANS in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS]) > 0:
+                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN][JSONKEY_PLAN_TIME])
+
+            elif JSONKEY_PLANS_DEPRECATED in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS_DEPRECATED]) > 0:
                 if is_veh_PLANSSOC:
-                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_SOC]
+                    value = self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS_DEPRECATED][0][JSONKEY_PLAN_SOC]
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
-                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS][0][JSONKEY_PLANS_TIME])
+                    return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS_DEPRECATED][0][JSONKEY_PLAN_TIME])
+
             else:
                 return None
         else:
-            if tag.key in self.data[JSONKEY_VEHICLES][vehicle_id]:
-                return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key]
-            elif tag.key_alias is not None and tag.key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]:
-                return self.data[JSONKEY_VEHICLES][vehicle_id][tag.key_alias]
+            if tag.json_key in self.data[JSONKEY_VEHICLES][vehicle_id]:
+                return self.data[JSONKEY_VEHICLES][vehicle_id][tag.json_key]
+            elif tag.json_key_alias is not None and tag.json_key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]:
+                return self.data[JSONKEY_VEHICLES][vehicle_id][tag.json_key_alias]
             else:
                 return "0"
 
@@ -725,20 +743,20 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         result = await self.bridge.write_tag(tag, value, idx_str)
         _LOGGER.debug(f"write result: {result}")
 
-        if tag.key not in result or result[tag.key] is None:
+        if tag.json_key not in result or result[tag.json_key] is None:
             _LOGGER.info(f"could not write value: '{value}' to: {tag} result was: {result}")
         else:
             # IMH0 it's quite tricky to patch the self.data object here... but we try!
             if tag.type == EP_TYPE.SITE:
-                if tag.key in self.data:
-                    self.data[tag.key] = value
+                if tag.json_key in self.data:
+                    self.data[tag.json_key] = value
 
             elif tag.type == EP_TYPE.LOADPOINTS:
                 if idx_str is not None:
                     idx = int(idx_str)
                     if len(self.data[JSONKEY_LOADPOINTS]) > idx - 1:
-                        if tag.key in self.data[JSONKEY_LOADPOINTS][idx - 1]:
-                            self.data[JSONKEY_LOADPOINTS][idx - 1][tag.key] = value
+                        if tag.json_key in self.data[JSONKEY_LOADPOINTS][idx - 1]:
+                            self.data[JSONKEY_LOADPOINTS][idx - 1][tag.json_key] = value
 
             elif tag.type == EP_TYPE.VEHICLES:
                 # TODO ?!
@@ -829,7 +847,7 @@ class EvccBaseEntity(Entity):
     _attr_has_entity_name = True
     _attr_name_addon = None
 
-    def __init__(self, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
+    def __init__(self, entity_type:str, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
         if hasattr(description, "tag"):
             self.tag = description.tag
         else:
@@ -860,7 +878,7 @@ class EvccBaseEntity(Entity):
 
         self.entity_description = description
         self.coordinator = coordinator
-        self.entity_id = f"{DOMAIN}.{self.coordinator.system_id}_{camel_to_snake(description.key)}"
+        self.entity_id = f"{entity_type}.{self.coordinator.system_id}_{camel_to_snake(description.key)}".lower()
 
     def _name_internal(self, device_class_name: str | None, platform_translations: dict[str, Any]) -> str | UndefinedType | None:
         tmp = super()._name_internal(device_class_name, platform_translations)
@@ -879,7 +897,7 @@ class EvccBaseEntity(Entity):
             elif self.tag.subtype == SESSIONS_KEY_VEHICLES:
                 return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
 
-        if self._attr_name_addon is not None:
+        if self.tag.type is not EP_TYPE.CIRCUITS and self._attr_name_addon is not None:
             return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
         else:
             return self.coordinator.device_info_dict
@@ -892,7 +910,7 @@ class EvccBaseEntity(Entity):
     @property
     def unique_id(self):
         """Return a unique ID to use for this entity."""
-        return self.entity_id
+        return f"{DOMAIN}.{self.entity_id.split('.')[1]}".lower()
 
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""
