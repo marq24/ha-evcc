@@ -95,6 +95,14 @@
       "priority": {"name": "Priority"}
     },
     "select": {
+      "batterymode": {
+        "name": "Battery mode",
+        "state": {
+          "normal": "Normal",
+          "hold": "Hold",
+          "charge": "Charge"
+        }
+      },
       "prioritysoc": {
         "name": "Home-Battery: Home has priority",
         "state": {
