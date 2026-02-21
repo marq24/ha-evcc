@@ -108,8 +108,9 @@ class Tag(ApiKey, Enum):
     AUXPOWER = ApiKey(json_key="auxPower", type=EP_TYPE.SITE)
 
     # "batteryMode": unknown|normal|hold|charge
-    # POST /api/batterymode/<mode>: set battery mode (normal/hold/charge)
-    BATTERYMODE = ApiKey(json_key="batteryMode", type=EP_TYPE.SITE, writeable=True, write_key="batterymode", options=["normal", "hold", "charge"])
+    # POST /api/batterymode/<mode>: set battery mode (unknown/normal/hold/charge)
+    # Directly controls the mode of all controllable batteries. evcc behavior like 'price limit' or 'prevent discharge while fast charging' is overruled. External mode resets after 60s. The external system has to call this endpoint regularly.
+    BATTERYMODE = ApiKey(json_key="batteryMode", type=EP_TYPE.SITE, writeable=True, write_key="batterymode", options=["null", "unknown", "normal", "hold", "charge"])
 
     # "battery":[{"power":0,"capacity":12,"soc":81,"controllable":false}], -> we must access this attribute via json_idx
     BATTERY = ApiKey(json_key="battery", type=EP_TYPE.SITE)

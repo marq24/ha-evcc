@@ -96,11 +96,13 @@
     },
     "select": {
       "batterymode": {
-        "name": "Battery mode",
+        "name": "Battery mode (auto-reset after 60 sec)",
         "state": {
-          "normal": "Normal",
-          "hold": "Hold",
-          "charge": "Charge"
+          "null": "delete",
+          "unknown": "unknown",
+          "normal": "normal",
+          "hold": "hold",
+          "charge": "charge"
         }
       },
       "prioritysoc": {

@@ -405,13 +405,6 @@ NUMBER_ENTITIES_PER_LOADPOINT = [
 
 SELECT_ENTITIES = [
     ExtSelectEntityDescription(
-        tag=Tag.BATTERYMODE,
-        key=Tag.BATTERYMODE.json_key,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:battery-sync-outline",
-        options=Tag.BATTERYMODE.options
-    ),
-    ExtSelectEntityDescription(
         tag=Tag.PRIORITYSOC,
         key=Tag.PRIORITYSOC.json_key,
         entity_category=EntityCategory.CONFIG,
@@ -440,7 +433,15 @@ SELECT_ENTITIES = [
         # we render the states via translations - so we can render '0 %' as '---'
         #unit_of_measurement=PERCENTAGE,
         #device_class= NumberDeviceClass.BATTERY,
-    )
+    ),
+    ExtSelectEntityDescription(
+        tag=Tag.BATTERYMODE,
+        key=Tag.BATTERYMODE.json_key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:battery-sync-outline",
+        options=Tag.BATTERYMODE.options,
+        entity_registry_enabled_default=False
+    ),
 ]
 SELECT_ENTITIES_PER_LOADPOINT = [
     ExtSelectEntityDescriptionStub(
