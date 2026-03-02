@@ -35,7 +35,7 @@ from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
 from homeassistant.helpers.entity import Entity, EntityDescription
-from homeassistant.helpers.event import async_track_time_interval
+from homeassistant.helpers.event import async_track_time_interval, async_call_later
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.loader import async_get_integration
@@ -64,7 +64,7 @@ from .service import EvccService
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 SCAN_INTERVAL = timedelta(seconds=10)
-WEBSOCKET_WATCHDOG_INTERVAL: Final = timedelta(seconds=60)
+WEBSOCKET_WATCHDOG_INTERVAL: Final = timedelta(minutes=5, seconds=1)
 
 CONFIG_SCHEMA = config_val.removed(DOMAIN, raise_if_present=False)
 
@@ -267,6 +267,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._cost_type = None
         self._currency = "€"
         self._device_info_dict = {}
+        self._device_info_show_ws_state = False
         self._circuit = {}
         self._loadpoint = {}
         self._vehicle = {}
@@ -289,6 +290,25 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         _LOGGER.debug(f"Event arrived: {evt}")
         return True
 
+    async def call_later_update_device_registry(self, now:Any):
+        _LOGGER.debug(f"call_later_update_device_registry(): called with '{now}'")
+        if self._device_info_show_ws_state:
+            if self.hass is not None:
+                a_device_reg = device_reg.async_get(self.hass)
+                if a_device_reg is not None:
+                    device = a_device_reg.async_get_device(identifiers=self._device_info_dict["identifiers"])
+                    if device:
+                        _LOGGER.info(f"call_later_update_device_registry(): device registry update triggered for device {device.name}")
+                        if self.bridge.ws_connected and self.bridge.ws_check_last_update():
+                            f_model = f"WebSocket connected? ✅"
+                        else:
+                            f_model = f"WebSocket connected? ⛔"
+
+                        a_device_reg.async_update_device(
+                            device.id,
+                            model=f_model
+                        )
+
     async def start_watchdog(self, event=None):
         """Start websocket watchdog."""
         await self._async_watchdog_check()
@@ -297,6 +317,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def stop_watchdog(self):
         if hasattr(self, "_watchdog") and self._watchdog is not None:
             self._watchdog()
+            async_call_later(self.hass, 5, self.call_later_update_device_registry)
 
     async def _async_watchdog_check(self, *_):
         """Reconnect the websocket if it fails."""
@@ -309,15 +330,19 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if not self.bridge.ws_connected:
                 _LOGGER.info(f"Watchdog: websocket connect required")
                 self._config_entry.async_create_background_task(self.hass, self.bridge.connect_ws(), "ws_connection")
+                async_call_later(self.hass, 10, self.call_later_update_device_registry)
             else:
-                if self.bridge.request_tariff_endpoints:
+                _LOGGER.debug(f"Watchdog: websocket is connected")
+                if not self.bridge.ws_check_last_update():
+                    async_call_later(self.hass, 5, self.call_later_update_device_registry)
+
+                if self.bridge.do_ws_update_tariffs():
                     _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'tariffs' updates")
                     await self.bridge.ws_update_tariffs_if_required()
 
-                _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'sessions' updates")
-                await self.bridge.ws_update_sessions_if_required()
-
-                _LOGGER.debug(f"Watchdog: websocket is connected")
+                if self.bridge.do_ws_update_sessions():
+                    _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'sessions' updates")
+                    await self.bridge.ws_update_sessions_if_required()
 
     def clear_data(self):
         _LOGGER.debug(f"clear_data called...")
@@ -354,7 +379,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": self._version,
+            "model": None
         }
 
         # init our circuits data... [this is a JSON DICT]
@@ -900,6 +926,7 @@ class EvccBaseEntity(Entity):
         if self.tag.type is not EP_TYPE.CIRCUITS and self._attr_name_addon is not None:
             return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
         else:
+            self.coordinator._device_info_show_ws_state = True
             return self.coordinator.device_info_dict
 
     @property

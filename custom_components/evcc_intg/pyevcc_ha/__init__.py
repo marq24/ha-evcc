@@ -3,12 +3,12 @@ import logging
 from datetime import datetime, timezone
 from json import JSONDecodeError
 from numbers import Number
+from time import time
 from typing import Callable
 
 import aiohttp
 from aiohttp import ClientResponseError, ClientConnectionError, ClientError
 from dateutil import parser
-from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
@@ -22,6 +22,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_LOADPOINTS
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
+from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -141,6 +142,7 @@ class EvccApiBridge:
             self.web_socket_url = f"ws://{host[7:]}/ws"
 
         self.ws_connected = False
+        self._ws_LAST_UPDATE = -1
         self.coordinator = coordinator
         self._debounced_update_task = None
 
@@ -189,21 +191,36 @@ class EvccApiBridge:
     def clear_data(self):
         self._TARIFF_LAST_UPDATE_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
+        self._ws_LAST_UPDATE = -1
         self._data = {}
+
+    def do_ws_update_tariffs(self):
+        return self.request_tariff_endpoints and self._TARIFF_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour
 
     async def ws_update_tariffs_if_required(self):
         """if we are in websocket mode, then we must (at least once each hour) update the tariff-data - we call
         this method in the watchdog to make sure that we have the latest data available!
         """
-        if self.request_tariff_endpoints and self._TARIFF_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
+        if self.do_ws_update_tariffs():
             await self.read_all_data(request_all=False, request_tariffs=True)
+
+    def do_ws_update_sessions(self):
+        return self._SESSIONS_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour
 
     async def ws_update_sessions_if_required(self):
         """if we are in websocket mode, then we must (at least once each hour) update the sessions-data - we call
         this method in the watchdog to make sure that we have the latest data available!
         """
-        if self._SESSIONS_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour:
+        if self.do_ws_update_sessions():
             await self.read_all_data(request_all=False, request_sessions=True)
+
+    def ws_check_last_update(self) -> bool:
+        if self._ws_LAST_UPDATE + 50 > time():
+            _LOGGER.debug(f"ws_check_last_update(): all good! [last update: {int(time()-self._ws_LAST_UPDATE)} sec ago]")
+            return True
+        else:
+            _LOGGER.info(f"ws_check_last_update(): force reconnect...")
+            return False
 
     async def connect_ws(self):
         try:
@@ -271,7 +288,7 @@ class EvccApiBridge:
                                         else:
                                             if key != "releaseNotes":
                                                 self._data[key] = value
-                                                _LOGGER.info(f"'added {key}' to self._data and assign: {value}")
+                                                _LOGGER.info(f"added '{key}' to self._data and assign: {value}")
 
 
                                 # END of for loop
@@ -279,6 +296,7 @@ class EvccApiBridge:
                                 if self._debounced_update_task is not None:
                                     self._debounced_update_task.cancel()
                                 self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
+                                self._ws_LAST_UPDATE = time()
 
                         except Exception as e:
                             _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
