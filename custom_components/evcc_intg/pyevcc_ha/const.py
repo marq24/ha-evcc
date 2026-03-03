@@ -99,7 +99,8 @@ TRANSLATIONS: Final = {
             "inactive": "Auch nach dem Timeout ist keine PV-Leistung verfügbar"
         },
         "device_name_loadpoint": "Ladepunkt",
-        "device_name_vehicle": "Fahrzeug"
+        "device_name_vehicle": "Fahrzeug",
+        "ws_connected": "WebSocket Verbindung:",
     },
     "en": {
         "batterymode": {
@@ -119,6 +120,7 @@ TRANSLATIONS: Final = {
             "inactive": "No PV power available even after the timeout"
         },
         "device_name_loadpoint": "Loadpoint",
-        "device_name_vehicle": "Vehicle"
+        "device_name_vehicle": "Vehicle",
+        "ws_connected": "WebSocket connection:",
     }
 }

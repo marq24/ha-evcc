@@ -122,14 +122,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
     else:
-        # If Home Assistant is already in a running state, start the watchdog
-        # immediately, else trigger it after Home Assistant has finished starting.
-        if coordinator.use_ws:
-            if hass.state is CoreState.running:
-                await coordinator.start_watchdog()
-            else:
-                hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
-
         # now we can attempt to initialize our coordinator with the data already read...
         if not await coordinator.read_evcc_config_on_startup(hass):
             _LOGGER.warning(f"coordinator.read_evcc_config_on_startup() was not completed successfully - please enable debug-log option in order to find a posiible root cause.")
@@ -148,6 +140,16 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                                      supports_response=SupportsResponse.OPTIONAL)
         hass.services.async_register(DOMAIN, SERVICE_DEL_VEHICLE_PLAN, evcc_services.del_vehicle_plan,
                                      supports_response=SupportsResponse.OPTIONAL)
+
+        # If Home Assistant is already in a running state, start the watchdog
+        # immediately, else trigger it after Home Assistant has finished starting.
+        if coordinator.use_ws:
+            if hass.state is CoreState.running:
+                _LOGGER.debug(f"starting watchdog INSTANTLY")
+                await coordinator.start_watchdog()
+            else:
+                _LOGGER.debug(f"starting watchdog delayed... (when EVENT_HOMEASSISTANT_STARTED is fired)")
+                hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
 
         config_entry.async_on_unload(config_entry.add_update_listener(entry_update_listener))
         # ok we are done...
@@ -235,6 +237,7 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
 
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
+
     def __init__(self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry):
         _LOGGER.debug(f"starting evcc_intg for: data:{config_entry.data}")
         self.name = config_entry.title
@@ -275,6 +278,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self._grid_data_as_object = False
         self._battery_data_as_object = False
         self._watchdog = None
+        self._ws_start_task = None
 
         # a global store for entities that we must manipulate later on...
         self.select_entities_dict = {}
@@ -300,9 +304,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     if device:
                         _LOGGER.info(f"call_later_update_device_registry(): device registry update triggered for device {device.name}")
                         if self.bridge.ws_connected and self.bridge.ws_check_last_update():
-                            f_model = f"WebSocket connected? ✅"
+                            f_model = f"{self.lang_map.get("ws_connected", "WebSocket connected:")} ✅"
                         else:
-                            f_model = f"WebSocket connected? ⛔"
+                            f_model = f"{self.lang_map.get("ws_connected", "WebSocket connected:")} ⛔"
 
                         a_device_reg.async_update_device(
                             device.id,
@@ -312,12 +316,26 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     async def start_watchdog(self, event=None):
         """Start websocket watchdog."""
         await self._async_watchdog_check()
-        self._watchdog = async_track_time_interval(self.hass, self._async_watchdog_check, WEBSOCKET_WATCHDOG_INTERVAL)
+        self._watchdog = async_track_time_interval(
+            self.hass,
+            self._async_watchdog_check,
+            WEBSOCKET_WATCHDOG_INTERVAL,
+        )
 
     def stop_watchdog(self):
         if hasattr(self, "_watchdog") and self._watchdog is not None:
             self._watchdog()
             async_call_later(self.hass, 5, self.call_later_update_device_registry)
+
+    def _check_for_ws_task_and_cancel_if_running(self):
+        if self._ws_start_task is not None and not self._ws_start_task.done():
+            _LOGGER.debug(f"Watchdog: websocket connect task is still running - canceling it...")
+            try:
+                canceled = self._ws_start_task.cancel()
+                _LOGGER.debug(f"Watchdog: websocket connect task was CANCELED? {canceled}")
+            except BaseException as ex:
+                _LOGGER.info(f"Watchdog: websocket connect task cancel failed: {type(ex).__name__} - {ex}")
+            self._ws_start_task = None
 
     async def _async_watchdog_check(self, *_):
         """Reconnect the websocket if it fails."""
@@ -329,20 +347,24 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             if not self.bridge.ws_connected:
                 _LOGGER.info(f"Watchdog: websocket connect required")
-                self._config_entry.async_create_background_task(self.hass, self.bridge.connect_ws(), "ws_connection")
-                async_call_later(self.hass, 10, self.call_later_update_device_registry)
+                self._check_for_ws_task_and_cancel_if_running()
+                self._ws_start_task = self._config_entry.async_create_background_task(self.hass, self.bridge.connect_ws(), "ws_connection")
+                if self._ws_start_task is not None:
+                    _LOGGER.debug(f"Watchdog: task created {self._ws_start_task.get_coro()}")
+                    async_call_later(self.hass, 10, self.call_later_update_device_registry)
             else:
                 _LOGGER.debug(f"Watchdog: websocket is connected")
                 if not self.bridge.ws_check_last_update():
+                    self._check_for_ws_task_and_cancel_if_running()
                     async_call_later(self.hass, 5, self.call_later_update_device_registry)
+                else:
+                    if self.bridge.do_ws_update_tariffs():
+                        _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'tariffs' updates")
+                        await self.bridge.ws_update_tariffs_if_required()
 
-                if self.bridge.do_ws_update_tariffs():
-                    _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'tariffs' updates")
-                    await self.bridge.ws_update_tariffs_if_required()
-
-                if self.bridge.do_ws_update_sessions():
-                    _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'sessions' updates")
-                    await self.bridge.ws_update_sessions_if_required()
+                    if self.bridge.do_ws_update_sessions():
+                        _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'sessions' updates")
+                        await self.bridge.ws_update_sessions_if_required()
 
     def clear_data(self):
         _LOGGER.debug(f"clear_data called...")
@@ -926,7 +948,9 @@ class EvccBaseEntity(Entity):
         if self.tag.type is not EP_TYPE.CIRCUITS and self._attr_name_addon is not None:
             return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
         else:
-            self.coordinator._device_info_show_ws_state = True
+            # only the main/site device information should show the connection status of a
+            # possible existing websocket connection
+            self.coordinator._device_info_show_ws_state = self.coordinator.use_ws
             return self.coordinator.device_info_dict
 
     @property
