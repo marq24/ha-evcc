@@ -43,6 +43,13 @@ Take a look at this sample Dashboard (showing Sensors from one load point):
 
 ![sampledashboard](https://github.com/marq24/ha-evcc/raw/main/sample-dashboard.png)
 
+### Using evcc Custom Card (external repository)
+[@mkshb](https://github.com/mkshb) have created multiple custom cards that can be installed via HACS (or manually) that
+will be a great enhancement for this integration. You can find all the details @ [https://github.com/mkshb/hass-evcc-card](https://github.com/mkshb/hass-evcc-card).
+![sampledashboard2](https://github.com/marq24/ha-evcc/raw/main/sample-dashboard_cards.png)
+Make sure, that you leave a GitHub star also at mkshb's repostitory!
+
+
 ## Installation
 
 ### Before you start — there are two 'tiny' requirements!
