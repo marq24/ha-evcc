@@ -23,7 +23,7 @@ class CustomFriendlyNameEntity(Entity):
         # First let the base implementation calculate state (returns a tuple)
         result = super()._Entity__async_calculate_state()
 
-        if not USE_NEW_FRIENDLY_NAME:
+        if not USE_NEW_FRIENDLY_NAME or self._attr_has_entity_name == False:
             return result
 
         # Check if child class implements _friendly_name_internal
@@ -35,12 +35,24 @@ class CustomFriendlyNameEntity(Entity):
 
         # Only modify if we have a custom name and it differs from cache
         if custom_friendly_name is not None:
-            state, attr, original_name, capability_attr, original_device_class, supported_features = result
+            result_list = list(result)
+            attr = None
+            attr_index = None
 
-            # Patch the ATTR_FRIENDLY_NAME in the attributes dict
-            if attr is not None and attr.get(ATTR_FRIENDLY_NAME, None) != custom_friendly_name:
-                #_LOGGER.debug(f"Patching friendly name for {self.entity_id}: '{attr.get(ATTR_FRIENDLY_NAME)}' -> '{custom_friendly_name}'")
+            for i, item in enumerate(result_list):
+                if isinstance(item, dict) and ATTR_FRIENDLY_NAME in item:
+                    attr = item
+                    attr_index = i
+                    break
+
+            if attr is None:
+                _LOGGER.warning(f"Could not find friendly name attribute in state result for {self.entity_id}")
+                return result
+
+            # Only modify if we found the attr dict and it differs
+            if attr.get(ATTR_FRIENDLY_NAME) != custom_friendly_name:
                 attr[ATTR_FRIENDLY_NAME] = custom_friendly_name
-                return (state, attr, original_name, capability_attr, original_device_class, supported_features)
+                result_list[attr_index] = attr
+                return tuple(result_list)
 
         return result
