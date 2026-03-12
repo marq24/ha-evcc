@@ -76,7 +76,6 @@ class EntityDescriptionStub():
     entity_registry_enabled_default: bool = True
     integrated_supported: bool = True
 
-
 @dataclass(frozen=True)
 class ExtBinarySensorEntityDescriptionStub(EntityDescriptionStub):
     icon_off: str | None = None
@@ -86,9 +85,9 @@ class ExtBinarySensorEntityDescription(BinarySensorEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    is_lp_integrated_device: bool | None = None
 
     icon_off: str | None = None
-
 
 @dataclass(frozen=True)
 class ExtButtonEntityDescriptionStub(EntityDescriptionStub):
@@ -99,6 +98,7 @@ class ExtButtonEntityDescription(ButtonEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    is_lp_integrated_device: bool | None = None
 
     payload: str | None = None
 
@@ -119,7 +119,7 @@ class ExtNumberEntityDescription(NumberEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
-
+    is_lp_integrated_device: bool | None = None
 
 @dataclass(frozen=True)
 class ExtSelectEntityDescriptionStub(EntityDescriptionStub):
@@ -130,7 +130,7 @@ class ExtSelectEntityDescription(SelectEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
-
+    is_lp_integrated_device: bool | None = None
 
 @dataclass(frozen=True)
 class ExtSensorEntityDescriptionStub(EntityDescriptionStub):
@@ -149,12 +149,12 @@ class ExtSensorEntityDescription(SensorEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    is_lp_integrated_device: bool | None = None
 
     json_idx: list[str|int] | None = None
     factor: int | None = None
     lookup: bool | None = None
     ignore_zero: bool | None = None
-
 
 @dataclass(frozen=True)
 class ExtSwitchEntityDescriptionStub(EntityDescriptionStub):
@@ -165,8 +165,10 @@ class ExtSwitchEntityDescription(SwitchEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    is_lp_integrated_device: bool | None = None
 
     icon_off: str | None = None
+
 
 PLATFORMS: Final = [Platform.BINARY_SENSOR, Platform.BUTTON, Platform.NUMBER, Platform.SELECT, Platform.SENSOR, Platform.SWITCH]
 

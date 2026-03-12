@@ -105,6 +105,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
                     entity_category=a_stub.entity_category,
                     entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                    is_lp_integrated_device=lp_is_integrated,
 
                     # the entity type specific values...
                     state_class=a_stub.state_class,

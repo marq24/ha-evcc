@@ -47,6 +47,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     icon=a_stub.icon,
                     entity_category=a_stub.entity_category,
                     entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                    is_lp_integrated_device=lp_is_integrated,
 
                     # the entity type specific values...
                     icon_off=a_stub.icon_off
