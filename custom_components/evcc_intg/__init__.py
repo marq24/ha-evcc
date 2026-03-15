@@ -676,10 +676,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def read_tag_statistics(self, tag: Tag):
         if JSONKEY_STATISTICS in self.data:
             if tag.subtype in self.data[JSONKEY_STATISTICS]:
-                if tag.json_key in self.data[JSONKEY_STATISTICS][tag.subtype]:
-                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.json_key]
-                elif tag.json_key_alias is not None and tag.json_key_alias in self.data[JSONKEY_STATISTICS]:
-                    return self.data[JSONKEY_STATISTICS][tag.subtype][tag.json_key_alias]
+                period_data = self.data[JSONKEY_STATISTICS][tag.subtype]
+                if tag.json_key == "solarKWh":
+                    charged = period_data.get("chargedKWh", 0) or 0
+                    solar_pct = period_data.get("solarPercentage", 0) or 0
+                    return round(float(charged) * float(solar_pct) / 100.0, 4)
+                if tag.json_key in period_data:
+                    return period_data[tag.json_key]
+                elif tag.json_key_alias is not None and tag.json_key_alias in period_data:
+                    return period_data[tag.json_key_alias]
 
     def read_tag_loadpoint(self, tag: Tag, loadpoint_idx: int = None):
         if loadpoint_idx is not None and len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:

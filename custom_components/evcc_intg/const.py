@@ -1167,6 +1167,45 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
+        tag=Tag.STATTOTALSOLARKWH,
+        key=Tag.STATTOTALSOLARKWH.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.STATTHISYEARSOLARKWH,
+        key=Tag.STATTHISYEARSOLARKWH.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.STAT365SOLARKWH,
+        key=Tag.STAT365SOLARKWH.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.STAT30SOLARKWH,
+        key=Tag.STAT30SOLARKWH.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
         tag=Tag.STAT30AVGPRICE,
         key=Tag.STAT30AVGPRICE.entity_key,
         icon="mdi:cash-multiple",

@@ -22,7 +22,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_30D,
     BATTERY_LIST,
     SESSIONS_KEY_VEHICLES,
-    SESSIONS_KEY_LOADPOINTS
+    SESSIONS_KEY_LOADPOINTS,
 )
 
 # from aenum import Enum, extend_enum
@@ -476,6 +476,11 @@ class Tag(ApiKey, Enum):
     CHARGING_SESSIONS_LOADPOINT_COST = ApiKey(entity_key="charging_sessions_loadpoint_cost", json_key="cost", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_ENERGY = ApiKey(entity_key="charging_sessions_loadpoint_chargedenergy", json_key="chargedEnergy", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_DURATION = ApiKey(entity_key="charging_sessions_loadpoint_chargeduration", json_key="chargeDuration", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
+
+    STATTOTALSOLARKWH = ApiKey(entity_key="statTotalSolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+    STATTHISYEARSOLARKWH = ApiKey(entity_key="statThisYearSolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+    STAT365SOLARKWH = ApiKey(entity_key="stat365SolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+    STAT30SOLARKWH = ApiKey(entity_key="stat30SolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
 
     ###################################
     # EV-OPTIMIZATION
