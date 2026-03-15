@@ -420,6 +420,11 @@
       "stat30avgprice": {"name": "Statistics: Last 30 days Ø Price"},
       "stat30avgco2": {"name": "Statistics: Last 30 days Ø CO₂"},
 
+      "stattotalsolarkwh": {"name": "Statistics: Total Solar energy"},
+      "statthisyearsolarkwh": {"name": "Statistics: This year Solar energy"},
+      "stat365solarkwh": {"name": "Statistics: Last 365 days Solar energy"},
+      "stat30solarkwh": {"name": "Statistics: Last 30 days Solar energy"},
+
       "tariff_api_solar": {"name": "Solar Prognoses [Tariff-API]"},
       "tariff_api_grid": {"name": "Grid Tariffs [Tariff-API]"},
       "tariff_api_feedin": {"name": "Feedin Tariffs [Tariff-API]"},

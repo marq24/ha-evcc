@@ -19,7 +19,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_RAW,
     SESSIONS_KEY_TOTAL,
     SESSIONS_KEY_VEHICLES,
-    SESSIONS_KEY_LOADPOINTS
+    SESSIONS_KEY_LOADPOINTS,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
