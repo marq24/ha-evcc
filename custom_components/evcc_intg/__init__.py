@@ -34,10 +34,14 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_THISYEAR,
     JSONKEY_STATISTICS_365D,
     JSONKEY_STATISTICS_30D,
+    JSONKEY_STAT_CHARGED_KWH,
+    JSONKEY_STAT_SOLAR_PERCENTAGE,
+    JSONKEY_STAT_SOLAR_KWH_TEMPLATE,
     ADDITIONAL_ENDPOINTS_DATA_TARIFF,
     ADDITIONAL_ENDPOINTS_DATA_SESSIONS,
     SESSIONS_KEY_LOADPOINTS,
-    SESSIONS_KEY_VEHICLES, JSONKEY_CIRCUITS
+    SESSIONS_KEY_VEHICLES,
+    JSONKEY_CIRCUITS,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
 from .const import (
@@ -677,9 +681,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if JSONKEY_STATISTICS in self.data:
             if tag.subtype in self.data[JSONKEY_STATISTICS]:
                 period_data = self.data[JSONKEY_STATISTICS][tag.subtype]
-                if tag.json_key == "solarKWh":
-                    charged = period_data.get("chargedKWh", 0) or 0
-                    solar_pct = period_data.get("solarPercentage", 0) or 0
+                if tag.json_key == JSONKEY_STAT_SOLAR_KWH_TEMPLATE:
+                    charged = period_data.get(JSONKEY_STAT_CHARGED_KWH, 0) or 0
+                    solar_pct = period_data.get(JSONKEY_STAT_SOLAR_PERCENTAGE, 0) or 0
                     return round(float(charged) * float(solar_pct) / 100.0, 4)
                 if tag.json_key in period_data:
                     return period_data[tag.json_key]

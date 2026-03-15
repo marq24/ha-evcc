@@ -1,15 +1,6 @@
 from dataclasses import dataclass
 from typing import Final
 
-from custom_components.evcc_intg.pyevcc_ha.const import (
-    JSONKEY_EVOPT_RES_BATTERIES,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
-    JSONKEY_EVOPT_REQ_TIME_SERIES,
-    JSONKEY_EVOPT_REQ_TIME_SERIES_DT,
-)
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 from homeassistant.components.binary_sensor import BinarySensorEntityDescription, BinarySensorDeviceClass
 from homeassistant.components.button import ButtonEntityDescription
 from homeassistant.components.number import NumberEntityDescription, NumberMode, NumberDeviceClass
@@ -27,6 +18,16 @@ from homeassistant.const import (
     PERCENTAGE,
     Platform
 )
+
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    JSONKEY_EVOPT_RES_BATTERIES,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
+    JSONKEY_EVOPT_REQ_TIME_SERIES,
+    JSONKEY_EVOPT_REQ_TIME_SERIES_DT,
+)
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
 
 # Base component constants
 MANUFACTURER: Final = "marq24"
@@ -1039,6 +1040,15 @@ SENSOR_ENTITIES = [
         suggested_display_precision=2
     ),
     ExtSensorEntityDescription(
+        tag=Tag.STATTOTALSOLARKWHTEMPLATE,
+        key=Tag.STATTOTALSOLARKWHTEMPLATE.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4
+    ),
+    ExtSensorEntityDescription(
         tag=Tag.STATTOTALCHARGEDKWH,
         key=Tag.STATTOTALCHARGEDKWH.entity_key,
         icon="mdi:lightning-bolt-outline",
@@ -1074,6 +1084,16 @@ SENSOR_ENTITIES = [
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
         suggested_display_precision=2,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.STATTHISYEARSOLARKWHTEMPLATE,
+        key=Tag.STATTHISYEARSOLARKWHTEMPLATE.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4,
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
@@ -1117,6 +1137,16 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
+        tag=Tag.STAT365SOLARKWHTEMPLATE,
+        key=Tag.STAT365SOLARKWHTEMPLATE.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
         tag=Tag.STAT365CHARGEDKWH,
         key=Tag.STAT365CHARGEDKWH.entity_key,
         icon="mdi:lightning-bolt-outline",
@@ -1157,48 +1187,19 @@ SENSOR_ENTITIES = [
         entity_registry_enabled_default=False
     ),
     ExtSensorEntityDescription(
+        tag=Tag.STAT30SOLARKWHTEMPLATE,
+        key=Tag.STAT30SOLARKWHTEMPLATE.entity_key,
+        icon="mdi:solar-power",
+        state_class=SensorStateClass.TOTAL_INCREASING,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=4,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
         tag=Tag.STAT30CHARGEDKWH,
         key=Tag.STAT30CHARGEDKWH.entity_key,
         icon="mdi:lightning-bolt-outline",
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=4,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.STATTOTALSOLARKWH,
-        key=Tag.STATTOTALSOLARKWH.entity_key,
-        icon="mdi:solar-power",
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=4
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.STATTHISYEARSOLARKWH,
-        key=Tag.STATTHISYEARSOLARKWH.entity_key,
-        icon="mdi:solar-power",
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=4,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.STAT365SOLARKWH,
-        key=Tag.STAT365SOLARKWH.entity_key,
-        icon="mdi:solar-power",
-        state_class=SensorStateClass.TOTAL_INCREASING,
-        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
-        device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=4,
-        entity_registry_enabled_default=False
-    ),
-    ExtSensorEntityDescription(
-        tag=Tag.STAT30SOLARKWH,
-        key=Tag.STAT30SOLARKWH.entity_key,
-        icon="mdi:solar-power",
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,

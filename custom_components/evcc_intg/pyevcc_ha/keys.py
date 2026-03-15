@@ -20,6 +20,9 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_STATISTICS_THISYEAR,
     JSONKEY_STATISTICS_365D,
     JSONKEY_STATISTICS_30D,
+    JSONKEY_STAT_CHARGED_KWH,
+    JSONKEY_STAT_SOLAR_KWH_TEMPLATE,
+    JSONKEY_STAT_SOLAR_PERCENTAGE,
     BATTERY_LIST,
     SESSIONS_KEY_VEHICLES,
     SESSIONS_KEY_LOADPOINTS,
@@ -443,23 +446,27 @@ class Tag(ApiKey, Enum):
 
     STATTOTALAVGCO2 = ApiKey(entity_key="statTotalAvgCo2", json_key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
     STATTOTALAVGPRICE = ApiKey(entity_key="statTotalAvgPrice", json_key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
-    STATTOTALCHARGEDKWH = ApiKey(entity_key="statTotalChargedKWh", json_key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
-    STATTOTALSOLARPERCENTAGE = ApiKey(entity_key="statTotalSolarPercentage", json_key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+    STATTOTALCHARGEDKWH = ApiKey(entity_key="statTotalChargedKWh", json_key=JSONKEY_STAT_CHARGED_KWH, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+    STATTOTALSOLARPERCENTAGE = ApiKey(entity_key="statTotalSolarPercentage", json_key=JSONKEY_STAT_SOLAR_PERCENTAGE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
+    STATTOTALSOLARKWHTEMPLATE = ApiKey(entity_key="statTotalSolarKWhTemplate", json_key=JSONKEY_STAT_SOLAR_KWH_TEMPLATE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
 
     STATTHISYEARAVGCO2 = ApiKey(entity_key="statThisYearAvgCo2", json_key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
     STATTHISYEARAVGPRICE = ApiKey(entity_key="statThisYearAvgPrice", json_key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
-    STATTHISYEARCHARGEDKWH = ApiKey(entity_key="statThisYearChargedKWh", json_key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
-    STATTHISYEARSOLARPERCENTAGE = ApiKey(entity_key="statThisYearSolarPercentage", json_key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+    STATTHISYEARCHARGEDKWH = ApiKey(entity_key="statThisYearChargedKWh", json_key=JSONKEY_STAT_CHARGED_KWH, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+    STATTHISYEARSOLARPERCENTAGE = ApiKey(entity_key="statThisYearSolarPercentage", json_key=JSONKEY_STAT_SOLAR_PERCENTAGE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
+    STATTHISYEARSOLARKWHTEMPLATE = ApiKey(entity_key="statThisYearSolarKWhTemplate", json_key=JSONKEY_STAT_SOLAR_KWH_TEMPLATE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
 
     STAT365AVGCO2 = ApiKey(entity_key="stat365AvgCo2", json_key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
     STAT365AVGPRICE = ApiKey(entity_key="stat365AvgPrice", json_key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
-    STAT365CHARGEDKWH = ApiKey(entity_key="stat365ChargedKWh", json_key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
-    STAT365SOLARPERCENTAGE = ApiKey(entity_key="stat365SolarPercentage", json_key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+    STAT365CHARGEDKWH = ApiKey(entity_key="stat365ChargedKWh", json_key=JSONKEY_STAT_CHARGED_KWH, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+    STAT365SOLARPERCENTAGE = ApiKey(entity_key="stat365SolarPercentage", json_key=JSONKEY_STAT_SOLAR_PERCENTAGE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
+    STAT365SOLARKWHTEMPLATE = ApiKey(entity_key="stat365SolarKWhTemplate", json_key=JSONKEY_STAT_SOLAR_KWH_TEMPLATE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
 
     STAT30AVGCO2 = ApiKey(entity_key="stat30AvgCo2", json_key="avgCo2", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
     STAT30AVGPRICE = ApiKey(entity_key="stat30AvgPrice", json_key="avgPrice", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
-    STAT30CHARGEDKWH = ApiKey(entity_key="stat30ChargedKWh", json_key="chargedKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
-    STAT30SOLARPERCENTAGE = ApiKey(entity_key="stat30SolarPercentage", json_key="solarPercentage", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
+    STAT30CHARGEDKWH = ApiKey(entity_key="stat30ChargedKWh", json_key=JSONKEY_STAT_CHARGED_KWH, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
+    STAT30SOLARPERCENTAGE = ApiKey(entity_key="stat30SolarPercentage", json_key=JSONKEY_STAT_SOLAR_PERCENTAGE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
+    STAT30SOLARKWHTEMPLATE = ApiKey(entity_key="stat30SolarKWhTemplate", json_key=JSONKEY_STAT_SOLAR_KWH_TEMPLATE, type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
 
     TARIFF_API_GRID = ApiKey(entity_key="tariff_api_grid", json_key="grid", type=EP_TYPE.TARIFF)
     TARIFF_API_SOLAR = ApiKey(entity_key="tariff_api_solar", json_key="solar", type=EP_TYPE.TARIFF)
@@ -476,11 +483,6 @@ class Tag(ApiKey, Enum):
     CHARGING_SESSIONS_LOADPOINT_COST = ApiKey(entity_key="charging_sessions_loadpoint_cost", json_key="cost", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_ENERGY = ApiKey(entity_key="charging_sessions_loadpoint_chargedenergy", json_key="chargedEnergy", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_DURATION = ApiKey(entity_key="charging_sessions_loadpoint_chargeduration", json_key="chargeDuration", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
-
-    STATTOTALSOLARKWH = ApiKey(entity_key="statTotalSolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_TOTAL)
-    STATTHISYEARSOLARKWH = ApiKey(entity_key="statThisYearSolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_THISYEAR)
-    STAT365SOLARKWH = ApiKey(entity_key="stat365SolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_365D)
-    STAT30SOLARKWH = ApiKey(entity_key="stat30SolarKWh", json_key="solarKWh", type=EP_TYPE.STATISTICS, subtype=JSONKEY_STATISTICS_30D)
 
     ###################################
     # EV-OPTIMIZATION
