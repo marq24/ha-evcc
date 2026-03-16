@@ -23,7 +23,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             if coordinator._currency != "€":
                 description = replace(
                     description,
-                    native_max_value = description.native_max_value * 10
+                    native_max_value = description.native_max_value * 10,
+                    native_min_value = description.native_min_value * 10
                 )
 
         entity = EvccNumber(coordinator, description)
@@ -83,7 +84,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     elif coordinator._currency != "€":
                         description = replace(
                             description,
-                            native_max_value = a_stub.native_max_value * 10
+                            native_max_value = a_stub.native_max_value * 10,
+                            native_min_value = a_stub.native_min_value * 10
                         )
 
                 entity = EvccNumber(coordinator, description)

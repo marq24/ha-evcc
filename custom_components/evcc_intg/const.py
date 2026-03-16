@@ -314,7 +314,7 @@ NUMBER_ENTITIES = [
         icon = "mdi:cash-multiple",
         mode = NumberMode.BOX,
         native_max_value=2.50,
-        native_min_value=-0.05,
+        native_min_value=-0.50,
         native_step=0.005,
         native_unit_of_measurement="@@@/kWh"
     ),
@@ -370,7 +370,7 @@ NUMBER_ENTITIES_PER_LOADPOINT = [
         icon = "mdi:cash-multiple",
         mode = NumberMode.BOX,
         native_max_value=2.50,
-        native_min_value=-0.05,
+        native_min_value=-0.50,
         native_step=0.005,
         native_unit_of_measurement="@@@/kWh",
     ),
