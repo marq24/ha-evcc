@@ -1001,6 +1001,11 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
         if name is None and self.use_device_name:
             return device_name
 
+        # check if there is a user specified entity name (overwritten)
+        if registry_entry := self.registry_entry:
+            if registry_entry.has_entity_name and registry_entry.name is not None:
+                name = registry_entry.name
+
         # we overwrite the default impl here and just return our 'name'
         # return f"{device_name} {name}" if device_name else name
         if device_entry.name_by_user is not None:
