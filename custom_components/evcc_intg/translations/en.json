@@ -315,6 +315,24 @@
       },
       "maxcurrent": {
         "name": "Charging Current Max."
+      },
+      "planstrategycontinuous": {
+        "name": "Charging plan: Optimization",
+        "state": {
+          "continuous": "Continuous",
+          "late": "Most favorable"
+        }
+      },
+      "planstrategyprecondition": {
+        "name": "Charging plan: Late charging",
+        "state": {
+          "0": "No",
+          "15": "15 minutes",
+          "30": "30 minutes",
+          "60": "1 hour",
+          "120": "2 hours",
+          "all": "All"
+        }
       }
     },
     "sensor": {

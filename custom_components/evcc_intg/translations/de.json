@@ -245,7 +245,25 @@
         }
       },
       "mincurrent": {"name": "Min. Ladestrom"},
-      "maxcurrent": {"name": "Max. Ladestrom"}
+      "maxcurrent": {"name": "Max. Ladestrom"},
+      "planstrategycontinuous": {
+        "name": "Ladeplanung: Optimierung",
+        "state": {
+          "continuous": "Kontinuierlich",
+          "late": "Günstigst"
+        }
+      },
+      "planstrategyprecondition": {
+        "name": "Ladeplanung: Spätes Laden",
+        "state": {
+          "0": "Nein",
+          "15": "15 Minuten",
+          "30": "30 Minuten",
+          "60": "1 Stunde",
+          "120": "2 Stunden",
+          "all": "Alles"
+        }
+      }
     },
     "sensor": {
       "chargecurrent": {"name": "Ladestrom"},

@@ -269,6 +269,20 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     async def async_select_option(self, option: str) -> None:
         try:
+            if self.tag == Tag.EFFECTIVEPLANSTRATEGY_CONTINUOUS:
+                continuous = (option == "continuous")
+                precondition_opt = self.coordinator.read_tag(Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION, self.lp_idx)
+                precondition_sec = 604800 if precondition_opt == "all" else int(precondition_opt or 0) * 60
+                await self.coordinator.async_write_plan_strategy(self.lp_idx, continuous, precondition_sec, self)
+                return
+
+            if self.tag == Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION:
+                continuous_opt = self.coordinator.read_tag(Tag.EFFECTIVEPLANSTRATEGY_CONTINUOUS, self.lp_idx)
+                continuous = (continuous_opt == "continuous") if continuous_opt is not None else False
+                precondition_sec = 604800 if option == "all" else int(option) * 60
+                await self.coordinator.async_write_plan_strategy(self.lp_idx, continuous, precondition_sec, self)
+                return
+
             if "null" == str(option):
                 await self.coordinator.async_write_tag(self.tag, None, self.lp_idx, self)
             else:

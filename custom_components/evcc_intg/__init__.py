@@ -696,6 +696,18 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             #    _LOGGER.error(f"valA? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]}")
             #    _LOGGER.error(f"valB? {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.key]}")
 
+            if tag == Tag.EFFECTIVEPLANSTRATEGY_CONTINUOUS or tag == Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION:
+                eps = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1].get("effectivePlanStrategy")
+                if eps is not None:
+                    if tag == Tag.EFFECTIVEPLANSTRATEGY_CONTINUOUS:
+                        return "continuous" if eps.get("continuous", False) else "late"
+                    else:
+                        minutes = (eps.get("precondition") or 0) // 60
+                        if minutes in (0, 15, 30, 60, 120):
+                            return str(minutes)
+                        return "all"
+                return None
+
             value = None
             if tag.json_key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
                 value = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][tag.json_key]
@@ -786,6 +798,22 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             return await self.bridge.write_vehicle_plan(vehicle_id=vehicle_name, soc=None, rfc_date=None, precondition=-1)
         else:
             return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=None, rfc_date=None)
+
+    async def async_write_plan_strategy(self, lp_idx: int, continuous: bool, precondition_seconds: int, entity: Entity = None) -> dict:
+        vehicle_id = self.data[JSONKEY_LOADPOINTS][lp_idx - 1].get(Tag.LP_VEHICLENAME.json_key) if len(self.data[JSONKEY_LOADPOINTS]) >= lp_idx else None
+        result = await self.bridge.write_plan_strategy(str(lp_idx), continuous, precondition_seconds, vehicle_id=vehicle_id)
+        _LOGGER.debug(f"write plan_strategy result: {result}")
+        try:
+            if len(self.data[JSONKEY_LOADPOINTS]) >= lp_idx:
+                self.data[JSONKEY_LOADPOINTS][lp_idx - 1]["effectivePlanStrategy"] = {"continuous": continuous, "precondition": precondition_seconds}
+        except Exception as err:
+            _LOGGER.debug(f"async_write_plan_strategy: {err}")
+        if entity is not None:
+            if self.bridge.ws_connected:
+                entity.async_write_ha_state()
+            else:
+                entity.async_schedule_update_ha_state(force_refresh=True)
+        return result
 
     async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
         result = await self.bridge.press_tag(tag, value, idx)

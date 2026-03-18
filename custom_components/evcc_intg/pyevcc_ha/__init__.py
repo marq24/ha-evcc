@@ -592,6 +592,25 @@ class EvccApiBridge:
         except Exception as err:
             _LOGGER.info(f"could not write to loadpoint: {idx}")
 
+    async def write_plan_strategy(self, lp_idx: str, continuous: bool, precondition: int, vehicle_id: str | None = None) -> dict:
+        try:
+            payload = {"continuous": continuous, "precondition": precondition}
+            if vehicle_id:
+                req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/strategy"
+                _LOGGER.info(f"going to write plan/strategy {payload} to evcc-vehicle{vehicle_id}@{self.host}")
+            else:
+                req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/plan/strategy"
+                _LOGGER.info(f"going to write plan/strategy {payload} to evcc-loadpoint{lp_idx}@{self.host}")
+            _LOGGER.debug(f"POST request: {req}")
+            r_json = await _do_request(method=self.web_session.post(url=req, json=payload, ssl=False))
+            if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+                return r_json
+            else:
+                return {"err": "no response from evcc"}
+        except Exception as err:
+            _LOGGER.error(f"could not write plan strategy: {err}")
+            return {"err": f"could not write plan strategy: {err}"}
+
     async def write_vehicle_plan(self, vehicle_id:str, soc:str, rfc_date:str, precondition: int | None = None):
         if vehicle_id is not None:
             try:
