@@ -245,7 +245,18 @@
         }
       },
       "mincurrent": {"name": "Min. Ladestrom"},
-      "maxcurrent": {"name": "Max. Ladestrom"}
+      "maxcurrent": {"name": "Max. Ladestrom"},
+      "planstrategyprecondition": {
+        "name": "Ladeplanung: Spätes Laden",
+        "state": {
+          "0": "Nein",
+          "900": "15 Minuten",
+          "1800": "30 Minuten",
+          "3600": "1 Stunde",
+          "7200": "2 Stunden",
+          "604800": "Alles"
+        }
+      }
     },
     "sensor": {
       "chargecurrent": {"name": "Ladestrom"},
@@ -382,7 +393,13 @@
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},
-      "batteryboost": {"name": "Schnell aus Hausbatterie laden."}
+      "batteryboost": {"name": "Schnell aus Hausbatterie laden."},
+      "planstrategycontinuous": {"name": "Ladeplanung: Optimierung",
+        "state": {
+          "on": "Kontinuierlich",
+          "off": "Günstigste"
+        }
+      }
     }
   }
 }

@@ -617,9 +617,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         if self.data is not None:
             if tag.type == EP_TYPE.LOADPOINTS:
                 ret = self.read_tag_loadpoint(tag=tag, loadpoint_idx=idx)
+                # quick hack for subtype support
+                if isinstance(ret, dict) and tag.subtype is not None:
+                    ret = ret.get(tag.subtype, ret)
 
             elif tag.type == EP_TYPE.VEHICLES:
                 ret = self.read_tag_vehicle_int(tag=tag, loadpoint_idx=idx)
+                # quick hack for subtype support
+                if isinstance(ret, dict) and tag.subtype is not None:
+                    ret = ret.get(tag.subtype, ret)
 
             # in the case of circuits, the 'idx' is not a int - it is a str and this
             # str is the key in the circuits dict...
@@ -628,6 +634,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 ret = circuit_data.get(tag.json_key, None) if tag.json_key in circuit_data else None
 
             elif tag.type == EP_TYPE.SITE:
+                # this must be done generally... not only for the SITE tag...
                 if tag.json_key in self.data:
                     ret = self.data[tag.json_key]
 
@@ -650,6 +657,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
             elif tag.type == EP_TYPE.TARIFF:
                 ret = self.read_tag_tariff(tag=tag)
+
         # _LOGGER.debug(f"read from {tag.key} [@idx {idx}] -> {ret}")
         return ret
 

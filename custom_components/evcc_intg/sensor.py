@@ -3,13 +3,14 @@ from dataclasses import replace
 from datetime import datetime, timezone
 from numbers import Number
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
 from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
+
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import (
     DOMAIN,
@@ -93,12 +94,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
                 # only when the json_idx has a length of 1 we must patch our key & translation_key
                 patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
+                the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
 
                 description = ExtSensorEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.json_key}" if not patch_keys else f"{lp_id_addon}_{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
-                    translation_key=a_stub.tag.json_key if not patch_keys else f"{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
+                    key=f"{lp_id_addon}_{the_key}" if not patch_keys else f"{lp_id_addon}_{the_key}_{a_stub.json_idx[0]}",
+                    translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
@@ -147,11 +149,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         for a_stub in SENSOR_ENTITIES_PER_VEHICLE:
             # only when the json_idx has a length of 1 we must patch our key & translation_key
             patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
+            the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
 
             description = ExtSensorEntityDescription(
                 tag=a_stub.tag,
-                key=f"{veh_id_addon}_{a_stub.tag.json_key}" if not patch_keys else f"{veh_id_addon}_{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
-                translation_key=a_stub.tag.json_key if not patch_keys else f"{a_stub.tag.json_key}_{a_stub.json_idx[0]}",
+                key=f"{veh_id_addon}_{the_key}" if not patch_keys else f"{veh_id_addon}_{the_key}_{a_stub.json_idx[0]}",
+                translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                 name_addon=veh_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
@@ -199,7 +202,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
                     description = ExtSensorEntityDescription(
                         tag=a_stub.tag,
-                        #key=a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key,
                         key=f"{a_circuit_key}_{the_key}",
                         translation_key=the_key,
                         lp_idx=a_circuit_key,

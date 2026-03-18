@@ -425,6 +425,12 @@ class Tag(ApiKey, Enum):
     # delete plan button
     PLANDELETE = ApiKey(json_key="planDelete", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="plan/energy")
 
+    # "effectivePlanStrategy": {"continuous": bool}, -> charging strategy: "continuous" or "late" (günstigst)
+    EFFECTIVEPLANSTRATEGY_CONTINUOUS = ApiKey(entity_key="planStrategyContinuous", json_key="effectivePlanStrategy", subtype="continuous", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="plan/strategy/continuous")
+
+    # "effectivePlanStrategy": {"precondition": int (seconds)}, -> pre-conditioning duration in minutes (0, 15min=900, 30min=1800, 60min=3600, 120min=7200 or all=604800)
+    EFFECTIVEPLANSTRATEGY_PRECONDITION = ApiKey(entity_key="planStrategyPrecondition", json_key="effectivePlanStrategy", subtype="precondition", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="plan/strategy/precondition", options=["0", "900", "1800", "3600", "7200", "604800"])
+
     ###################################
     # VEHICLE
     ###################################

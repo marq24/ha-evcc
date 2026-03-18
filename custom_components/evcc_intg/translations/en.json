@@ -315,6 +315,17 @@
       },
       "maxcurrent": {
         "name": "Charging Current Max."
+      },
+      "planstrategyprecondition": {
+        "name": "Charging plan: Late charging",
+        "state": {
+          "0": "No",
+          "900": "15 minutes",
+          "1800": "30 minutes",
+          "3600": "1 hour",
+          "7200": "2 hours",
+          "604800": "All"
+        }
       }
     },
     "sensor": {
@@ -466,7 +477,13 @@
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},
-      "batteryboost": {"name": "Boost from Home-Battery"}
+      "batteryboost": {"name": "Boost from Home-Battery"},
+      "planstrategycontinuous": {"name": "Charging plan: Optimization",
+        "state": {
+          "on": "Continuous",
+          "off": "Most favorable"
+        }
+      }
     }
   }
 }

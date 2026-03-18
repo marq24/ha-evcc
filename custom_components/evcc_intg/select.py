@@ -2,13 +2,14 @@ import asyncio
 import logging
 from dataclasses import replace
 
-from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from homeassistant.components.select import SelectEntity
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+
+from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SELECT_ENTITIES, SELECT_ENTITIES_PER_LOADPOINT, ExtSelectEntityDescription
 
@@ -55,11 +56,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in SELECT_ENTITIES_PER_LOADPOINT:
             if (not lp_is_single_phase_only or a_stub.tag != Tag.PHASES) and (not lp_is_integrated or a_stub.integrated_supported):
+                the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
                 description = ExtSelectEntityDescription(
                     tag=a_stub.tag,
                     lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{a_stub.tag.json_key}",
-                    translation_key=a_stub.tag.json_key,
+                    key=f"{lp_id_addon}_{the_key}",
+                    translation_key=the_key,
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
                     icon=a_stub.icon,
                     device_class=a_stub.device_class,
@@ -251,6 +253,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                     value = "null"
                 else:
                     value = 'unknown'
+
             if isinstance(value, (int, float)):
                 value = str(value)
 

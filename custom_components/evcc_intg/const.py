@@ -495,7 +495,6 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         #device_class= NumberDeviceClass.BATTERY,
         integrated_supported=False
     ),
-
     ExtSelectEntityDescriptionStub(
         tag=Tag.BATTERYBOOSTLIMIT,
         icon="mdi:battery-plus-outline",
@@ -504,7 +503,14 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         #device_class= NumberDeviceClass.BATTERY,
         options=Tag.BATTERYBOOSTLIMIT.options,
         integrated_supported=False
-    )
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:car-clock",
+        options=Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION.options,
+        integrated_supported=False
+    ),
 ]
 
 SENSOR_ENTITIES_GRID_AS_PREFIX = [
@@ -1942,7 +1948,14 @@ SWITCH_ENTITIES_PER_LOADPOINT = [
         tag=Tag.BATTERYBOOST,
         icon="mdi:battery-plus",
         icon_off="mdi:battery-plus-outline",
+        device_class=None
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.EFFECTIVEPLANSTRATEGY_CONTINUOUS,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
         device_class=None,
-        entity_registry_enabled_default=True
+        integrated_supported=False
     ),
 ]
