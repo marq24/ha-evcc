@@ -561,7 +561,7 @@ class EvccApiBridge:
                         lp_object = self._data[JSONKEY_LOADPOINTS][array_idx]
                         if "effectivePlanStrategy" in lp_object:
 
-                            # 1st we must create the payload...
+                            # 1'st we must create the payload...
                             payload_json = lp_object["effectivePlanStrategy"].copy()
                             if write_key == "plan/strategy/continuous":
                                 # the switch code will give us "1" or "0"... (and we need to convert it to a boolean)

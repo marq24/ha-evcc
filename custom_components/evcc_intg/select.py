@@ -101,6 +101,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
         if self.tag == Tag.LP_VEHICLENAME:
 
             has_pf_data = hasattr(self.platform, "platform_data")
+            has_cp_trans = hasattr(self.platform.platform_data, "component_translations") if has_pf_data else hasattr(self.platform, "component_translations")
             has_pf_trans = hasattr(self.platform.platform_data, "platform_translations") if has_pf_data else hasattr(self.platform, "platform_translations")
             has_pf_default_lang_trans = hasattr(self.platform.platform_data, "default_language_platform_translations") if has_pf_data else hasattr(self.platform, "default_language_platform_translations")
 
@@ -111,12 +112,16 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 if has_pf_data:
                     if has_pf_trans:
                         self.platform.platform_data.platform_translations[a_trans_key] = a_value
+                    if has_cp_trans:
+                        self.platform.platform_data.component_translations[a_trans_key] = a_value
                     if has_pf_default_lang_trans:
                         self.platform.platform_data.default_language_platform_translations[a_trans_key] = a_value
                 else:
                     # old HA compatible version...
                     if has_pf_trans:
                         self.platform.platform_translations[a_trans_key] = a_value
+                    if has_cp_trans:
+                        self.platform.component_translations[a_trans_key] = a_value
                     if has_pf_default_lang_trans:
                         self.platform.default_language_platform_translations[a_trans_key] = a_value
 
