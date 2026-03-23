@@ -96,25 +96,28 @@ def calculate_session_sums(sessions_resp, json_resp: dict):
                     charge_duration = 0
             else:
                 charge_duration = a_session_entry.get("chargeDuration", 0)
-                if charge_duration is None or not isinstance(charge_duration, Number):
+                if charge_duration is None:
+                    charge_duration = 0
+                elif not isinstance(charge_duration, Number):
                     charge_duration = 0
                     # de-noisify logs since None is a valid value for 'charge_duration' and we don't want to spam the logs with this
-                    if not isinstance(charge_duration, Number):
-                        _LOGGER.info(f"calculate_session_sums(): invalid 'charge_duration' in session entry: {a_session_entry}")
+                    _LOGGER.info(f"calculate_session_sums(): invalid 'charge_duration' in session entry: {a_session_entry}")
 
             charged_energy = a_session_entry.get("chargedEnergy", 0)
-            if charged_energy is None or not isinstance(charged_energy, Number):
+            if charged_energy is None:
                 charged_energy = 0
+            elif not isinstance(charged_energy, Number):
                 # de-noisify logs since None is a valid value for 'charged_energy' and we don't want to spam the logs with this
-                if not isinstance(charged_energy, Number):
-                    _LOGGER.info(f"calculate_session_sums(): invalid 'charged_energy' in session entry: {a_session_entry}")
+                charged_energy = 0
+                _LOGGER.info(f"calculate_session_sums(): invalid 'charged_energy' in session entry: {a_session_entry}")
 
             cost = a_session_entry.get("price", 0)
-            if cost is None or not isinstance(cost, Number):
+            if cost is None:
                 cost = 0
+            elif not isinstance(cost, Number):
                 # de-noisify logs since None is a valid value for 'cost' and we don't want to spam the logs with this
-                if not isinstance(cost, Number):
-                    _LOGGER.info(f"calculate_session_sums(): invalid 'costs' in session entry: {a_session_entry}")
+                cost = 0
+                _LOGGER.info(f"calculate_session_sums(): invalid 'costs' in session entry: {a_session_entry}")
 
             _add_to_sums(vehicle_sums, a_vehicle, charge_duration, charged_energy, cost)
             _add_to_sums(loadpoint_sums, a_loadpoint, charge_duration, charged_energy, cost)
@@ -232,8 +235,9 @@ class EvccApiBridge:
         try:
             async with self.web_session.ws_connect(self.web_socket_url) as ws:
                 self.ws_connected = True
-                self._ws_LAST_UPDATE = time()  # Set grace period so watchdog doesn't immediately kill connection
+                self._ws_LAST_UPDATE = time()  # Set a grace period so the watchdog doesn't immediately kill connection
                 _LOGGER.info(f"connected to websocket: {self.web_socket_url}")
+
                 async for msg in ws:
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         try:
@@ -244,7 +248,6 @@ class EvccApiBridge:
                         except:
                             _LOGGER.info(f"could not read initial data from evcc@{self.host} - ignoring")
                             self._data = {}
-
                         try:
                             ws_data = msg.json()
                             if self._data is None:
@@ -299,18 +302,12 @@ class EvccApiBridge:
 
                                 # END of for loop
                                 # _LOGGER.debug(f"key: {key} value: {value}")
-                                if self._debounced_update_task is not None:
-                                    self._debounced_update_task.cancel()
-                                self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
-                                self._ws_LAST_UPDATE = time()
+                                self._ws_update_data_debounced()
 
                         except Exception as e:
                             _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
                             # Ensure we still update the coordinator even if processing failed
-                            if self._debounced_update_task is not None:
-                                self._debounced_update_task.cancel()
-                            self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
-                            self._ws_LAST_UPDATE = time()
+                            self._ws_update_data_debounced()
 
                     elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
                         _LOGGER.debug(f"received: {msg}")
@@ -327,15 +324,21 @@ class EvccApiBridge:
 
         self.ws_connected = False
 
+    def _ws_update_data_debounced(self):
+        if self._debounced_update_task is not None:
+            self._debounced_update_task.cancel()
+        self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
+        self._ws_LAST_UPDATE = time()
+
     async def _debounce_coordinator_update(self):
         try:
             await asyncio.sleep(0.3)
             if self.coordinator is not None:
                 self.coordinator.async_set_updated_data(self._data)
         except asyncio.CancelledError:
-            _LOGGER.debug("DEBOUNCE: task was cancelled (normal during reconnect)")
+            _LOGGER.debug("_debounce_coordinator_update(): task was cancelled (normal during reconnect)")
         except Exception as e:
-            _LOGGER.error(f"DEBOUNCE ERROR: {type(e).__name__}: {e}", exc_info=True)
+            _LOGGER.warning(f"_debounce_coordinator_update(): ERROR: {type(e).__name__}: {e}", exc_info=True)
 
     async def read_all_data(self, request_all:bool=True, request_tariffs:bool=False, request_sessions:bool=False) -> dict:
         if request_all:
