@@ -368,7 +368,8 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
 
                 elif self.tag == Tag.FORECAST_SOLAR and FORECAST_CONTENT.SOLAR.value in data:
                     a_object = data[FORECAST_CONTENT.SOLAR.value]
-                    if "timeseries" in a_object:
+                    # Fix (masked) exception when a_object is None
+                    if a_object is not None and "timeseries" in a_object:
                         a_copy_object = a_object.copy()
                         a_array = a_copy_object["timeseries"]
                         if a_array is not None and "ts" in a_array[0]:
