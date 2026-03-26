@@ -336,9 +336,10 @@ class EvccApiBridge:
             if self.coordinator is not None:
                 self.coordinator.async_set_updated_data(self._data)
         except asyncio.CancelledError:
-            _LOGGER.debug("_debounce_coordinator_update(): task was cancelled (normal during reconnect)")
+            #_LOGGER.debug("_debounce_coordinator_update(): task was cancelled (normal during reconnect)")
+            pass
         except Exception as e:
-            _LOGGER.warning(f"_debounce_coordinator_update(): ERROR: {type(e).__name__}: {e}", exc_info=True)
+            _LOGGER.info(f"_debounce_coordinator_update(): ERROR: {type(e).__name__}: {e}", exc_info=True)
 
     async def read_all_data(self, request_all:bool=True, request_tariffs:bool=False, request_sessions:bool=False) -> dict:
         if request_all:
