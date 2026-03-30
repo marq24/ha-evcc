@@ -8,7 +8,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST
+from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST, BATTERY_LIST
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SELECT_ENTITIES, SELECT_ENTITIES_PER_LOADPOINT, ExtSelectEntityDescription
@@ -188,14 +188,14 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 # we need to adjust the 'Support vehicle charging' (BUFFERSTARTSOC) options
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSTARTSOC]
                 # we must reset the DEFAULT OPTIONS for BUFFERSTARTSOC!
-                select.options = Tag.BUFFERSTARTSOC.options.copy()
+                select.options = BATTERY_LIST[1:]+BATTERY_LIST[0:1] #Tag.BUFFERSTARTSOC.options.copy()
                 if option in select.options:
                     select.options = select.options[select.options.index(option):]
 
                 # we need to adjust the 'Home has priority' (PRIORITYSOC) options
                 select = self.coordinator.select_entities_dict[Tag.PRIORITYSOC]
                 # we must reset the DEFAULT OPTIONS for PRIORITYSOC!
-                select.options = Tag.PRIORITYSOC.options.copy()
+                select.options = BATTERY_LIST #Tag.PRIORITYSOC.options.copy()
                 if int(option) > 0 and option in select.options:
                     select.options = select.options[:select.options.index(option)+1]
 
@@ -205,7 +205,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 # we need to adjust the 'Vehicle first' (BUFFERSOC) options
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSOC]
                 # we must reset the DEFAULT OPTIONS for BUFFERSOC!
-                select.options = Tag.BUFFERSOC.opions.copy()
+                select.options = BATTERY_LIST[1:] #Tag.BUFFERSOC.opions.copy()
                 if option in select.options:
                     select.options = select.options[select.options.index(option):]
 
@@ -215,7 +215,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 low_option = self.coordinator.select_entities_dict[Tag.PRIORITYSOC].current_option
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSOC]
                 # we must reset the DEFAULT OPTIONS for BUFFERSOC!
-                select.options = Tag.BUFFERSOC.opions.copy()
+                select.options = BATTERY_LIST[1:] #Tag.BUFFERSOC.opions.copy()
                 if int(option) > 0 and option in select.options:
                     select.options = select.options[:select.options.index(option)+1]
                 if low_option in select.options:
