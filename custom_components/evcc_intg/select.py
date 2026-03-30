@@ -95,6 +95,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
 class EvccSelect(EvccBaseEntity, SelectEntity):
     def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSelectEntityDescription):
+        self._last_tag_check_value = None
         super().__init__(entity_type=Platform.SELECT, coordinator=coordinator, description=description)
 
     async def add_to_platform_finish(self) -> None:
@@ -138,13 +139,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     def check_tag_after_init(self, is_last: bool = False):
         try:
-            if self.tag == Tag.MAXCURRENT:
-                self._check_min_options(self.current_option)
-            elif self.tag == Tag.MINCURRENT:
-                self._check_max_options(self.current_option)
-            elif self.tag in SOCS_TAG_LIST:
-                self._check_socs(self.current_option)
-
+            self._check_tags(self.current_option)
             if is_last:
                 if self.hass is not None:
                     self.async_schedule_update_ha_state(force_refresh=True)
@@ -152,6 +147,17 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                     _LOGGER.info("check_tag_after_init(): SELECT Skipping async_schedule_update_ha_state, since hass object is None?!")
         except BaseException as err:
             _LOGGER.debug(f"check_tag_after_init(): SELECT Error in check_tag_after_init for '{self.tag}' {self.entity_id} {type(err)} {err}")
+
+    def _check_tags(self, value: str):
+        if value != self._last_tag_check_value:
+            _LOGGER.debug(f"_check_tags(): SELECT value changed for '{self.tag}' from '{self._last_tag_check_value}' to '{value}'")
+            if self.tag == Tag.MAXCURRENT:
+                self._check_min_options(value)
+            elif self.tag == Tag.MINCURRENT:
+                self._check_max_options(value)
+            elif self.tag in SOCS_TAG_LIST:
+                self._check_socs(value)
+            self._last_tag_check_value = value
 
     def _check_min_options(self, new_max_option: str):
         try:
@@ -182,30 +188,28 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
     def _check_socs(self, option: str):
         try:
             #_LOGGER.warning(f"SOC CHECK caused by: {self.tag}")
-
             # is 'Vehicle first' (BUFFERSOC)
             if self.tag == Tag.BUFFERSOC:
                 # we need to adjust the 'Support vehicle charging' (BUFFERSTARTSOC) options
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSTARTSOC]
                 # we must reset the DEFAULT OPTIONS for BUFFERSTARTSOC!
-                select.options = BATTERY_LIST[1:]+BATTERY_LIST[0:1] #Tag.BUFFERSTARTSOC.options.copy()
+                select.options = list(BATTERY_LIST[1:]+BATTERY_LIST[0:1]) #Tag.BUFFERSTARTSOC.options.copy()
                 if option in select.options:
                     select.options = select.options[select.options.index(option):]
 
                 # we need to adjust the 'Home has priority' (PRIORITYSOC) options
                 select = self.coordinator.select_entities_dict[Tag.PRIORITYSOC]
                 # we must reset the DEFAULT OPTIONS for PRIORITYSOC!
-                select.options = BATTERY_LIST #Tag.PRIORITYSOC.options.copy()
+                select.options = list(BATTERY_LIST) #Tag.PRIORITYSOC.options.copy()
                 if int(option) > 0 and option in select.options:
                     select.options = select.options[:select.options.index(option)+1]
-
 
             # is 'Home has priority' (PRIORITYSOC)
             elif self.tag == Tag.PRIORITYSOC:
                 # we need to adjust the 'Vehicle first' (BUFFERSOC) options
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSOC]
                 # we must reset the DEFAULT OPTIONS for BUFFERSOC!
-                select.options = BATTERY_LIST[1:] #Tag.BUFFERSOC.opions.copy()
+                select.options = list(BATTERY_LIST[1:]) #Tag.BUFFERSOC.opions.copy()
                 if option in select.options:
                     select.options = select.options[select.options.index(option):]
 
@@ -215,7 +219,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 low_option = self.coordinator.select_entities_dict[Tag.PRIORITYSOC].current_option
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSOC]
                 # we must reset the DEFAULT OPTIONS for BUFFERSOC!
-                select.options = BATTERY_LIST[1:] #Tag.BUFFERSOC.opions.copy()
+                select.options = list(BATTERY_LIST[1:]) #Tag.BUFFERSOC.opions.copy()
                 if int(option) > 0 and option in select.options:
                     select.options = select.options[:select.options.index(option)+1]
                 if low_option in select.options:
@@ -267,6 +271,9 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             if isinstance(value, (int, float)):
                 value = str(value)
 
+            # update selects...
+            self._check_tags(value)
+
             #if self.tag == Tag.LP_VEHICLENAME and isinstance(value, str):
             #    # when we read from the API a value like 'db:12' we MUST convert it
             #    # to our local format 'db_12' ... since HA can't handle the ':'
@@ -295,14 +302,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 await self.coordinator.async_write_tag(self.tag, option, self.lp_idx, self)
 
             #_LOGGER.info(f"{self.tag} CHANGED to '{option}'")
-            if self.tag == Tag.MAXCURRENT:
-                self._check_min_options(option)
-
-            elif self.tag == Tag.MINCURRENT:
-                self._check_max_options(option)
-
-            elif self.tag in SOCS_TAG_LIST:
-                self._check_socs(option)
+            self._check_tags(option)
 
         except ValueError:
             return "unavailable"
