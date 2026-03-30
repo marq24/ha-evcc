@@ -187,41 +187,46 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
             if self.tag == Tag.BUFFERSOC:
                 # we need to adjust the 'Support vehicle charging' (BUFFERSTARTSOC) options
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSTARTSOC]
-                if option in Tag.BUFFERSTARTSOC.options:
-                    select.options = Tag.BUFFERSTARTSOC.options[Tag.BUFFERSTARTSOC.options.index(option):]
-                else:
-                    select.options = Tag.BUFFERSTARTSOC.options
+                # we must reset the DEFAULT OPTIONS for BUFFERSTARTSOC!
+                select.options = Tag.BUFFERSTARTSOC.options.copy()
+                if option in select.options:
+                    select.options = select.options[select.options.index(option):]
 
                 # we need to adjust the 'Home has priority' (PRIORITYSOC) options
                 select = self.coordinator.select_entities_dict[Tag.PRIORITYSOC]
-                if int(option) > 0 and option in Tag.PRIORITYSOC.options:
-                    select.options = Tag.PRIORITYSOC.options[:Tag.PRIORITYSOC.options.index(option)+1]
-                else:
-                    select.options = Tag.PRIORITYSOC.options
+                # we must reset the DEFAULT OPTIONS for PRIORITYSOC!
+                select.options = Tag.PRIORITYSOC.options.copy()
+                if int(option) > 0 and option in select.options:
+                    select.options = select.options[:select.options.index(option)+1]
+
 
             # is 'Home has priority' (PRIORITYSOC)
             elif self.tag == Tag.PRIORITYSOC:
                 # we need to adjust the 'Vehicle first' (BUFFERSOC) options
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSOC]
-                if option in Tag.BUFFERSOC.options:
-                    select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(option):]
-                else:
-                    select.options = Tag.BUFFERSOC.options
+                # we must reset the DEFAULT OPTIONS for BUFFERSOC!
+                select.options = Tag.BUFFERSOC.opions.copy()
+                if option in select.options:
+                    select.options = select.options[select.options.index(option):]
 
             # is 'Support vehicle charging' (BUFFERSTARTSOC)
             elif self.tag == Tag.BUFFERSTARTSOC:
                 # we need to adjust the 'Vehicle first' (BUFFERSOC) options
                 low_option = self.coordinator.select_entities_dict[Tag.PRIORITYSOC].current_option
                 select = self.coordinator.select_entities_dict[Tag.BUFFERSOC]
-                if int(option) > 0 and option in Tag.BUFFERSOC.options and low_option in Tag.BUFFERSOC.options:
-                    select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):Tag.BUFFERSOC.options.index(option)+1]
-                elif int(option) > 0 and option in Tag.BUFFERSOC.options:
-                    select.options = Tag.BUFFERSOC.options[:Tag.BUFFERSOC.options.index(option)+1]
-                else:
-                    if low_option in Tag.BUFFERSOC.options:
-                        select.options = Tag.BUFFERSOC.options[Tag.BUFFERSOC.options.index(low_option):]
-                    else:
-                        select.options = Tag.BUFFERSOC.options
+                # we must reset the DEFAULT OPTIONS for BUFFERSOC!
+                select.options = Tag.BUFFERSOC.opions.copy()
+                if int(option) > 0 and option in select.options:
+                    select.options = select.options[:select.options.index(option)+1]
+                if low_option in select.options:
+                    select.options = select.options[select.options.index(low_option):]
+
+                # if int(option) > 0 and option in select.options and low_option in select.options:
+                #     select.options = select.options[select.options.index(low_option):select.options.index(option)+1]
+                # elif int(option) > 0 and option in select.options:
+                #     select.options = select.options[:select.options.index(option)+1]
+                # elif low_option in select.options:
+                #     select.options = select.options[select.options.index(low_option):]
 
         except BaseException as err:
             _LOGGER.debug(f"SELECT Error _check_socs for '{option}' {self.entity_id} {self.tag} {err}")
