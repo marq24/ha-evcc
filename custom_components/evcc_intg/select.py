@@ -150,7 +150,8 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     def _check_tags(self, value: str):
         if value != self._last_tag_check_value:
-            _LOGGER.debug(f"_check_tags(): SELECT value changed for '{self.tag}' from '{self._last_tag_check_value}' to '{value}'")
+            if self._last_tag_check_value is not None:
+                _LOGGER.debug(f"_check_tags(): SELECT value changed for '{self.tag}' from '{self._last_tag_check_value}' to '{value}'")
             if self.tag == Tag.MAXCURRENT:
                 self._check_min_options(value)
             elif self.tag == Tag.MINCURRENT:
