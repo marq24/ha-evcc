@@ -363,13 +363,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     self._check_for_ws_task_and_cancel_if_running()
                     async_call_later(self.hass, 5, self.call_later_update_device_registry)
                 else:
-                    if self.bridge.do_ws_update_tariffs():
-                        _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'tariffs' updates")
-                        await self.bridge.ws_update_tariffs_if_required()
-
-                    if self.bridge.do_ws_update_sessions():
-                        _LOGGER.debug(f"Watchdog: websocket is connected - check for optional required 'sessions' updates")
-                        await self.bridge.ws_update_sessions_if_required()
+                    pass
+                    # move any time related checks directly into the websocket handler... (so we check with
+                    # every new data arrival, of some additional senso data should be requested)...
 
     def clear_data(self):
         _LOGGER.debug(f"clear_data called...")

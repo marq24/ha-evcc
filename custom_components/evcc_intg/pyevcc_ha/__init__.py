@@ -154,6 +154,7 @@ class EvccApiBridge:
         self._ws_LAST_UPDATE = -1
         self.coordinator = coordinator
         self._debounced_update_task = None
+        self._debounced_additional_data_update_task = None
 
         self.host = host
         self.web_session = web_session
@@ -163,7 +164,7 @@ class EvccApiBridge:
         else:
             self.lang_map = TRANSLATIONS["en"]
 
-        self._TARIFF_LAST_UPDATE_HOUR = -1
+        self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
         self._data = {}
 
@@ -189,7 +190,7 @@ class EvccApiBridge:
         _LOGGER.debug(f"is_evcc_available(): '{self.host}' is AVAILABLE")
 
     def enable_tariff_endpoints(self, keys: list):
-        self._TARIFF_LAST_UPDATE_HOUR = -1
+        self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self.request_tariff_endpoints = True
         self.request_tariff_keys = keys
         _LOGGER.debug(f"enabled tariff endpoints with keys: {keys}")
@@ -198,30 +199,10 @@ class EvccApiBridge:
         return len(self._data)
 
     def clear_data(self):
-        self._TARIFF_LAST_UPDATE_HOUR = -1
+        self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
         self._ws_LAST_UPDATE = -1
         self._data = {}
-
-    def do_ws_update_tariffs(self):
-        return self.request_tariff_endpoints and self._TARIFF_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour
-
-    async def ws_update_tariffs_if_required(self):
-        """if we are in websocket mode, then we must (at least once each hour) update the tariff-data - we call
-        this method in the watchdog to make sure that we have the latest data available!
-        """
-        if self.do_ws_update_tariffs():
-            await self.read_all_data(request_all=False, request_tariffs=True)
-
-    def do_ws_update_sessions(self):
-        return self._SESSIONS_LAST_UPDATE_HOUR != datetime.now(timezone.utc).hour
-
-    async def ws_update_sessions_if_required(self):
-        """if we are in websocket mode, then we must (at least once each hour) update the sessions-data - we call
-        this method in the watchdog to make sure that we have the latest data available!
-        """
-        if self.do_ws_update_sessions():
-            await self.read_all_data(request_all=False, request_sessions=True)
 
     def ws_check_last_update(self) -> bool:
         if self._ws_LAST_UPDATE + 50 > time():
@@ -242,7 +223,7 @@ class EvccApiBridge:
                     if msg.type == aiohttp.WSMsgType.TEXT:
                         try:
                             if self._data is None or len(self._data) == 0:
-                                self._TARIFF_LAST_UPDATE_HOUR = -1
+                                self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
                                 self._SESSIONS_LAST_UPDATE_HOUR = -1
                                 await self.read_all_data()
                         except:
@@ -309,6 +290,9 @@ class EvccApiBridge:
                             # Ensure we still update the coordinator even if processing failed
                             self._ws_update_data_debounced()
 
+                        # launch a task to update the session & tariff data (if needed)
+                        self._ws_start_async_additional_data_update_task_if_needed()
+
                     elif msg.type in (aiohttp.WSMsgType.CLOSED, aiohttp.WSMsgType.ERROR):
                         _LOGGER.debug(f"received: {msg}")
                         break
@@ -324,22 +308,34 @@ class EvccApiBridge:
 
         self.ws_connected = False
 
+    def _ws_start_async_additional_data_update_task_if_needed(self):
+        if self._debounced_additional_data_update_task is None or self._debounced_additional_data_update_task.done():
+            async def _task():
+                await self.read_all_data(request_all=False, request_tariffs=True, request_sessions=True)
+                if self.coordinator is not None and self._data_coordinator_update_needed:
+                    self._ws_update_data_debounced()
+            self._debounced_additional_data_update_task = asyncio.create_task(_task())
+        else:
+            # if the task is already running, we don't need to do anything...'
+            pass
+
     def _ws_update_data_debounced(self):
         if self._debounced_update_task is not None:
             self._debounced_update_task.cancel()
-        self._debounced_update_task = asyncio.create_task(self._debounce_coordinator_update())
-        self._ws_LAST_UPDATE = time()
 
-    async def _debounce_coordinator_update(self):
-        try:
-            await asyncio.sleep(0.3)
-            if self.coordinator is not None:
-                self.coordinator.async_set_updated_data(self._data)
-        except asyncio.CancelledError:
-            #_LOGGER.debug("_debounce_coordinator_update(): task was cancelled (normal during reconnect)")
-            pass
-        except Exception as e:
-            _LOGGER.info(f"_debounce_coordinator_update(): ERROR: {type(e).__name__}: {e}", exc_info=True)
+        async def _task():
+            try:
+                await asyncio.sleep(0.3)
+                if self.coordinator is not None:
+                    self.coordinator.async_set_updated_data(self._data)
+            except asyncio.CancelledError:
+                #_LOGGER.debug("_ws_update_data_debounced:task(): task was cancelled (normal during reconnect)")
+                pass
+            except Exception as e:
+                _LOGGER.info(f"_ws_update_data_debounced:task(): ERROR: {type(e).__name__}: {e}", exc_info=True)
+
+        self._debounced_update_task = asyncio.create_task(_task())
+        self._ws_LAST_UPDATE = time()
 
     async def read_all_data(self, request_all:bool=True, request_tariffs:bool=False, request_sessions:bool=False) -> dict:
         if request_all:
@@ -355,24 +351,28 @@ class EvccApiBridge:
                 self._data = {}
             json_resp = self._data
 
+        self._data_coordinator_update_needed = False
         current_hour = datetime.now(timezone.utc).hour
+        current_quarter_hour = datetime.now(timezone.utc).minute//15
         if request_all or request_tariffs:
             if self.request_tariff_endpoints:
-                _LOGGER.debug(f"going to request tariff data from evcc@{self.host}")
                 # we only update the tariff data once per hour...
-                if self._TARIFF_LAST_UPDATE_HOUR != current_hour:
+                if self._TARIFF_LAST_UPDATE_QUARTER_HOUR != current_quarter_hour:
+                    _LOGGER.debug(f"going to request tariff data from evcc@{self.host}")
                     json_resp = await self.read_tariff_data(json_resp)
-                    self._TARIFF_LAST_UPDATE_HOUR = current_hour
+                    self._data_coordinator_update_needed = True
+                    self._TARIFF_LAST_UPDATE_QUARTER_HOUR = current_quarter_hour
                 else:
                     # we must copy the previous existing data to the new json_resp!
                     if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
 
         if request_all or request_sessions:
-            _LOGGER.debug(f"going to request sessions data from evcc@{self.host}")
-            # we only update the sessions data once per hour...
+            # we only update the session's data once per hour...
             if self._SESSIONS_LAST_UPDATE_HOUR != current_hour:
+                _LOGGER.debug(f"going to request sessions data from evcc@{self.host}")
                 json_resp = await self.read_sessions_data(json_resp)
+                self._data_coordinator_update_needed = True
                 self._SESSIONS_LAST_UPDATE_HOUR = current_hour
             else:
                 # we must copy the previous existing data to the new json_resp!

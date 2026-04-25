@@ -16,21 +16,6 @@ from .const import DOMAIN, SELECT_ENTITIES, SELECT_ENTITIES_PER_LOADPOINT, ExtSe
 _LOGGER = logging.getLogger(__name__)
 SOCS_TAG_LIST = [Tag.PRIORITYSOC, Tag.BUFFERSOC, Tag.BUFFERSTARTSOC]
 
-async def check_min_max_after_init(coordinator: EvccDataUpdateCoordinator = None):
-    _LOGGER.debug("check_min_max_after_init(): SELECT scheduled min_max check")
-    try:
-        await asyncio.sleep(15)
-        if coordinator.select_entities_dict is not None:
-            size = len(coordinator.select_entities_dict)
-            count = 1
-            for a_entity in coordinator.select_entities_dict.values():
-                a_entity.check_tag_after_init(size == count)
-                count += 1
-
-            _LOGGER.debug("check_min_max_after_init(): SELECT init is COMPLETED")
-    except BaseException as err:
-        _LOGGER.warning(f"check_min_max_after_init(): SELECT Error in check_min_max: {type(err)} {err}")
-
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_entity_cb: AddEntitiesCallback):
     _LOGGER.debug("SELECT async_setup_entry")
@@ -90,7 +75,23 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entities.append(entity)
 
     add_entity_cb(entities)
-    asyncio.create_task(check_min_max_after_init(coordinator))
+
+    async def _check_min_max_after_init():
+        _LOGGER.debug("check_min_max_after_init(): SELECT scheduled min_max check")
+        try:
+            await asyncio.sleep(15)
+            if coordinator.select_entities_dict is not None:
+                size = len(coordinator.select_entities_dict)
+                count = 1
+                for a_entity in coordinator.select_entities_dict.values():
+                    a_entity.check_tag_after_init(size == count)
+                    count += 1
+
+                _LOGGER.debug("check_min_max_after_init(): SELECT init is COMPLETED")
+        except BaseException as err:
+            _LOGGER.warning(f"check_min_max_after_init(): SELECT Error in check_min_max: {type(err).__name__} {err}")
+
+    asyncio.create_task(_check_min_max_after_init())
 
 
 class EvccSelect(EvccBaseEntity, SelectEntity):
@@ -146,7 +147,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 else:
                     _LOGGER.info("check_tag_after_init(): SELECT Skipping async_schedule_update_ha_state, since hass object is None?!")
         except BaseException as err:
-            _LOGGER.debug(f"check_tag_after_init(): SELECT Error in check_tag_after_init for '{self.tag}' {self.entity_id} {type(err)} {err}")
+            _LOGGER.debug(f"check_tag_after_init(): SELECT Error in check_tag_after_init for '{self.tag}' {self.entity_id} {type(err).__name__} {err}")
 
     def _check_tags(self, value: str):
         if value != self._last_tag_check_value:
