@@ -152,6 +152,7 @@ class EvccApiBridge:
 
         self.ws_connected = False
         self._ws_LAST_UPDATE = -1
+        self._ws_LAST_NEW_DATA_NOTIFY = 0
         self.coordinator = coordinator
         self._debounced_update_task = None
         self._debounced_additional_data_update_task = None
@@ -202,6 +203,7 @@ class EvccApiBridge:
         self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
         self._ws_LAST_UPDATE = -1
+        self._ws_LAST_NEW_DATA_NOTIFY = -1
         self._data = {}
 
     def ws_check_last_update(self) -> bool:
@@ -325,9 +327,17 @@ class EvccApiBridge:
 
         async def _task():
             try:
-                await asyncio.sleep(0.3)
+                await asyncio.sleep(0.2)
                 if self.coordinator is not None:
-                    self.coordinator.async_set_updated_data(self._data)
+                    current_time = time()
+                    # only update every second...
+                    if current_time - self._ws_LAST_NEW_DATA_NOTIFY >= 1:
+                        self._ws_LAST_NEW_DATA_NOTIFY = current_time
+                        self.coordinator.async_set_updated_data(self._data)
+                    else:
+                        #_LOGGER.debug("_ws_update_data_debounced:task(): update was skipped due 1 sec update interval...")
+                        pass
+
             except asyncio.CancelledError:
                 #_LOGGER.debug("_ws_update_data_debounced:task(): task was cancelled (normal during reconnect)")
                 pass

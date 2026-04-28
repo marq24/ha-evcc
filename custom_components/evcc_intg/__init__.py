@@ -12,6 +12,7 @@ from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
 from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval, async_call_later
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
@@ -184,6 +185,24 @@ async def entry_update_listener(hass: HomeAssistant, config_entry: ConfigEntry) 
     """Update the configuration of the host entity."""
     _LOGGER.debug(f"entry_update_listener() called for entry: {config_entry.entry_id}")
     await hass.config_entries.async_reload(config_entry.entry_id)
+
+
+async def async_remove_config_entry_device(hass: HomeAssistant, config_entry: ConfigEntry, device_entry: DeviceEntry) -> bool:
+    coordinator = hass.data[DOMAIN][config_entry.entry_id]
+    # Only handle devices belonging to this integration/config entry
+    if config_entry.entry_id not in device_entry.config_entries:
+        return False
+
+    if not any(identifier[0] == DOMAIN for identifier in device_entry.identifiers):
+        return False
+
+    # Do not allow removing the main evcc device manually.
+    main_device_id = slugify(f"did_{config_entry.data.get(CONF_HOST)}")
+    if (DOMAIN, main_device_id) in device_entry.identifiers:
+        return False
+
+    # Allow removing dynamic child devices like vehicles/loadpoints.
+    return coordinator is not None
 
 
 @staticmethod
@@ -905,11 +924,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return self._battery_data_as_object
 
 class EvccBaseEntity(CustomFriendlyNameEntity):
-    _attr_should_poll = False
     _attr_has_entity_name = True
     _attr_name_addon = None
 
     def __init__(self, entity_type:str, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
+        super().__init__(coordinator, description)
         if hasattr(description, "tag"):
             self.tag = description.tag
         else:
@@ -980,14 +999,7 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
     async def async_added_to_hass(self):
         """Connect to dispatcher listening for entity data notifications."""
         self.async_on_remove(self.coordinator.async_add_listener(self.async_write_ha_state))
-
-    async def async_update(self):
-        """Update entity."""
-        await self.coordinator.async_request_refresh()
-
-    @property
-    def should_poll(self) -> bool:
-        return False
+        await super().async_added_to_hass()
 
     def _friendly_name_internal(self) -> str | None:
         """Return the friendly name.

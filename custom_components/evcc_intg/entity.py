@@ -2,7 +2,7 @@ import logging
 
 from awesomeversion import AwesomeVersion
 from homeassistant.const import ATTR_FRIENDLY_NAME, __version__ as HA_VERSION
-from homeassistant.helpers.entity import Entity
+from homeassistant.helpers.update_coordinator import CoordinatorEntity
 
 USE_NEW_FRIENDLY_NAME = AwesomeVersion(HA_VERSION) >= AwesomeVersion("2026.2.0")
 
@@ -10,7 +10,7 @@ _LOGGER = logging.getLogger(__name__)
 #_LOGGER.debug(f"HA Version: {HA_VERSION}, USE_NEW_FRIENDLY_NAME: {USE_NEW_FRIENDLY_NAME}")
 
 
-class CustomFriendlyNameEntity(Entity):
+class CustomFriendlyNameEntity(CoordinatorEntity):
 
     def __init__(self, *args, **kwargs):
         """Initialize and check if method exists."""
