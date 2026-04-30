@@ -83,25 +83,15 @@ def calculate_session_sums(sessions_resp, json_resp: dict):
             if a_vehicle is None or len(a_vehicle) == 0 or a_loadpoint is None or len(a_loadpoint) == 0:
                 _LOGGER.info(f"calculate_session_sums(): missing a key in session entry: {a_session_entry}")
 
-            created = a_session_entry.get("created", None)
-            finished = a_session_entry.get("finished", None)
-            if created is not None and finished is not None:
-                try:
-                    delta = parser.isoparse(finished) - parser.isoparse(created)
-                    charge_duration = delta.total_seconds()
-                    #_LOGGER.debug(f"calculate_session_sums(): {a_session_entry["id"]} {charge_duration}")
-
-                except BaseException as exception:
-                    _LOGGER.info(f"calculate_session_sums(): invalid 'created' or 'finished' in session entry: {a_session_entry} caused: {type(exception).__name__} details: {exception}")
+            charge_duration_in_nano_seconds = a_session_entry.get("chargeDuration", 0)
+            if charge_duration_in_nano_seconds is None or not isinstance(charge_duration_in_nano_seconds, Number):
+                charge_duration = _get_charge_duration_from_create_finish(a_session_entry)
+                if charge_duration is None:
+                    _LOGGER.info(f"calculate_session_sums(): could not calucalte charge_duration based on created/finished data for {a_session_entry}")
                     charge_duration = 0
             else:
-                charge_duration = a_session_entry.get("chargeDuration", 0)
-                if charge_duration is None:
-                    charge_duration = 0
-                elif not isinstance(charge_duration, Number):
-                    charge_duration = 0
-                    # de-noisify logs since None is a valid value for 'charge_duration' and we don't want to spam the logs with this
-                    _LOGGER.info(f"calculate_session_sums(): invalid 'charge_duration' in session entry: {a_session_entry}")
+                # we need to convert nanoseconds to seconds!
+                charge_duration = charge_duration_in_nano_seconds / 1000000000
 
             charged_energy = a_session_entry.get("chargedEnergy", 0)
             if charged_energy is None:
@@ -127,6 +117,25 @@ def calculate_session_sums(sessions_resp, json_resp: dict):
 
     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_VEHICLES] = vehicle_sums
     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_LOADPOINTS] = loadpoint_sums
+
+@staticmethod
+def _get_charge_duration_from_create_finish(a_session_entry: dict):
+    created = a_session_entry.get("created", None)
+    finished = a_session_entry.get("finished", None)
+    if created is not None and finished is not None:
+        try:
+            start_date = parser.isoparse(created)
+            end_date = parser.isoparse(finished)
+            if end_date > start_date:
+                delta = end_date - start_date
+                return delta.total_seconds()
+            else:
+                _LOGGER.info(f"calculate_session_sums(): {a_session_entry['id']} invalid date range: {a_session_entry}")
+
+        except BaseException as exception:
+            _LOGGER.info(f"calculate_session_sums(): invalid 'created' or 'finished' in session entry: {a_session_entry} caused: {type(exception).__name__} details: {exception}")
+
+    return None
 
 @staticmethod
 def _add_to_sums(a_sums_dict: dict, key: str, val_charge_duration, val_charged_energy, val_cost):
