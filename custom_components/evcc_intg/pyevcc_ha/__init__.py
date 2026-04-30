@@ -84,10 +84,11 @@ def calculate_session_sums(sessions_resp, json_resp: dict):
                 _LOGGER.info(f"calculate_session_sums(): missing a key in session entry: {a_session_entry}")
 
             charge_duration_in_nano_seconds = a_session_entry.get("chargeDuration", 0)
-            if charge_duration_in_nano_seconds is None or not isinstance(charge_duration_in_nano_seconds, Number):
+            if (charge_duration_in_nano_seconds is None or
+                    not isinstance(charge_duration_in_nano_seconds, Number) or
+                    charge_duration_in_nano_seconds < 0):
                 charge_duration = _get_charge_duration_from_create_finish(a_session_entry)
                 if charge_duration is None:
-                    _LOGGER.info(f"calculate_session_sums(): could not calucalte charge_duration based on created/finished data for {a_session_entry}")
                     charge_duration = 0
             else:
                 # we need to convert nanoseconds to seconds!
