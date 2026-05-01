@@ -1,14 +1,15 @@
 import logging
 from typing import Any
 
+import aiohttp
 import voluptuous as vol
+from homeassistant import config_entries
+from homeassistant.config_entries import ConfigFlowResult, SOURCE_RECONFIGURE
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, ATTR_SW_VERSION, CONF_NAME, CONF_PASSWORD
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
-from homeassistant import config_entries
-from homeassistant.config_entries import ConfigFlowResult, SOURCE_RECONFIGURE
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, ATTR_SW_VERSION, CONF_NAME
-from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from .const import (
     DOMAIN,
     CONF_INCLUDE_EVCC,
@@ -45,6 +46,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         entry_data = self._get_reconfigure_entry().data
         self._default_name = entry_data.get(CONF_NAME, DEFAULT_NAME)
         self._default_host = entry_data.get(CONF_HOST, DEFAULT_HOST)
+        self._default_password = entry_data.get(CONF_PASSWORD, None)
         self._default_scan_interval = entry_data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         self._default_use_ws = entry_data.get(CONF_USE_WS, DEFAULT_USE_WS)
         self._default_include_evcc = entry_data.get(CONF_INCLUDE_EVCC, DEFAULT_INCLUDE_EVCC)
@@ -67,11 +69,22 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             while user_input[CONF_HOST].endswith(("/", " ")):
                 user_input[CONF_HOST] = user_input[CONF_HOST][:-1]
 
-            valid = await self._test_host(host=user_input[CONF_HOST])
-            if valid:
+            valid_server, valid_pwd = await self._test_host_and_optional_pwd(host=user_input[CONF_HOST], adm_pwd=user_input.get(CONF_PASSWORD, None))
+            if valid_server and valid_pwd:
+                # check, if another config does not already exist
+                self._abort_if_unique_id_configured()
+
                 user_input[ATTR_SW_VERSION] = self._version
                 user_input[CONF_SCAN_INTERVAL] = max(5, user_input[CONF_SCAN_INTERVAL])
-                self._abort_if_unique_id_configured()
+
+                # make sure that we have either a stipped pwd (with len > 0) in our config or NONE
+                if user_input.get(CONF_PASSWORD, None) is not None:
+                    user_input[CONF_PASSWORD] = user_input.get(CONF_PASSWORD, "").strip()
+                    if len(user_input[CONF_PASSWORD]) == 0:
+                        user_input.pop(CONF_PASSWORD)
+                else:
+                    user_input.pop(CONF_PASSWORD)
+
                 if self.source == SOURCE_RECONFIGURE:
                     # when the hostname has changed, the device_entries must be purged (since they will include
                     # the hostname)
@@ -81,11 +94,15 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
             else:
-                self._errors[CONF_HOST] = "auth"
+                if not valid_server:
+                    self._errors[CONF_HOST] = "auth"
+                else:
+                    self._errors[CONF_PASSWORD] = "pwd"
         else:
             user_input = {}
             user_input[CONF_NAME] = self._default_name
             user_input[CONF_HOST] = self._default_host
+            user_input[CONF_PASSWORD] = self._default_password if self._default_password else ""
             user_input[CONF_SCAN_INTERVAL] = self._default_scan_interval
             user_input[CONF_USE_WS] = self._default_use_ws
             user_input[CONF_INCLUDE_EVCC] = self._default_include_evcc
@@ -96,6 +113,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Required(CONF_NAME, default=user_input.get(CONF_NAME)): str,
                 vol.Required(CONF_HOST, default=user_input.get(CONF_HOST)): str,
+                vol.Optional(CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")): str,
                 vol.Required(CONF_USE_WS, default=user_input.get(CONF_USE_WS)): bool,
                 vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
                 vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
@@ -106,10 +124,21 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             errors=self._errors
         )
 
-    async def _test_host(self, host):
+    async def _test_host_and_optional_pwd(self, host, adm_pwd:str=None):
         try:
-            session = async_create_clientsession(self.hass)
-            client = EvccApiBridge(host=host, web_session=session, coordinator=None, lang=self.hass.config.language.lower())
+            # for the test we must still ensure that our adm_pwd is stripped...
+            if adm_pwd is not None:
+                adm_pwd = adm_pwd.strip()
+
+            if len(adm_pwd) == 0:
+                adm_pwd = None
+
+            session = async_create_clientsession(self.hass, verify_ssl=False, cookie_jar=aiohttp.CookieJar(unsafe=True))
+            client = EvccApiBridge(host=host, web_session=session, coordinator=None,
+                                   lang=self.hass.config.language.lower(), opt_password=adm_pwd)
+
+            server_is_valid = False
+            pwd_is_valid = True if adm_pwd is None else False
 
             ret = await client.read_all_data()
             if ret is not None and len(ret) > 0:
@@ -121,11 +150,16 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     _LOGGER.warning("No Version could be detected - ignore for now")
 
                 _LOGGER.info(f"successfully validated host -> result: {ret}")
-                return True
+                server_is_valid = True
+                if not pwd_is_valid:
+                    pwd_is_valid = await client.ensure_session_is_authorized()
+
+            return server_is_valid, pwd_is_valid
 
         except Exception as exc:
-            _LOGGER.error(f"Exception while test credentials: {exc}")
-        return False
+            _LOGGER.error(f"Exception while test host/credentials: {exc}")
+
+        return False, False
 
     # @staticmethod
     # @callback

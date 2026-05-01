@@ -9,19 +9,22 @@
       "user": {
         "description": "If you need help with the setup, you can find it here: {repo}.\n-- --\n### An evcc server installation is required\n-- --\n__Before__ you can set up and use this integration, you __must have evcc itself installed__!\nThis can be done, for example, by installing the HA _evcc AddOn's_ or by installing evcc in a separate Docker container or on another server in your network.\nPlease only install the integration if you know the URL of your evcc server – that is, the URL you enter in your browser to directly access the evcc web interface.\n-- --\nTherefore, you must enter the IP address and port of your evcc server here (and not the IP address and port of your Home Assistant server)!",
         "data": {
-          "host": "Your local EVCC-Server URL (including the port)",
+          "host": "Your local evcc-Server URL (including the port)",
+          "password": "Admin Password for the evcc-Server (optional)",
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
           "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
           "purge_all_devices": "Remove an recreate all Devices"
         },
         "data_description": {
+          "password": "Providing your evcc admin password is __optional__ and only necessary for advanced integration features. If you are unsure, leave the field empty!\nYou can add the password anytime later if you decide you want to use the advanced features (e.g., restarting the evcc-server from HA).",
           "purge_all_devices": "This may be necessary if you have orphaned device entries in your HA. This setting (checkbox) will be reset automatically."
         }
       }
     },
     "error": {
-      "auth": "You HA instance could not connect to an EVCC-Server under the specified URL."
+      "auth": "You HA instance could not connect to an evcc-Server under the specified URL.",
+      "pwd": "The specified admin password you entered seams to be incorrect."
     }
   },
   "services": {
@@ -76,6 +79,7 @@
       "circuits_curtailed": {"name": "Load Management curtailed"}
     },
     "button": {
+      "evcc_shutdown": {"name": "Server shutdown"},
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
       "plandelete": {"name": "Charging plan: Delete Departure (Loadpoint/Energy)"},
       "detectvehicle": {"name": "Start vehicle detection"},

@@ -27,7 +27,8 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_EVOPT_REQ_TIME_SERIES,
     JSONKEY_EVOPT_REQ_TIME_SERIES_DT,
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT, \
+    IS_TRIGGER
 
 # Base component constants
 MANUFACTURER: Final = "marq24"
@@ -261,7 +262,16 @@ BINARY_ENTITIES_PER_LOADPOINT = [
     )
 ]
 
-BUTTONS_ENTITIES = []
+BUTTONS_ENTITIES = [
+    ExtButtonEntityDescription(
+        tag=Tag.EVCC_SHUTDOWN,
+        key=Tag.EVCC_SHUTDOWN.entity_key,
+        payload=IS_TRIGGER,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:server-off",
+        entity_registry_enabled_default=False,
+    )
+]
 BUTTONS_ENTITIES_PER_LOADPOINT = [
     ExtButtonEntityDescriptionStub(
         tag=Tag.VEHICLEPLANSDELETE,

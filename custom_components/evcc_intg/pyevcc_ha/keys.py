@@ -33,6 +33,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 IS_TRIGGER: Final = "TRIGGER"
+INTERNAL_ONLY: Final = "intg_internal"
 
 CC_P1: Final = re.compile(r"(.)([A-Z][a-z]+)")
 CC_P2: Final = re.compile(r"([a-z0-9])([A-Z])")
@@ -82,6 +83,13 @@ class ApiKey(NamedTuple):
     write_type: str = None
     options: list[str] = None
     writeable: bool = False
+
+    # by default, no call requires authentication
+    auth_required: bool = False
+
+    # when we have the need to check for a specific http status code...
+    # e.g. the shutdown endpoint returns status: 204
+    expected_http_status_response: int = None
 
     @property
     def snake_case(self) -> str:
@@ -225,6 +233,9 @@ class Tag(ApiKey, Enum):
     FORECAST_SOLAR = ApiKey(entity_key="forecast_solar", json_key="forecast", type=EP_TYPE.SITE)
     FORECAST_FEEDIN = ApiKey(entity_key="forecast_feedin", json_key="forecast", type=EP_TYPE.SITE)
     FORECAST_PLANNER = ApiKey(entity_key="forecast_planner", json_key="forecast", type=EP_TYPE.SITE)
+
+    # a SHUTDOWN Button for the evcc Server (that requires admin password)
+    EVCC_SHUTDOWN = ApiKey(entity_key="evcc_shutdown", json_key=f"{INTERNAL_ONLY}_shutdown", auth_required=True, type=EP_TYPE.SITE, write_key ="system/shutdown", expected_http_status_response=204)
 
     ###################################
     # CIRCUITS-DATA

@@ -7,22 +7,25 @@
     },
     "step": {
       "user": {
-        "descri_rant": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: {repo}.\n-- --\n### Du musst die IP-Addresse & Port Deines EVCC-Servers angeben und nicht die IP & Port von Deinem Home-Assistent Server!\n-- --\nJeder der seine Home-Assistent Addresse einträgt (weil er das vielleicht so auf YouTube gesehen hat) und sich dann bei mir wegen dem *Fehler* meldet, möge bitte wahlweise in die USA oder nach Russland auswandern (Nordkorea wäre auch noch 'ne Option)!\n-- --\nAn alle anderen: bitte entschuldigt diesen Rant \uD83E\uDD2E - Seit **Monaten** bekomme ich immer wieder die gleiche Support-Anfrage von der Generation TikTok.",
+        "descri_rant": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: {repo}.\n-- --\n### Du musst die IP-Addresse & Port Deines evcc-Servers angeben und nicht die IP & Port von Deinem Home-Assistent Server!\n-- --\nJeder der seine Home-Assistent Addresse einträgt (weil er das vielleicht so auf YouTube gesehen hat) und sich dann bei mir wegen dem *Fehler* meldet, möge bitte wahlweise in die USA oder nach Russland auswandern (Nordkorea wäre auch noch 'ne Option)!\n-- --\nAn alle anderen: bitte entschuldigt diesen Rant \uD83E\uDD2E - Seit **Monaten** bekomme ich immer wieder die gleiche Support-Anfrage von der Generation TikTok.",
         "description": "Wenn Du Hilfe bei der Einrichtung benötigst, findest du sie hier: {repo}.\n-- --\n### Es wird eine evcc Server Installation benötigt\n-- --\nBevor Du diese Integration einrichten und verwenden kannst, musst Du __zuvor__ evcc selbst installiert haben!\nDies geht z.B. über die Installation des HA _evcc AddOn's_ oder aber die Installation von evcc in einen separaten Docker Container oder auf einem anderen Server in Deinem Netzwerk.\nBitte installiere die Integration nur dann, wenn Du die URL Deines evcc Servers kennst – also die URL die Du in Deinem Browser angibst, um das evcc Weboberfläche direkt zu erreichen.\n-- --\nDu musst hier also die IP-Addresse & Port Deines evcc Servers angeben (und nicht die IP & Port von Deinem Home-Assistent Server)!",
         "data": {
-          "host": "Deine lokale EVCC-Server Addresse (einschließlich des Ports)",
+          "host": "Deine lokale evcc-Server Addresse (einschließlich des Ports)",
+          "password": "Admin Passwort für den evcc-Server (optional)",
           "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
           "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
           "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen",
           "purge_all_devices": "Alle Geräte (Devices) Löschen und neu Erstellen"
         },
         "data_description": {
+          "password": "Die Angabe Deines evcc Admin-Passworts ist __optional__ und nur für erweiterte Features der Integration notwendig. Wenn Du Dir unsicher bist, lass dieses Feld bitte leer.\nDu kannst das Passwort auch jederzeit nachträglich hinzufügen, wenn Du feststellst, dass Du die erweiterten Funktionen der Integration verwendne möchtest (z.B. Neustart des evcc-Servers via HA).",
           "purge_all_devices": "Dies kann notwendig werden, wenn Du verwaiste Geräte (Einträge) bei Dir in HA hast. Diese Einstellung wird automatisch zurückgesetzt."
         }
       }
     },
     "error": {
-      "auth": "Unter dieser URL konnte Deine HA Instanz keinen EVCC-Server erreichen. **Bitte ließ doch noch einmal die Anleitung oben** Das Schwarze ist die Schrift!"
+      "auth": "Unter dieser URL konnte Deine HA Instanz keinen evcc-Server erreichen. **Bitte ließ doch noch einmal die Anleitung oben** Das Schwarze ist die Schrift!",
+      "pwd": "Das Admin-Passwort für den evcc-Server scheint nicht korrekt. Bitte überprüfe Deine Eingabe (oder lass dieses Feld leer, wenn Du Dir unsicher bist)."
     }
   },
   "services": {
@@ -76,6 +79,7 @@
       "circuits_curtailed": {"name": "Lastmanagement 'gekürzt'"}
     },
     "button": {
+      "evcc_shutdown": {"name": "Server stoppen"},
       "vehicleplansdelete": {"name": "Ladeplanung: Abfahrt löschen (Fahrzeug/SOC)"},
       "plandelete": {"name": "Ladeplanung: Abfahrt löschen (Ladepunkt/Energie)"},
       "detectvehicle": {"name": "Fahrzeugerkennung starten"},

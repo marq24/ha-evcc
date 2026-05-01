@@ -7,11 +7,11 @@ from typing import Any, Final
 import aiohttp
 from aiohttp import ClientConnectionError
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED
+from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED, CONF_PASSWORD
 from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
-from homeassistant.helpers.aiohttp_client import async_get_clientsession
+from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval, async_call_later
@@ -117,7 +117,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         _LOGGER.debug(f"Updated configuration (PURGE_ALL removed): {new_data_dict}")
 
     # using the same http client for test and final integration...
-    http_session = async_get_clientsession(hass)
+    http_session = async_create_clientsession(hass, verify_ssl=False, cookie_jar=aiohttp.CookieJar(unsafe=True))
 
     # simple check, IF the evcc serve is up and running ... raise an 'ConfigEntryNotReady' if
     # the configured backend could not be reached - then let HA deal with an optional retry
@@ -263,7 +263,12 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
     def __init__(self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry):
-        _LOGGER.debug(f"starting evcc_intg for: data:{config_entry.data}")
+        # make sure we to not log the admin_pwd on console...
+        log_dict = config_entry.data.copy()
+        if CONF_PASSWORD in log_dict:
+            log_dict[CONF_PASSWORD] = "********"
+        _LOGGER.debug(f"starting evcc_intg for: data:{log_dict}")
+
         self.name = config_entry.title
         self.use_ws = config_entry.data.get(CONF_USE_WS, True)
 
@@ -276,7 +281,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
                                     web_session=http_session,
                                     coordinator=self,
-                                    lang=lang)
+                                    lang=lang,
+                                    opt_password=config_entry.data.get(CONF_PASSWORD, None))
 
         global SCAN_INTERVAL
         SCAN_INTERVAL = timedelta(seconds=config_entry.data.get(CONF_SCAN_INTERVAL, 5))
@@ -810,12 +816,21 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=None, rfc_date=None)
 
-    async def async_press_tag(self, tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
-        result = await self.bridge.press_tag(tag, value, idx)
-        _LOGGER.debug(f"press result: {result}")
+    async def async_press_tag(self, a_tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
+        result = await self.bridge.press_tag(a_tag, value, idx)
+        _LOGGER.debug(f"async_press_tag(): press result: {result}")
 
-        if entity is not None and not self.bridge.ws_connected:
-            entity.async_schedule_update_ha_state(force_refresh=True)
+        if a_tag == Tag.EVCC_SHUTDOWN:
+            if result.get(a_tag.json_key, False):
+                _LOGGER.info(f"async_press_tag(): EVCC shutdown initiated successfully... we need to reschedule a reconnect!")
+                self.stop_watchdog()
+                self.bridge.clear_data(clear_evcc_data=False)
+                async_call_later(self.hass, 15, self.start_watchdog)
+            else:
+                _LOGGER.info(f"async_press_tag(): EVCC shutdown failed with result: {result}")
+        else:
+            if entity is not None and not self.bridge.ws_connected:
+                entity.async_schedule_update_ha_state(force_refresh=True)
 
         return result
 
