@@ -469,13 +469,12 @@ class EvccApiBridge:
             # I assume this will happen with every HA restart...
             try:
                 async with self.web_session.get(url=f"{self.host}/api/auth/status", ssl=False, timeout=static_timeout) as resp_status:
-                    status_ok = resp_status.status == 200
-                    if status_ok:
-                        status_response = await resp_status.json()
+                    if resp_status.status == 200:
+                        status_response_from_evcc_server_if_seesion_is_authorized = await resp_status.json()
                     else:
-                        status_response = False
+                        status_response_from_evcc_server_if_seesion_is_authorized = False
 
-                    if status_response is not True:
+                    if status_response_from_evcc_server_if_seesion_is_authorized is not True:
                         # we need to authenticate...
                         _LOGGER.debug(f"ensure_session_is_authorized(): auth status returned {resp_status.status} - trying to authenticate")
                         async with self.web_session.post(url=f"{self.host}/api/auth/login", json={"password": self._admin_password}, ssl=False, timeout=static_timeout) as resp_auth:
@@ -489,15 +488,17 @@ class EvccApiBridge:
                                     set_cookie_str = resp_auth.headers.get("Set-Cookie", None)
                                     if set_cookie_str is not None:
                                         # set_cookie_str = 'auth=XXXX; Path=/; Expires=Thu, 30 Jul 2026 16:38:18 GMT; HttpOnly; SameSite=Strict'
-                                        for a_statement in set_cookie_str.split(';'):
-                                            if a_statement is not None and a_statement.strip().lower().startswith('expires='):
+                                        for a_statement in set_cookie_str.split(";"):
+                                            if a_statement is not None and a_statement.strip().lower().startswith("expires="):
                                                 # we need to parse the expiration date of the cookie... this will do the
                                                 # 'email.utils.parsedate_to_datetime' and
                                                 # 'homeassistant.util.dt' for us!
                                                 a_expire_date = a_statement.strip().split('=')[1]
                                                 self._admin_cookie_expire_datetime = dt_util.as_utc(parsedate_to_datetime(a_expire_date))
                                                 if self._admin_cookie_expire_datetime > dt_util.utcnow():
-                                                    _LOGGER.info(f"ensure_session_is_authorized(): authentication successful!")
+                                                    _LOGGER.info(f"ensure_session_is_authorized(): authentication successful")
+                                                    if self.coordinator is not None:
+                                                        await self.coordinator.save_cookies()
                                                     return True
 
                                 # if we could not read the set-cookie header... or the expiration date... we assume the login
@@ -505,7 +506,20 @@ class EvccApiBridge:
                                 _LOGGER.warning(f"ensure_session_is_authorized(): authentication failed with no Set-Cookie header")
                                 return False
                     else:
-                        _LOGGER.info(f"ensure_session_is_authorized(): session already authorized")
+                        if self._admin_cookie_expire_datetime is None:
+                            # we must parse the expiration date of the cookie from our jar!
+                            for a_cookie in self.web_session.cookie_jar:
+                                if a_cookie.get("domain", "UNKNOWN-DOMAIN") in self.host and a_cookie.key == "auth":
+                                    # this is quite a simple check if this 'auth' cookie belongs to our host...
+                                    # but it should be enough...
+                                    a_expire_date = a_cookie.get("expires", None)
+                                    if a_expire_date is not None and len(a_expire_date) > 0:
+                                        self._admin_cookie_expire_datetime = dt_util.as_utc(parsedate_to_datetime(a_expire_date))
+                                        if self._admin_cookie_expire_datetime > dt_util.utcnow():
+                                            _LOGGER.info(f"ensure_session_is_authorized(): session already authorized AND '_admin_cookie_expire_datetime' IS SET")
+                                            return True
+
+                        _LOGGER.info(f"ensure_session_is_authorized(): session already authorized - but no '_admin_cookie_expire_datetime' is set :-(")
                         return True
 
             except BaseException as ex:

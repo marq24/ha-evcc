@@ -1,7 +1,9 @@
 import asyncio
 import logging
+import os
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
+from pathlib import Path
 from typing import Any, Final
 
 import aiohttp
@@ -15,6 +17,7 @@ from homeassistant.helpers.aiohttp_client import async_create_clientsession
 from homeassistant.helpers.device_registry import DeviceEntry
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval, async_call_later
+from homeassistant.helpers.storage import STORAGE_DIR
 from homeassistant.helpers.typing import UNDEFINED, UndefinedType
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.loader import async_get_integration
@@ -116,14 +119,29 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass.config_entries.async_update_entry(config_entry, data=new_data_dict, options={}, version=CONFIG_VERSION, minor_version=CONFIG_MINOR_VERSION)
         _LOGGER.debug(f"Updated configuration (PURGE_ALL removed): {new_data_dict}")
 
+
+    cookie_path = str(Path(hass.config.config_dir).joinpath(STORAGE_DIR, f"cookies_evcc_intg_{config_entry.entry_id}.txt"))
+    # make sure, that our storage directory exists...
+    def prepare_dir():
+        os.makedirs(os.path.dirname(cookie_path), exist_ok=True)
+    await hass.async_add_executor_job(prepare_dir)
+
+    the_persistent_cookie_jar = aiohttp.CookieJar(unsafe=True)
+    if os.path.exists(cookie_path):
+        try:
+            await hass.async_add_executor_job(the_persistent_cookie_jar.load, cookie_path)
+            _LOGGER.debug(f"Loaded cookies from file: '{cookie_path}'")
+        except Exception as err:
+            _LOGGER.info(f"Could not load cookies from {cookie_path}: {type(err).__name__} - {err}")
+
     # using the same http client for test and final integration...
-    http_session = async_create_clientsession(hass, verify_ssl=False, cookie_jar=aiohttp.CookieJar(unsafe=True))
+    http_session = async_create_clientsession(hass, verify_ssl=False, cookie_jar=the_persistent_cookie_jar)
 
     # simple check, IF the evcc serve is up and running ... raise an 'ConfigEntryNotReady' if
     # the configured backend could not be reached - then let HA deal with an optional retry
     await check_evcc_is_available(http_session, config_entry)
 
-    coordinator = EvccDataUpdateCoordinator(hass, http_session, config_entry)
+    coordinator = EvccDataUpdateCoordinator(hass, http_session, config_entry, cookie_path)
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
         raise ConfigEntryNotReady
@@ -262,7 +280,7 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
 
 class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
-    def __init__(self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry):
+    def __init__(self, hass: HomeAssistant, http_session: aiohttp.ClientSession, config_entry, cookie_path: str):
         # make sure we to not log the admin_pwd on console...
         log_dict = config_entry.data.copy()
         if CONF_PASSWORD in log_dict:
@@ -313,6 +331,10 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # a global store for entities that we must manipulate later on...
         self.select_entities_dict = {}
 
+        # just for internal usage...
+        self._http_session = http_session
+        self._cookie_path_on_fs = cookie_path
+
         # when we use the websocket we need to call the super constructor without update_interval...
         if self.use_ws:
             super().__init__(hass, _LOGGER, name=DOMAIN)
@@ -342,6 +364,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                             device.id,
                             model=f_model
                         )
+
+    async def save_cookies(self):
+        """Save cookies to file."""
+        if self._cookie_path_on_fs is None:
+            _LOGGER.info(f"save_cookies(): Failed to save cookies to fs - no 'self._cookie_path_on_fs' is set")
+            return
+        try:
+            await self.hass.async_add_executor_job(self._http_session.cookie_jar.save, self._cookie_path_on_fs)
+            _LOGGER.debug(f"save_cookies(): Saved cookies to file: '{self._cookie_path_on_fs}'")
+        except Exception as err:
+            _LOGGER.info(f"save_cookies(): Failed to save cookies to {self.cookie_path}: {type(err).__name__} - {err}")
 
     async def start_watchdog(self, event=None):
         """Start websocket watchdog."""
