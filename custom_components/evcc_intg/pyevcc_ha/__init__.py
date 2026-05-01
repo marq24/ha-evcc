@@ -1,6 +1,7 @@
 import asyncio
 import logging
 from datetime import datetime, timezone
+from email.utils import parsedate_to_datetime
 from json import JSONDecodeError
 from numbers import Number
 from time import time
@@ -10,6 +11,7 @@ import aiohttp
 from aiohttp import ClientResponseError, ClientConnectionError, ClientError, ClientTimeout
 from dateutil import parser
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator
+from homeassistant.util import dt as dt_util
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
     TRANSLATIONS,
@@ -177,7 +179,9 @@ class EvccApiBridge:
         self._debounced_additional_data_update_task = None
 
         self.host = host
-        self.admin_password = opt_password
+        self._admin_password = opt_password
+        self._admin_cookie_expire_datetime = None
+
         self.web_session = web_session
         self.lang_map = None
         if lang in TRANSLATIONS:
@@ -454,7 +458,15 @@ class EvccApiBridge:
         return json_resp
 
     async def ensure_session_is_authorized(self):
-        if self.admin_password is not None:
+        if self._admin_password is not None:
+
+            # check check-implementation...
+            if self._admin_cookie_expire_datetime is not None:
+                if self._admin_cookie_expire_datetime > dt_util.utcnow():
+                    return True
+
+            # the default code will ask the evcc-backend if our session is authorized?!
+            # I assume this will happen with every HA restart...
             try:
                 async with self.web_session.get(url=f"{self.host}/api/auth/status", ssl=False, timeout=static_timeout) as resp_status:
                     status_ok = resp_status.status == 200
@@ -466,20 +478,36 @@ class EvccApiBridge:
                     if status_response is not True:
                         # we need to authenticate...
                         _LOGGER.debug(f"ensure_session_is_authorized(): auth status returned {resp_status.status} - trying to authenticate")
-                        async with self.web_session.post(url=f"{self.host}/api/auth/login", json={"password": self.admin_password}, ssl=False, timeout=static_timeout) as resp_auth:
+                        async with self.web_session.post(url=f"{self.host}/api/auth/login", json={"password": self._admin_password}, ssl=False, timeout=static_timeout) as resp_auth:
                             if resp_auth.status != 200:
                                 _LOGGER.warning(f"ensure_session_is_authorized(): authentication failed with status {resp_auth.status}")
                                 return False
                             else:
-                                if resp_auth.headers is not None and resp_auth.headers.get("Set-Cookie", None) is not None:
-                                    _LOGGER.info(f"ensure_session_is_authorized(): authentication successful!}}")
-                                    return True
-                                else:
-                                    _LOGGER.warning(f"ensure_session_is_authorized(): authentication failed with no Set-Cookie header")
-                                    return False
+                                if resp_auth.headers is not None:
+                                    # resp_auth.headers is a 'CIMultiDict' - this means, the key is case_insensitive!!!
+                                    # so no matter if we check for "Set-Cookie" or "set-cookie" or "SET-COOKIE"
+                                    set_cookie_str = resp_auth.headers.get("Set-Cookie", None)
+                                    if set_cookie_str is not None:
+                                        # set_cookie_str = 'auth=XXXX; Path=/; Expires=Thu, 30 Jul 2026 16:38:18 GMT; HttpOnly; SameSite=Strict'
+                                        for a_statement in set_cookie_str.split(';'):
+                                            if a_statement is not None and a_statement.strip().lower().startswith('expires='):
+                                                # we need to parse the expiration date of the cookie... this will do the
+                                                # 'email.utils.parsedate_to_datetime' and
+                                                # 'homeassistant.util.dt' for us!
+                                                a_expire_date = a_statement.strip().split('=')[1]
+                                                self._admin_cookie_expire_datetime = dt_util.as_utc(parsedate_to_datetime(a_expire_date))
+                                                if self._admin_cookie_expire_datetime > dt_util.utcnow():
+                                                    _LOGGER.info(f"ensure_session_is_authorized(): authentication successful!")
+                                                    return True
+
+                                # if we could not read the set-cookie header... or the expiration date... we assume the login
+                                # failed...
+                                _LOGGER.warning(f"ensure_session_is_authorized(): authentication failed with no Set-Cookie header")
+                                return False
                     else:
                         _LOGGER.info(f"ensure_session_is_authorized(): session already authorized")
                         return True
+
             except BaseException as ex:
                 _LOGGER.warning(f"ensure_session_is_authorized(): caused {type(ex).__name__} -> {ex}")
         else:
@@ -487,19 +515,24 @@ class EvccApiBridge:
 
     async def press_tag(self, a_tag: Tag, value, idx: str = None) -> dict:
         ret = {}
-        if hasattr(a_tag, "write_type") and a_tag.write_type is not None:
-            final_type = a_tag.write_type
-        else:
-            final_type = a_tag.type
 
-        if a_tag.auth_required:
+        # 'configuration' types MUST be authorized
+        if a_tag.type == EP_TYPE.CONFIGURATION:
             if not await self.ensure_session_is_authorized():
                 _LOGGER.warning(f"press_tag(): could not authorize session - skipping: {a_tag.json_key}, value: {value}, idx: {idx}")
                 ret[a_tag.json_key] = False
                 return ret
 
-        if final_type == EP_TYPE.SITE:
-            ret[a_tag.json_key] = await self.press_site_key(a_tag.write_key, value, a_tag.expected_http_status_response)
+        # check, if we must "re-write" the type...
+        if hasattr(a_tag, "write_type") and a_tag.write_type is not None:
+            final_type = a_tag.write_type
+        else:
+            final_type = a_tag.type
+
+        # if there is NO-PAYLOAD...
+        if value == IS_TRIGGER:
+            # we will just post "no-data" to the f"{host}/api/{a_tag.write_key}"
+            ret[a_tag.json_key] = await self.press_trigger_key(a_tag.write_key, value, a_tag.expected_http_status_response)
 
         elif final_type == EP_TYPE.LOADPOINTS and idx is not None:
             ret[a_tag.json_key] = await self.press_loadpoint_key(idx, a_tag.write_key, value)
@@ -519,25 +552,19 @@ class EvccApiBridge:
 
         return ret
 
-    async def press_site_key(self, write_key, value, expected_response_http_status:int=None) -> dict:
-        if value == IS_TRIGGER:
-            req = f"{self.host}/api/{write_key}"
-            _LOGGER.debug(f"press_site_key(): POST request: {req}")
-            resp = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
-            raw_resp = resp.get("aiohttp.ClientResponse", None)
-            if raw_resp is not None and expected_response_http_status is not None:
-                if raw_resp.status == expected_response_http_status:
-                    return True
-                else:
-                    _LOGGER.warning(f"press_site_key(): unexpected response status: IS: {raw_resp.status} / EXPECTED: {expected_response_http_status} - skipping: {write_key}, value: {value}")
-                    return False
-
+    async def press_trigger_key(self, write_key, expected_response_http_status:int=None) -> dict:
+        req = f"{self.host}/api/{write_key}"
+        _LOGGER.debug(f"press_trigger_key(): POST request: {req}")
+        resp = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+        raw_resp = resp.get("aiohttp.ClientResponse", None)
+        if raw_resp is not None and expected_response_http_status is not None:
+            if raw_resp.status == expected_response_http_status:
+                return True
             else:
-                _LOGGER.warning(f"press_site_key(): need to handle response for '{write_key}' -> received: {resp}")
+                _LOGGER.warning(f"press_trigger_key(): unexpected response status: IS: {raw_resp.status} / EXPECTED: {expected_response_http_status} - skipping: {write_key}, value: {value}")
                 return False
-
         else:
-            _LOGGER.info(f"going to press a button with payload '{value}' for key '{write_key}' to evcc@{self.host}")
+            _LOGGER.warning(f"press_trigger_key(): need to handle response for '{write_key}' -> received: {resp}")
             return False
 
     async def press_loadpoint_key(self, lp_idx, write_key, value) -> dict:
