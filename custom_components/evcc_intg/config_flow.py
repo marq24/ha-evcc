@@ -38,6 +38,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._version = ""
         self._default_name = DEFAULT_NAME
         self._default_host = DEFAULT_HOST
+        self._default_password = ""
         self._default_scan_interval = DEFAULT_SCAN_INTERVAL
         self._default_use_ws = DEFAULT_USE_WS
         self._default_include_evcc = DEFAULT_INCLUDE_EVCC
