@@ -1,3 +1,4 @@
+from enum import Enum
 from typing import Final
 
 JSONKEY_PLANS_DEPRECATED: Final = "plans"
@@ -61,6 +62,28 @@ SESSIONS_KEY_TOTAL: Final = "total"
 SESSIONS_KEY_VEHICLES: Final = "vehicles"
 SESSIONS_KEY_LOADPOINTS: Final = "loadpoints"
 
+class EVCCCONF_DEVICE_TYPES(Enum):
+    VEHICLE = "vehicle"
+    CHARGER = "charger"
+    METER = "meter"
+    CIRCUIT = "circuit"
+    MESSENGER = "messenger"
+    TARIFF = "tariff"
+
+ADDITIONAL_ENDPOINTS_DATA_EVCCCONF: Final = "@@@evccconf-data"
+EVCCCONF_KEY_CONFIG: Final = "@@@config"
+EVCCCONF_KEY_DATA: Final = "@@@data"
+EVCCCONF_OBJECT_HIERARCHY: Final = {"devices":[
+                                            EVCCCONF_DEVICE_TYPES.VEHICLE.value,
+                                            EVCCCONF_DEVICE_TYPES.CHARGER.value,
+                                            EVCCCONF_DEVICE_TYPES.METER.value,
+                                            EVCCCONF_DEVICE_TYPES.CIRCUIT.value,
+                                            EVCCCONF_DEVICE_TYPES.MESSENGER.value,
+                                            EVCCCONF_DEVICE_TYPES.TARIFF.value],
+                                         "site": [],
+                                         "loadpoints":[],
+                                         "tariff":[]}
+
 # STATES: Final = [JSONKEY_LOADPOINTS, JSONKEY_AUXPOWER, JSONKEY_BATTERYMODE, JSONKEY_BATTERYPOWER, JSONKEY_BATTERYSOC,
 #                  JSONKEY_GRID, JSONKEY_GRIDCURRENTS, JSONKEY_GRIDPOWER, JSONKEY_HOMEPOWER, JSONKEY_PVENERGY,
 #                  JSONKEY_PVPOWER, JSONKEY_PV, JSONKEY_VEHICLES, JSONKEY_STATISTICS]
@@ -103,6 +126,7 @@ TRANSLATIONS: Final = {
         },
         "device_name_loadpoint": "Ladepunkt",
         "device_name_vehicle": "Fahrzeug",
+        "device_name_circuit": "Stromkreis",
         "ws_connected": "WebSocket Verbindung:",
     },
     "en": {
@@ -124,6 +148,7 @@ TRANSLATIONS: Final = {
         },
         "device_name_loadpoint": "Loadpoint",
         "device_name_vehicle": "Vehicle",
+        "device_name_circuit": "Circuit",
         "ws_connected": "WebSocket connection:",
     }
 }

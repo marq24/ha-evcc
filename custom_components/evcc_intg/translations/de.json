@@ -18,7 +18,7 @@
           "purge_all_devices": "Alle Geräte (Devices) Löschen und neu Erstellen"
         },
         "data_description": {
-          "password": "Die Angabe Deines evcc Admin-Passworts ist __optional__ und nur für erweiterte Features der Integration notwendig. Wenn Du Dir unsicher bist, lass dieses Feld bitte leer.\nDu kannst das Passwort auch jederzeit nachträglich hinzufügen, wenn Du feststellst, dass Du die erweiterten Funktionen der Integration verwendne möchtest (z.B. Neustart des evcc-Servers via HA).",
+          "password": "Die Angabe Deines evcc Admin-Passwort ist __optional__ und nur für erweiterte Features der Integration notwendig. Wenn Du Dir unsicher bist, lass dieses Feld bitte leer.\nDu kannst das Passwort auch jederzeit nachträglich hinzufügen, wenn Du feststellst, dass Du die erweiterten Funktionen der Integration verwendne möchtest (z.B. Neustart des evcc-Servers via HA).\n\nWenn Du Dein aktuelles Passwort __entfernen__ möchtest, dann mußt Du ein __LEERZEICHEN__ eingeben (sonst erkennt HA keine Änderung)!",
           "purge_all_devices": "Dies kann notwendig werden, wenn Du verwaiste Geräte (Einträge) bei Dir in HA hast. Diese Einstellung wird automatisch zurückgesetzt."
         }
       }
@@ -393,7 +393,12 @@
       "charging_sessions_loadpoint_chargeduration": {"name": "Ladevorgänge: Dauer [LP]"},
 
       "circuits_power": {"name": "Lastmanagement Leistung"},
-      "circuits_current": {"name": "Lastmanagement Strom"}
+      "circuits_current": {"name": "Lastmanagement Strom"},
+
+      "configvehicle_soc": {"name": "Ladestand"},
+      "configvehicle_limitsoc": {"name": "Ladelimit"},
+      "configvehicle_odometer": {"name": "Kilometerstand"},
+      "configvehicle_range": {"name": "Reichweite"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},

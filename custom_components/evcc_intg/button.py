@@ -1,4 +1,5 @@
 import logging
+from dataclasses import replace
 
 from homeassistant.components.button import ButtonEntity
 from homeassistant.config_entries import ConfigEntry
@@ -6,7 +7,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import EvccDataUpdateCoordinator, EvccBaseEntity
+from . import EvccDataUpdateCoordinator, EvccBaseEntity, ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, EP_TYPE
 from .const import DOMAIN, BUTTONS_ENTITIES, BUTTONS_ENTITIES_PER_LOADPOINT, ExtButtonEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
@@ -15,8 +16,21 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_entity_cb: AddEntitiesCallback):
     _LOGGER.debug("BUTTON async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
+
+    configuration_data_available = False
+    if len(coordinator.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {})) > 0:
+        configuration_data_available = True
+
     entities = []
     for description in BUTTONS_ENTITIES:
+        # enable all CONFIGURATION entities if config-data is available
+        if configuration_data_available and description.tag.type == EP_TYPE.EVCCCONF:
+            if not description.entity_registry_enabled_default:
+                description = replace(
+                    description,
+                    entity_registry_enabled_default = True
+                )
+
         entity = EvccButton(coordinator, description)
         entities.append(entity)
 
@@ -32,6 +46,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in BUTTONS_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
+                force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
                 the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
                 description = ExtButtonEntityDescription(
                     tag=a_stub.tag,
@@ -43,7 +58,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     device_class=a_stub.device_class,
                     unit_of_measurement=a_stub.unit_of_measurement,
                     entity_category=a_stub.entity_category,
-                    entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                    entity_registry_enabled_default=True if force_enable_by_default else a_stub.entity_registry_enabled_default,
                     is_lp_integrated_device=lp_is_integrated,
 
                     # the entity type specific values...

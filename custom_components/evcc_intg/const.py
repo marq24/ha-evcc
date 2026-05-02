@@ -151,6 +151,7 @@ class ExtSensorEntityDescription(SensorEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    evcc_config_id: str | None = None
     is_lp_integrated_device: bool | None = None
 
     json_idx: list[str|int] | None = None
@@ -1886,6 +1887,44 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         suggested_display_precision=1,
         entity_registry_enabled_default=True
     ),
+
+    # the VEHICLE CONFIGURATION Sensors...
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_VEHICLERANGE,
+        icon="mdi:ev-station",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_VEHICLEODOMETER,
+        icon="mdi:counter",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfLength.KILOMETERS,
+        device_class=None,
+        suggested_display_precision=0,
+        ignore_zero=True,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_VEHICLESOC,
+        icon="mdi:car-electric-outline",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_VEHICLELIMITSOC,
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=False
+    )
 ]
 SENSOR_ENTITIES_PER_CIRCUIT = [
     ExtSensorEntityDescriptionStub(

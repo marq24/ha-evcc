@@ -134,7 +134,7 @@ I use this feature to control the hot-water temperature of my waterkotte heat pu
 
 Do you know, that as owners of a go-eCharger (V3+) there is no need to use evcc for solar surplus charging? Even without any additional hardware! Home Assistant and the __go-eCharger APIv2 Connect__ Integration is all you need. Get all details from [https://github.com/marq24/ha-goecharger-api2](https://github.com/marq24/ha-goecharger-api2).
 
-
+<!-- THIS IS NOW directly supported by the integration (since 2026.5.2)
 ## Accessing your vehicle SOC & Range when the vehicle is not connected to a loadpoint
 
 By default, evcc and this integration focus on vehicles connected to a loadpoint, this implies that data like SOC or range are _only available when the vehicle is actually connected_.
@@ -142,7 +142,7 @@ By default, evcc and this integration focus on vehicles connected to a loadpoint
 Nevertheless, evcc provides this data in the configuration section (no matter of the connection state). If you want to access your vehicle SOC and range, when the vehicle is not connected to a loadpoint, you can do this by adding a command_line sensor to your Home Assistant configuration.yaml file.
 
 > [!IMPORTANT]
-> You need to know the technical `vehicle_id`. Depending on from your configuration this is either the value you have specified in the `evcc.yaml` file or it had been automatically generated.
+> You need to know the technical `vehicle_id`. Depending on your configuration, this is either the value you have specified in the `evcc.yaml` file or it had been automatically generated.
 >
 > In any case you can request: `http://[YOUR_EVCC_IP]:7070/api/config/devices/vehicle` and check the value of the `name` attribute to get your `vehicle_id`.
 
@@ -229,6 +229,7 @@ and you want to capture the __soc__ as main entity information and the `range` a
 
 ### Don't want to store your evcc password in the ha configuration.yaml?
 [@BDBAfH was so kind to post an alternative example here](https://github.com/marq24/ha-evcc/discussions/137), showing the way how to store and use the evcc password from a separate file.
+-->
 
 ## Want to report an issue?
 

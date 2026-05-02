@@ -17,7 +17,7 @@
           "purge_all_devices": "Remove an recreate all Devices"
         },
         "data_description": {
-          "password": "Providing your evcc admin password is __optional__ and only necessary for advanced integration features. If you are unsure, leave the field empty!\nYou can add the password anytime later if you decide you want to use the advanced features (e.g., restarting the evcc-server from HA).",
+          "password": "Providing your evcc admin password is __optional__ and only necessary for advanced integration features. If you are unsure, leave the field empty!\nYou can add the password anytime later if you decide you want to use the advanced features (e.g., restarting the evcc-server from HA).\n\nWhen you want to __delete__ your current password, please enter a __SPACE__!",
           "purge_all_devices": "This may be necessary if you have orphaned device entries in your HA. This setting (checkbox) will be reset automatically."
         }
       }
@@ -477,7 +477,12 @@
       "evopt_battery_3_charged_total": {"name": "Optimizer BAT IV: Total Energy Stored"},
 
       "circuits_power": {"name": "Load Management Power"},
-      "circuits_current": {"name": "Load Management Current"}
+      "circuits_current": {"name": "Load Management Current"},
+
+      "configvehicle_soc": {"name": "Charge"},
+      "configvehicle_limitsoc": {"name": "Charge Limit"},
+      "configvehicle_odometer": {"name": "Odometer"},
+      "configvehicle_range": {"name": "Range"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

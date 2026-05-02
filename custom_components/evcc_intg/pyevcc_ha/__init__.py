@@ -5,7 +5,7 @@ from email.utils import parsedate_to_datetime
 from json import JSONDecodeError
 from numbers import Number
 from time import time
-from typing import Callable
+from typing import Callable, Final
 
 import aiohttp
 from aiohttp import ClientResponseError, ClientConnectionError, ClientError, ClientTimeout
@@ -23,14 +23,19 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_TOTAL,
     SESSIONS_KEY_VEHICLES,
     SESSIONS_KEY_LOADPOINTS,
+    ADDITIONAL_ENDPOINTS_DATA_EVCCCONF,
+    EVCCCONF_KEY_CONFIG,
+    EVCCCONF_KEY_DATA,
+    EVCCCONF_OBJECT_HIERARCHY,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-static_timeout = ClientTimeout(total=5)
+static_timeout: Final = ClientTimeout(total=5)
+RAW_CLIENT_RESPONSE_KEY = "aiohttp.ClientResponse"
 
-async def _do_request(method: Callable) -> dict:
+async def _do_request(method: Callable, return_raw_client_response:bool=False) -> dict:
     try:
         async with method as res:
             try:
@@ -42,7 +47,10 @@ async def _do_request(method: Callable) -> dict:
 
                                 # if we have NO DATA in the response, we will return the response itself...
                                 if data is None or len(data) == 0:
-                                    return {"aiohttp.ClientResponse": res}
+                                    if return_raw_client_response:
+                                        return {RAW_CLIENT_RESPONSE_KEY: res}
+                                    else:
+                                        return {}
                                 else:
                                     # check if the data is a dict with a single key "result" - this 'result' container
                                     # will be removed in the future [https://github.com/evcc-io/evcc/pull/22299]
@@ -54,7 +62,10 @@ async def _do_request(method: Callable) -> dict:
                                 _LOGGER.warning(f"APP-API: JSONDecodeError while 'await res.json(): {json_exc} [caused by {res.request_info.method} {res.request_info.url}]")
                         else:
                             # if this is no JSON response, we just return the raw response...
-                            return {"aiohttp.ClientResponse": res}
+                            if return_raw_client_response:
+                                return {RAW_CLIENT_RESPONSE_KEY: res}
+                            else:
+                                return {}
 
                     except ClientResponseError as io_exc:
                         _LOGGER.warning(f"APP-API: ClientResponseError while 'await res.json(): {io_exc} [caused by {res.request_info.method} {res.request_info.url}]")
@@ -191,6 +202,12 @@ class EvccApiBridge:
 
         self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
+        self._CONFIG_LAST_UPDATE = -1
+        if self.coordinator is not None and hasattr(self.coordinator, 'update_interval_in_seconds_from_config_entry'):
+            self._CONFIG_UPDATE_INTERVAL_IN_SECONDS = self.coordinator.update_interval_in_seconds_from_config_entry
+        else:
+            self._CONFIG_UPDATE_INTERVAL_IN_SECONDS = 60 * 15 # the default update will be every 15 minutes
+
         self._data = {}
 
         # by default, we do not request the tariff endpoints
@@ -226,14 +243,16 @@ class EvccApiBridge:
     def clear_data(self, clear_evcc_data: bool = True):
         self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
+        self._CONFIG_LAST_UPDATE = -1
         self._ws_LAST_UPDATE = -1
         self._ws_LAST_NEW_DATA_NOTIFY = -1
         if clear_evcc_data:
             self._data = {}
 
     def ws_check_last_update(self) -> bool:
-        if self._ws_LAST_UPDATE + 50 > time():
-            _LOGGER.debug(f"ws_check_last_update(): all good! [last update: {int(time()-self._ws_LAST_UPDATE)} sec ago]")
+        now_time = time()
+        if self._ws_LAST_UPDATE + 50 > now_time:
+            _LOGGER.debug(f"ws_check_last_update(): all good! [last update: {int(now_time - self._ws_LAST_UPDATE)} sec ago]")
             return True
         else:
             _LOGGER.info(f"ws_check_last_update(): force reconnect...")
@@ -252,6 +271,7 @@ class EvccApiBridge:
                             if self._data is None or len(self._data) == 0:
                                 self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
                                 self._SESSIONS_LAST_UPDATE_HOUR = -1
+                                self._CONFIG_LAST_UPDATE = -1
                                 await self.read_all_data()
                         except:
                             _LOGGER.info(f"could not read initial data from evcc@{self.host} - ignoring")
@@ -338,7 +358,7 @@ class EvccApiBridge:
     def _ws_start_async_additional_data_update_task_if_needed(self):
         if self._debounced_additional_data_update_task is None or self._debounced_additional_data_update_task.done():
             async def _task():
-                await self.read_all_data(request_all=False, request_tariffs=True, request_sessions=True)
+                await self.read_all_data(request_all=False, request_tariffs=True, request_sessions=True, request_config=True)
                 if self.coordinator is not None and self._data_coordinator_update_needed:
                     self._ws_update_data_debounced()
             self._debounced_additional_data_update_task = asyncio.create_task(_task())
@@ -354,10 +374,10 @@ class EvccApiBridge:
             try:
                 await asyncio.sleep(0.2)
                 if self.coordinator is not None:
-                    current_time = time()
+                    now_time = time()
                     # only update every second...
-                    if current_time - self._ws_LAST_NEW_DATA_NOTIFY >= 1:
-                        self._ws_LAST_NEW_DATA_NOTIFY = current_time
+                    if now_time - self._ws_LAST_NEW_DATA_NOTIFY >= 1:
+                        self._ws_LAST_NEW_DATA_NOTIFY = now_time
                         self.coordinator.async_set_updated_data(self._data)
                     else:
                         #_LOGGER.debug("_ws_update_data_debounced:task(): update was skipped due 1 sec update interval...")
@@ -372,7 +392,10 @@ class EvccApiBridge:
         self._debounced_update_task = asyncio.create_task(_task())
         self._ws_LAST_UPDATE = time()
 
-    async def read_all_data(self, request_all:bool=True, request_tariffs:bool=False, request_sessions:bool=False) -> dict:
+    async def read_all_data(self, request_all:bool=True,
+                            request_tariffs:bool=False,
+                            request_sessions:bool=False,
+                            request_config:bool=False) -> dict:
         if request_all:
             _LOGGER.debug(f"going to read all data from evcc@{self.host}")
             req = f"{self.host}/api/state"
@@ -413,6 +436,13 @@ class EvccApiBridge:
                 # we must copy the previous existing data to the new json_resp!
                 if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
+
+        if request_all or request_config:
+            now_time = time()
+            if self._CONFIG_LAST_UPDATE + self._CONFIG_UPDATE_INTERVAL_IN_SECONDS <= time():
+                json_resp = await self.read_config_data(json_resp)
+                self._data_coordinator_update_needed = True
+                self._CONFIG_LAST_UPDATE = now_time
 
         self._data = json_resp
         return json_resp
@@ -456,6 +486,319 @@ class EvccApiBridge:
             _LOGGER.info(f"could not read sessions data '{type(err).__name__}' -> {err}")
 
         return json_resp
+
+    async def read_config_data(self, json_resp: dict, log_requests:bool=False):
+        if await self.ensure_session_is_authorized():
+            if ADDITIONAL_ENDPOINTS_DATA_EVCCCONF not in json_resp:
+                # creating our core data container object...
+                json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF] = {}
+                json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG] = await self._read_config_setup()
+                json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA] = {}
+
+            # ok the configuration data MUST exis now... so we can finally fetch the states
+            a_config = json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG]
+
+            for a_device_type, value_list in a_config.items():
+                for a_device_id in value_list:
+                    if a_device_type not in json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA]:
+                        json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type] = {}
+                    req = f"{self.host}/api/config/devices/{a_device_type}/{a_device_id}/status"
+                    if log_requests:
+                        _LOGGER.debug(f"GET request: {req}")
+                    a_status_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+                    if a_status_resp is not None and len(a_status_resp) > 0:
+                        # make sure that we always use lower case device-ids
+                        # comprae also with the reading code in 'read_tag_configuration'
+                        json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type][a_device_id.lower()] = a_status_resp
+
+            _LOGGER.debug(f"read_config_data(): configuration data read {list(json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA].keys())}")
+
+        return json_resp
+
+    async def _read_config_setup(self, log_requests:bool=False):
+        the_configuration = {}
+        # ok we must first fetch (once) the available configuration entities!
+        for a_object_type in EVCCCONF_OBJECT_HIERARCHY.keys():
+            if len(EVCCCONF_OBJECT_HIERARCHY[a_object_type]) > 0:
+                the_configuration[a_object_type] = {}
+                for a_sub_type in EVCCCONF_OBJECT_HIERARCHY[a_object_type]:
+                    req = f"{self.host}/api/config/{a_object_type}/{a_sub_type}"
+                    if log_requests:
+                        _LOGGER.debug(f"GET request: {req}")
+                    config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+                    if config_resp is not None and len(config_resp) > 0:
+                        the_configuration[a_object_type][a_sub_type] = config_resp
+            else:
+                req = f"{self.host}/api/config/{a_object_type}"
+                if log_requests:
+                    _LOGGER.debug(f"GET request: {req}")
+                config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+                if config_resp is not None and len(config_resp) > 0:
+                    the_configuration[a_object_type] = config_resp
+
+        # just as object reference...
+        # a_sample_config = {
+        #     "devices": {
+        #         "vehicle": [
+        #             {
+        #                 "config": {
+        #                     "icon": "ford-mustang-mach-e",
+        #                     "title": "MachE IS HERE"
+        #                 },
+        #                 "name": "ford_mach_e",
+        #                 "type": "template"
+        #             }
+        #         ],
+        #         "charger": [
+        #             {
+        #                 "config": {
+        #                     "icon": "waterheater"
+        #                 },
+        #                 "name": "heatpump-water_ha_switch",
+        #                 "type": "template"
+        #             },
+        #             {
+        #                 "name": "go-e",
+        #                 "type": "template"
+        #             },
+        #             {
+        #                 "config": {
+        #                     "icon": "heatexchange"
+        #                 },
+        #                 "name": "pool-shelly_switch",
+        #                 "type": "template"
+        #             },
+        #             {
+        #                 "config": {
+        #                     "icon": "compute"
+        #                 },
+        #                 "name": "garden-shelly_switch",
+        #                 "type": "template"
+        #             }
+        #         ],
+        #         "meter": [
+        #             {
+        #                 "name": "SENEC.bat",
+        #                 "type": "template"
+        #             },
+        #             {
+        #                 "name": "TIBBER.grid",
+        #                 "type": "template"
+        #             },
+        #             {
+        #                 "name": "SENEC.grid",
+        #                 "type": "template"
+        #             },
+        #             {
+        #                 "name": "SENEC.pv",
+        #                 "type": "template"
+        #             }
+        #         ],
+        #         "circuit": [
+        #             {
+        #                 "config": {
+        #                     "title": "Hausanschluss"
+        #                 },
+        #                 "name": "main"
+        #             }
+        #         ]
+        #     },
+        #     "site": {
+        #         "title": "Home",
+        #         "grid": "TIBBER.grid",
+        #         "pv": [
+        #             "SENEC.pv"
+        #         ],
+        #         "battery": [
+        #             "SENEC.bat"
+        #         ],
+        #         "aux": None,
+        #         "ext": [
+        #             "SENEC.grid"
+        #         ]
+        #     },
+        #     "loadpoints": [
+        #         {
+        #             "name": "lp-1",
+        #             "charger": "go-e",
+        #             "title": "HH-7",
+        #             "defaultMode": "",
+        #             "priority": 3,
+        #             "phasesConfigured": 0,
+        #             "minCurrent": 6,
+        #             "maxCurrent": 25,
+        #             "smartCostLimit": -0.11,
+        #             "smartFeedInPriorityLimit": None,
+        #             "planEnergy": 0,
+        #             "planTime": "0001-01-01T00:00:00Z",
+        #             "planPrecondition": 0,
+        #             "batteryBoostLimit": 100,
+        #             "limitEnergy": 0,
+        #             "limitSoc": 0,
+        #             "planStrategy": {
+        #                 "continuous": False,
+        #                 "precondition": 0
+        #             },
+        #             "thresholds": {
+        #                 "enable": {
+        #                     "delay": 30000000000,
+        #                     "threshold": 0
+        #                 },
+        #                 "disable": {
+        #                     "delay": 90000000000,
+        #                     "threshold": 0
+        #                 }
+        #             },
+        #             "soc": {
+        #                 "poll": {
+        #                     "mode": "charging",
+        #                     "interval": 3600000000000
+        #                 },
+        #                 "estimate": None
+        #             }
+        #         },
+        #         {
+        #             "name": "lp-2",
+        #             "charger": "pool-shelly_switch",
+        #             "title": "Pool",
+        #             "defaultMode": "",
+        #             "priority": 4,
+        #             "phasesConfigured": 1,
+        #             "minCurrent": 5,
+        #             "maxCurrent": 5,
+        #             "smartCostLimit": -0.11,
+        #             "smartFeedInPriorityLimit": None,
+        #             "planEnergy": 0,
+        #             "planTime": "0001-01-01T00:00:00Z",
+        #             "planPrecondition": 0,
+        #             "batteryBoostLimit": 100,
+        #             "limitEnergy": 0,
+        #             "limitSoc": 0,
+        #             "planStrategy": {
+        #                 "continuous": False,
+        #                 "precondition": 0
+        #             },
+        #             "thresholds": {
+        #                 "enable": {
+        #                     "delay": 300000000000,
+        #                     "threshold": 0
+        #                 },
+        #                 "disable": {
+        #                     "delay": 300000000000,
+        #                     "threshold": 0
+        #                 }
+        #             },
+        #             "soc": {
+        #                 "poll": {
+        #                     "mode": "charging",
+        #                     "interval": 3600000000000
+        #                 },
+        #                 "estimate": None
+        #             }
+        #         },
+        #         {
+        #             "name": "lp-3",
+        #             "charger": "garden-shelly_switch",
+        #             "title": "Gartenpumpe",
+        #             "defaultMode": "",
+        #             "priority": 5,
+        #             "phasesConfigured": 1,
+        #             "minCurrent": 5,
+        #             "maxCurrent": 7,
+        #             "smartCostLimit": -0.11,
+        #             "smartFeedInPriorityLimit": None,
+        #             "planEnergy": 0,
+        #             "planTime": "0001-01-01T00:00:00Z",
+        #             "planPrecondition": 0,
+        #             "batteryBoostLimit": 100,
+        #             "limitEnergy": 0,
+        #             "limitSoc": 0,
+        #             "planStrategy": {
+        #                 "continuous": False,
+        #                 "precondition": 0
+        #             },
+        #             "thresholds": {
+        #                 "enable": {
+        #                     "delay": 30000000000,
+        #                     "threshold": 0
+        #                 },
+        #                 "disable": {
+        #                     "delay": 600000000000,
+        #                     "threshold": 0
+        #                 }
+        #             },
+        #             "soc": {
+        #                 "poll": {
+        #                     "mode": "charging",
+        #                     "interval": 3600000000000
+        #                 },
+        #                 "estimate": None
+        #             }
+        #         },
+        #         {
+        #             "name": "lp-4",
+        #             "charger": "heatpump-water_ha_switch",
+        #             "title": "Warmwasser-Boost",
+        #             "defaultMode": "",
+        #             "priority": 1,
+        #             "phasesConfigured": 1,
+        #             "minCurrent": 13.48,
+        #             "maxCurrent": 13.48,
+        #             "smartCostLimit": -0.11,
+        #             "smartFeedInPriorityLimit": None,
+        #             "planEnergy": 0,
+        #             "planTime": "0001-01-01T00:00:00Z",
+        #             "planPrecondition": 0,
+        #             "batteryBoostLimit": 100,
+        #             "limitEnergy": 0,
+        #             "limitSoc": 0,
+        #             "planStrategy": {
+        #                 "continuous": False,
+        #                 "precondition": 0
+        #             },
+        #             "thresholds": {
+        #                 "enable": {
+        #                     "delay": 1500000000000,
+        #                     "threshold": 0
+        #                 },
+        #                 "disable": {
+        #                     "delay": 300000000000,
+        #                     "threshold": 0
+        #                 }
+        #             },
+        #             "soc": {
+        #                 "poll": {
+        #                     "mode": "charging",
+        #                     "interval": 3600000000000
+        #                 },
+        #                 "estimate": None
+        #             }
+        #         }
+        #     ],
+        #     "tariff": {
+        #         "grid": "",
+        #         "feedIn": "",
+        #         "co2": "",
+        #         "planner": "",
+        #         "solar": None
+        #     }
+        # }
+
+        # so 'the_configuration' object should contain the keys:"devices", "site", "loadpoints" and "tariff"
+        # currently we are ONLY interested in the devices!
+        a_result = {}
+        for category, items in the_configuration["devices"].items():
+            a_result[category] = [item["name"] for item in items]
+
+            # in the 'site' object, we can see which 'meter' is from which type:
+            # grid, pv, battery, aux and ext (but currently we don't use this info (yet))
+
+            # if we additionally need the loadpoint names (=id's)... we can use this line:
+            # a_result["loadpoints"] = [lp["name"] for lp in a_conf["loadpoints"]]
+
+        _LOGGER.debug(f"_read_config_setup(): configuration setup read successfully {list(a_result.keys())}")
+        return a_result
+
 
     async def ensure_session_is_authorized(self):
         if self._admin_password is not None:
@@ -531,7 +874,7 @@ class EvccApiBridge:
         ret = {}
 
         # 'configuration' types MUST be authorized
-        if a_tag.type == EP_TYPE.CONFIGURATION:
+        if a_tag.type == EP_TYPE.EVCCCONF:
             if not await self.ensure_session_is_authorized():
                 _LOGGER.warning(f"press_tag(): could not authorize session - skipping: {a_tag.json_key}, value: {value}, idx: {idx}")
                 ret[a_tag.json_key] = False
@@ -543,10 +886,10 @@ class EvccApiBridge:
         else:
             final_type = a_tag.type
 
-        # if there is NO-PAYLOAD...
+        # if there is NO-PAYLOAD for a TRIGGER
         if value == IS_TRIGGER:
             # we will just post "no-data" to the f"{host}/api/{a_tag.write_key}"
-            ret[a_tag.json_key] = await self.press_trigger_key(a_tag.write_key, value, a_tag.expected_http_status_response)
+            ret[a_tag.json_key] = await self.press_trigger_key(a_tag.write_key, a_tag.expected_http_status_response)
 
         elif final_type == EP_TYPE.LOADPOINTS and idx is not None:
             ret[a_tag.json_key] = await self.press_loadpoint_key(idx, a_tag.write_key, value)
@@ -569,13 +912,13 @@ class EvccApiBridge:
     async def press_trigger_key(self, write_key, expected_response_http_status:int=None) -> dict:
         req = f"{self.host}/api/{write_key}"
         _LOGGER.debug(f"press_trigger_key(): POST request: {req}")
-        resp = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
-        raw_resp = resp.get("aiohttp.ClientResponse", None)
+        resp = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout), return_raw_client_response=True)
+        raw_resp = resp.get(RAW_CLIENT_RESPONSE_KEY, None)
         if raw_resp is not None and expected_response_http_status is not None:
             if raw_resp.status == expected_response_http_status:
                 return True
             else:
-                _LOGGER.warning(f"press_trigger_key(): unexpected response status: IS: {raw_resp.status} / EXPECTED: {expected_response_http_status} - skipping: {write_key}, value: {value}")
+                _LOGGER.warning(f"press_trigger_key(): unexpected response status: IS: {raw_resp.status} / EXPECTED: {expected_response_http_status} - skipping: {write_key}")
                 return False
         else:
             _LOGGER.warning(f"press_trigger_key(): need to handle response for '{write_key}' -> received: {resp}")

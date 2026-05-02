@@ -150,7 +150,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 else:
                     _LOGGER.warning("No Version could be detected - ignore for now")
 
-                _LOGGER.info(f"successfully validated host -> result: {ret}")
+                _LOGGER.info(f"successfully validated host -> result: {list(ret.keys())}")
                 server_is_valid = True
                 if not pwd_is_valid:
                     pwd_is_valid = await client.ensure_session_is_authorized()

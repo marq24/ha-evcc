@@ -26,6 +26,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     BATTERY_LIST,
     SESSIONS_KEY_VEHICLES,
     SESSIONS_KEY_LOADPOINTS,
+    EVCCCONF_DEVICE_TYPES,
 )
 
 # from aenum import Enum, extend_enum
@@ -53,7 +54,7 @@ class EP_TYPE(Enum):
     SITE = "site"
     TARIFF = "tariff"
     SESSIONS = "sessions"
-    CONFIGURATION = "configuration"
+    EVCCCONF = "evccconf"
 
 class BATTERY_CONTENT(Enum):
     SOC = "soc"
@@ -231,9 +232,6 @@ class Tag(ApiKey, Enum):
     FORECAST_SOLAR = ApiKey(entity_key="forecast_solar", json_key="forecast", type=EP_TYPE.SITE)
     FORECAST_FEEDIN = ApiKey(entity_key="forecast_feedin", json_key="forecast", type=EP_TYPE.SITE)
     FORECAST_PLANNER = ApiKey(entity_key="forecast_planner", json_key="forecast", type=EP_TYPE.SITE)
-
-    # a SHUTDOWN Button for the evcc Server (that requires admin password)
-    EVCC_SHUTDOWN = ApiKey(entity_key="evcc_shutdown", json_key=f"{INTERNAL_ONLY}_shutdown", type=EP_TYPE.CONFIGURATION, write_key ="system/shutdown", expected_http_status_response=204)
 
     ###################################
     # CIRCUITS-DATA
@@ -505,3 +503,32 @@ class Tag(ApiKey, Enum):
     EVOPT_REQUEST_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_REQ, type=EP_TYPE.EVOPT)
     EVOPT_RESULT_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_RES, type=EP_TYPE.EVOPT)
     EVOPT_DETAILS_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_DETAILS, type=EP_TYPE.EVOPT)
+
+    ###################################
+    # CONFIGURATION
+    ###################################
+    # a SHUTDOWN Button for the evcc Server (that requires admin password)
+    EVCC_SHUTDOWN = ApiKey(entity_key="evcc_shutdown", json_key=f"{INTERNAL_ONLY}_shutdown", type=EP_TYPE.EVCCCONF, write_key ="system/shutdown", expected_http_status_response=204)
+
+    # request: http://{host}/api/config/devices/vehicle/ford_mach_e/status
+    # response: {'capacity': {'value': 91.4, 'error': ''}, 'chargeStatus': {'value': 'A', 'error': ''}, 'icon': {'value': 'ford-mustang-mach-e', 'error': ''}, 'odometer': {'value': 19017, 'error': ''}, 'range': {'value': 516, 'error': ''}, 'soc': {'value': 100, 'error': ''}, 'vehicleLimitSoc': {'value': 100, 'error': ''}}
+    EVCCCONF_VEHICLECAPACITY    = ApiKey(entity_key="configvehicle_capacity", json_key="capacity", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.VEHICLE.value)
+    EVCCCONF_VEHICLESOC         = ApiKey(entity_key="configvehicle_soc", json_key="soc", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.VEHICLE.value)
+    EVCCCONF_VEHICLELIMITSOC    = ApiKey(entity_key="configvehicle_limitsoc", json_key="vehicleLimitSoc", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.VEHICLE.value)
+    EVCCCONF_VEHICLEODOMETER    = ApiKey(entity_key="configvehicle_odometer", json_key="odometer", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.VEHICLE.value)
+    EVCCCONF_VEHICLERANGE       = ApiKey(entity_key="configvehicle_range", json_key="range", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.VEHICLE.value)
+
+    # request: http://{host}/api/config/devices/charger/go-e/status
+    # response: {'chargeStatus': {'value': 'A', 'error': ''}, 'enabled': {'value': False, 'error': ''}, 'energy': {'value': 3844.383, 'error': ''}, 'identifier': {'value': '', 'error': ''}, 'phaseCurrents': {'value': [0, 0, 0], 'error': ''}, 'phaseVoltages': {'value': [233.7400055, 235.2899933, 233.7400055], 'error': ''}, 'phases1p3p': {'value': True, 'error': ''}, 'power': {'value': 0, 'error': ''}}
+    # request: http://{host}/api/config/devices/charger/heatpump-water_ha_switch/status
+    # response: {'chargeStatus': {'value': 'C', 'error': ''}, 'enabled': {'value': True, 'error': ''}, 'heating': {'value': True, 'error': ''}, 'icon': {'value': 'waterheater', 'error': ''}, 'integratedDevice': {'value': True, 'error': ''}, 'power': {'value': 19.051, 'error': ''}, 'singlePhase': {'value': True, 'error': ''}}
+
+    # request: http://{host}/api/config/devices/meter/SENEC.bat/status
+    # response: {'capacity': {'value': 12, 'error': ''}, 'power': {'value': 0, 'error': ''}, 'soc': {'value': 100, 'error': ''}}
+    # request: http://{host}/api/config/devices/meter/SENEC.grid/status
+    # response: {'phaseCurrents': {'value': [18.3899993896484, 5.38000011444092, 1.54999995231628], 'error': ''}, 'phaseVoltages': {'value': [238.800003051758, 237.900009155273, 236.199996948242], 'error': ''}, 'power': {'value': -5623.3798828125, 'error': ''}}
+    # request: http://{host}/api/config/devices/meter/SENEC.pv/status
+    # response: {'power': {'value': 7152.0888671875, 'error': ''}}
+
+    # request: http://{host}/api/config/devices/circuit/main/status
+    # response: {}

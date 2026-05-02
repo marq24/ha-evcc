@@ -31,7 +31,8 @@ from .pyevcc_ha.const import (
     JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
     JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
     JSONKEY_EVOPT_DETAILS_BATTERYDETAILS,
-    JSONKEY_EVOPT_DETAILS_TIMESTAMP
+    JSONKEY_EVOPT_DETAILS_TIMESTAMP,
+    ADDITIONAL_ENDPOINTS_DATA_EVCCCONF
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -40,11 +41,15 @@ _LOGGER = logging.getLogger(__name__)
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_entity_cb: AddEntitiesCallback):
     _LOGGER.debug("SENSOR async_setup_entry")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
-    entities = []
 
+    configuration_data_available = False
+    if len(coordinator.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {})) > 0:
+        configuration_data_available = True
+
+    entities = []
     the_sensors_list = SENSOR_ENTITIES
 
-    # we need to check if the grid data (power & currents) is available as separate object...
+    # we need to check if the grid data (power & currents) is available as a separate object...
     # or if it's still part of the main/site object (as gridPower, gridCurrents)
     if coordinator.grid_data_as_object:
         _LOGGER.debug("evcc 'grid' data is available in separate object")
@@ -64,6 +69,14 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
     # finally creating all the Sensors, based on the descriptions
     for description in the_sensors_list:
+        # enable all CONFIGURATION entities if config-data is available
+        if configuration_data_available and description.tag.type == EP_TYPE.EVCCCONF:
+            if not description.entity_registry_enabled_default:
+                description = replace(
+                    description,
+                    entity_registry_enabled_default = True
+                )
+
         entity = EvccSensor(coordinator, description)
         entities.append(entity)
 
@@ -81,6 +94,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in SENSOR_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
+                force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
                 # well - a hack to show any heating related loadpoints with temperature units...
                 # note: this will not change the label (that still show 'SOC')
                 force_celsius = lp_is_heating  and (
@@ -102,11 +116,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     key=f"{lp_id_addon}_{the_key}" if not patch_keys else f"{lp_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                     translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
+                    evcc_config_id=a_lp_key,
                     icon=a_stub.icon,
                     device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
                     unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
                     entity_category=a_stub.entity_category,
-                    entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                    entity_registry_enabled_default=True if force_enable_by_default else a_stub.entity_registry_enabled_default,
                     is_lp_integrated_device=lp_is_integrated,
 
                     # the entity type specific values...
@@ -147,6 +162,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         veh_name_addon = a_vehicle_obj["name"]
 
         for a_stub in SENSOR_ENTITIES_PER_VEHICLE:
+            force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
             # only when the json_idx has a length of 1 we must patch our key & translation_key
             patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
             the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
@@ -155,12 +171,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 tag=a_stub.tag,
                 key=f"{veh_id_addon}_{the_key}" if not patch_keys else f"{veh_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                 translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
+                evcc_config_id=a_vehicle_key,
                 name_addon=veh_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
                 unit_of_measurement=a_stub.unit_of_measurement,
                 entity_category=a_stub.entity_category,
-                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                entity_registry_enabled_default=True if force_enable_by_default else a_stub.entity_registry_enabled_default,
 
                 # the entity type specific values...
                 state_class=a_stub.state_class,
@@ -199,6 +216,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             # a_circuit_config = coordinator._circuit[a_circuit_key]
             for a_stub in SENSOR_ENTITIES_PER_CIRCUIT:
                 if a_stub.integrated_supported:
+                    force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
                     the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
                     description = ExtSensorEntityDescription(
                         tag=a_stub.tag,
@@ -208,7 +226,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                         name_addon=f"'{a_circuit_key.upper()}'",
                         icon=a_stub.icon,
                         entity_category=a_stub.entity_category,
-                        entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                        entity_registry_enabled_default=True if force_enable_by_default else a_stub.entity_registry_enabled_default,
 
                         # the entity type specific values...
                         state_class=a_stub.state_class,
@@ -463,6 +481,29 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     return None
             else:
                 _LOGGER.debug(f"no tariff data found for {self.tag}")
+                return None
+
+        if self.tag.type == EP_TYPE.EVCCCONF:
+            # for the entities that read the data from the CONFIGURATION, we need
+            # some special handling...
+            if self.entity_description.evcc_config_id is None:
+                return None
+            try:
+                value_from_config = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
+
+                # special handling for odometers...
+                if self.entity_description.ignore_zero:
+                    isZeroVal = value_from_config is None or value_from_config == "unknown" or value_from_config <= 0.1
+
+                    if isZeroVal and self._previous_float_value is not None and self._previous_float_value > 0:
+                        value_from_config = self._previous_float_value
+                    elif value_from_config > 0:
+                        self._previous_float_value = value_from_config
+
+                return value_from_config
+
+            except BaseException as exc:
+                _LOGGER.error(f"Error reading CONFIGURATION tag for {self.entity_id}: {type(exc).__name__} - {exc}")
                 return None
 
         try:
