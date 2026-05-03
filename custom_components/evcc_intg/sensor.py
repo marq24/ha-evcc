@@ -10,7 +10,20 @@ from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 from homeassistant.helpers.restore_state import RestoreEntity
 
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, FORECAST_CONTENT
+from custom_components.evcc_intg.pyevcc_ha.const import (
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
+    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
+    JSONKEY_EVOPT_DETAILS_BATTERYDETAILS,
+    JSONKEY_EVOPT_DETAILS_TIMESTAMP,
+    ADDITIONAL_ENDPOINTS_DATA_EVCCCONF,
+    EP_TYPE,
+    FORECAST_CONTENT,
+    SESSIONS_KEY_TOTAL,
+    EVCCCONF_KEY_CONFIG,
+    EVCCCONF_DEVICE_TYPES
+)
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, camel_to_snake
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import (
     DOMAIN,
@@ -22,17 +35,9 @@ from .const import (
     SENSOR_ENTITIES_PER_LOADPOINT,
     SENSOR_ENTITIES_PER_VEHICLE,
     SENSOR_ENTITIES_PER_CIRCUIT,
+    SENSOR_ENTITIES_PER_METER,
     TAG_TO_CONTENT_KEY,
     ExtSensorEntityDescription
-)
-from .pyevcc_ha import SESSIONS_KEY_TOTAL
-from .pyevcc_ha.const import (
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
-    JSONKEY_EVOPT_DETAILS_BATTERYDETAILS,
-    JSONKEY_EVOPT_DETAILS_TIMESTAMP,
-    ADDITIONAL_ENDPOINTS_DATA_EVCCCONF
 )
 
 _LOGGER = logging.getLogger(__name__)
@@ -227,6 +232,46 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                         icon=a_stub.icon,
                         entity_category=a_stub.entity_category,
                         entity_registry_enabled_default=True if force_enable_by_default else a_stub.entity_registry_enabled_default,
+
+                        # the entity type specific values...
+                        state_class=a_stub.state_class,
+                        native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                        suggested_display_precision=a_stub.suggested_display_precision,
+                        json_idx=a_stub.json_idx,
+                        factor=a_stub.factor,
+                        lookup=a_stub.lookup,
+                        ignore_zero=a_stub.ignore_zero
+                    )
+
+                    entity = EvccSensor(coordinator, description)
+                    entities.append(entity)
+
+    # the additional meter entities (from the configuration)
+    if configuration_data_available:
+        meter_data = coordinator.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.METER.value, {})
+        for a_meter_key in meter_data:
+            # we MUST ensure, that the meter_id_addon is a valid HA entity-id
+            # (at least 'meter_id_addon' will become part of an entity-id)
+            meter_id_addon = camel_to_snake(a_meter_key).replace(".", "_")
+            meter_name_addon = a_meter_key
+
+            for a_stub in SENSOR_ENTITIES_PER_METER:
+                value = coordinator.read_tag_configuration(a_stub.tag, a_meter_key)
+                if value is not None:
+                    patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
+                    the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
+
+                    description = ExtSensorEntityDescription(
+                        tag=a_stub.tag,
+                        key=f"{meter_id_addon}_{the_key}" if not patch_keys else f"{meter_id_addon}_{the_key}_{a_stub.json_idx[0]}",
+                        translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
+                        evcc_config_id=a_meter_key,
+                        name_addon=meter_name_addon if multi_loadpoint_config else None,
+                        icon=a_stub.icon,
+                        device_class=a_stub.device_class,
+                        unit_of_measurement=a_stub.unit_of_measurement,
+                        entity_category=a_stub.entity_category,
+                        entity_registry_enabled_default=True,
 
                         # the entity type specific values...
                         state_class=a_stub.state_class,
@@ -490,6 +535,20 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 return None
             try:
                 value_from_config = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
+                if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
+                    for idx, key in enumerate(self.entity_description.json_idx):
+                        if isinstance(value_from_config, (list, dict)):
+                            if isinstance(key, int) and len(value_from_config) > key:
+                                value_from_config = value_from_config[key]
+                            elif key in value_from_config:
+                                value_from_config = value_from_config[key]
+                        else:
+                            try:
+                                value_from_config = value_from_config[key]
+                            except (IndexError, KeyError, TypeError):
+                                _LOGGER.info(f"native_value(): index {idx+1} ({key}) not found in {value_from_config}")
+                                value_from_config = None
+                                break
 
                 # special handling for odometers...
                 if self.entity_description.ignore_zero:

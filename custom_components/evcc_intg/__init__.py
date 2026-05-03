@@ -50,8 +50,9 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     EVCCCONF_KEY_CONFIG,
     EVCCCONF_KEY_DATA,
     JSONKEY_CIRCUITS,
+    EP_TYPE
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, EP_TYPE, camel_to_snake
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, camel_to_snake
 from .const import (
     NAME,
     NAME_SHORT,
@@ -1014,6 +1015,22 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         }
         return a_device_info_dict
 
+    def device_info_dict_for_meter(self, addon: str) -> dict:
+        # check also 'read_evcc_config_on_startup' where we create the default device_info_dict
+        unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}_{addon}")
+        device_name_meter = "device_name_meter"
+        if self.data is not None:
+            meter_data = self.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.METER.value, {})
+            if addon in meter_data:
+                device_name_meter = f"device_name_meter_{meter_data[addon].lower()}"
+        a_device_info_dict = {
+            "identifiers": {(DOMAIN, unique_device_id)},
+            "manufacturer": MANUFACTURER,
+            "name": f"{NAME_SHORT} - {self.lang_map[device_name_meter]} {addon} [{self._system_id}]",
+            "sw_version": self._version
+        }
+        return a_device_info_dict
+
     @property
     def grid_data_as_object(self) -> bool:
         return self._grid_data_as_object
@@ -1074,12 +1091,13 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
         if self.tag.type == EP_TYPE.EVCCCONF:
             if self.tag.subtype == EVCCCONF_DEVICE_TYPES.VEHICLE.value:
                 return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
-            elif self.tag.subtype == EVCCCONF_DEVICE_TYPES.CIRCUIT.value:
-                return self.coordinator.device_info_dict_for_circuit(self._attr_name_addon)
+            # elif self.tag.subtype == EVCCCONF_DEVICE_TYPES.CIRCUIT.value:
+            #     return self.coordinator.device_info_dict_for_circuit(self._attr_name_addon)
+            elif self.tag.subtype == EVCCCONF_DEVICE_TYPES.METER.value:
+                return self.coordinator.device_info_dict_for_meter(self._attr_name_addon)
 
-
-        if self.tag.type is EP_TYPE.CIRCUITS and self._attr_name_addon is not None:
-            return self.coordinator.device_info_dict_for_circuit(self._attr_name_addon)
+        # if self.tag.type is EP_TYPE.CIRCUITS and self._attr_name_addon is not None:
+        #     return self.coordinator.device_info_dict_for_circuit(self._attr_name_addon)
 
         if self.tag.type == EP_TYPE.SESSIONS and self.tag.subtype is not None and self._attr_name_addon is not None:
             if self.tag.subtype == SESSIONS_KEY_LOADPOINTS:

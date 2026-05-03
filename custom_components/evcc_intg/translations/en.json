@@ -482,7 +482,21 @@
       "configvehicle_soc": {"name": "Charge"},
       "configvehicle_limitsoc": {"name": "Charge Limit"},
       "configvehicle_odometer": {"name": "Odometer"},
-      "configvehicle_range": {"name": "Range"}
+      "configvehicle_range": {"name": "Range"},
+
+      "configmeter_power": {"name": "Power"},
+      "configmeter_energy": {"name": "Energy"},
+      "configmeter_soc": {"name": "Charge"},
+      "configmeter_temp": {"name": "Temperature"},
+      "configmeter_phasecurrents_0": {"name": "Current P1"},
+      "configmeter_phasecurrents_1": {"name": "Current P2"},
+      "configmeter_phasecurrents_2": {"name": "Current P3"},
+      "configmeter_phasevoltages_0": {"name": "Voltage P1"},
+      "configmeter_phasevoltages_1": {"name": "Voltage P2"},
+      "configmeter_phasevoltages_2": {"name": "Voltage P3"},
+      "configmeter_phasepowers_0": {"name": "Power P1"},
+      "configmeter_phasepowers_1": {"name": "Power P2"},
+      "configmeter_phasepowers_2": {"name": "Power P3"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},

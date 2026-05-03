@@ -27,8 +27,13 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     EVCCCONF_KEY_CONFIG,
     EVCCCONF_KEY_DATA,
     EVCCCONF_OBJECT_HIERARCHY,
+    EVCCCONF_DEVICES,
+    EVCCCONF_DEVICE_TYPES,
+    EVCCCONF_SITE,
+    EVCCCONF_LOADPOINTS,
+    EP_TYPE,
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import EP_TYPE, Tag, IS_TRIGGER
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, IS_TRIGGER
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -492,7 +497,7 @@ class EvccApiBridge:
             if ADDITIONAL_ENDPOINTS_DATA_EVCCCONF not in json_resp:
                 # creating our core data container object...
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF] = {}
-                json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG] = await self._read_config_setup()
+                json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG] = await self._read_config_setup(log_requests)
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA] = {}
 
             # ok the configuration data MUST exis now... so we can finally fetch the states
@@ -508,8 +513,11 @@ class EvccApiBridge:
                     a_status_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
                     if a_status_resp is not None and len(a_status_resp) > 0:
                         # make sure that we always use lower case device-ids
-                        # comprae also with the reading code in 'read_tag_configuration'
+                        # compare also with the reading code in 'read_tag_configuration'
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type][a_device_id.lower()] = a_status_resp
+                        if log_requests:
+                            _LOGGER.debug(f"Response received for {req}: {a_status_resp}")
+
 
             _LOGGER.debug(f"read_config_data(): configuration data read {list(json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA].keys())}")
 
@@ -528,6 +536,8 @@ class EvccApiBridge:
                     config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
                     if config_resp is not None and len(config_resp) > 0:
                         the_configuration[a_object_type][a_sub_type] = config_resp
+                        if log_requests:
+                            _LOGGER.debug(f"Response received for {req}: {config_resp}")
             else:
                 req = f"{self.host}/api/config/{a_object_type}"
                 if log_requests:
@@ -535,7 +545,8 @@ class EvccApiBridge:
                 config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
                 if config_resp is not None and len(config_resp) > 0:
                     the_configuration[a_object_type] = config_resp
-
+                    if log_requests:
+                        _LOGGER.debug(f"Response received for {req}: {config_resp}")
         # just as object reference...
         # a_sample_config = {
         #     "devices": {
@@ -784,14 +795,49 @@ class EvccApiBridge:
         #     }
         # }
 
+        # in the 'site' object, we can see which 'meter' is from which type:
+        # grid, pv, battery, aux and ext (but currently we don't use this info (yet))
+
+        # since the_configuration has been created on basis of the EVCCCONF_OBJECT_HIERARCHY
+        # we are sure that "site", "loadpoints" and "devices" are present!
+        meter_to_site_key = {}
+        for key, value in the_configuration[EVCCCONF_SITE].items():
+            if value is None:
+                continue
+
+            if isinstance(value, list):
+                for meter_name in value:
+                    meter_to_site_key[meter_name] = key
+            else:
+                meter_to_site_key[value] = key
+
+        # generate a lookup also for the 'chargers' - since a charger is assigned to a
+        # loadpoint (1:1)
+        loadpoint_by_charger = {
+            loadpoint[EVCCCONF_DEVICE_TYPES.CHARGER.value]: loadpoint
+            for loadpoint in the_configuration[EVCCCONF_LOADPOINTS]
+        }
+
         # so 'the_configuration' object should contain the keys:"devices", "site", "loadpoints" and "tariff"
         # currently we are ONLY interested in the devices!
         a_result = {}
-        for category, items in the_configuration["devices"].items():
-            a_result[category] = [item["name"] for item in items]
 
-            # in the 'site' object, we can see which 'meter' is from which type:
-            # grid, pv, battery, aux and ext (but currently we don't use this info (yet))
+        for category, items in the_configuration[EVCCCONF_DEVICES].items():
+            if category == EVCCCONF_DEVICE_TYPES.METER.value:
+                a_result[category] = {
+                    item["name"]: meter_to_site_key.get(item["name"])
+                    for item in items
+                }
+            elif category == EVCCCONF_DEVICE_TYPES.CHARGER.value:
+                a_result[category] = {
+                    item["name"]: loadpoint_by_charger.get(item["name"])
+                    for item in items
+                }
+            else:
+                a_result[category] = [
+                    item["name"]
+                    for item in items
+                ]
 
             # if we additionally need the loadpoint names (=id's)... we can use this line:
             # a_result["loadpoints"] = [lp["name"] for lp in a_conf["loadpoints"]]

@@ -7,7 +7,8 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import EvccDataUpdateCoordinator, EvccBaseEntity, ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, EP_TYPE
+from custom_components.evcc_intg.pyevcc_ha.const import ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, EP_TYPE
+from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, BUTTONS_ENTITIES, BUTTONS_ENTITIES_PER_LOADPOINT, ExtButtonEntityDescription
 
 _LOGGER = logging.getLogger(__name__)

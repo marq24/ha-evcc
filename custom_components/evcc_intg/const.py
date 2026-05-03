@@ -15,6 +15,7 @@ from homeassistant.const import (
     UnitOfLength,
     UnitOfTime,
     UnitOfElectricPotential,
+    UnitOfTemperature,
     PERCENTAGE,
     Platform
 )
@@ -26,9 +27,12 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
     JSONKEY_EVOPT_REQ_TIME_SERIES,
     JSONKEY_EVOPT_REQ_TIME_SERIES_DT,
+    GRID_CONTENT,
+    PV_CONTENT,
+    FORECAST_CONTENT,
+    BATTERY_CONTENT
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, GRID_CONTENT, PV_CONTENT, FORECAST_CONTENT, BATTERY_CONTENT, \
-    IS_TRIGGER
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, IS_TRIGGER
 
 # Base component constants
 MANUFACTURER: Final = "marq24"
@@ -1926,6 +1930,98 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         entity_registry_enabled_default=False
     )
 ]
+# the meters are coming from the evcc configuration endpoints (and require the evcc-admin pwd)
+# there is no entity_registry_enabled_default=True/False here, since the sensor code will
+# check, if there is a value (from the configuration) before adding the sensors...
+SENSOR_ENTITIES_PER_METER = [
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERPOWER,
+        icon="mdi:transmission-tower",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfPower.WATT,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.POWER
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERENERGY,
+        icon="mdi:transmission-tower",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=SensorDeviceClass.ENERGY,
+        suggested_display_precision=2
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERSOC,
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERTEMP,
+        icon="mdi:thermometer",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfTemperature.CELSIUS,
+        device_class=None,
+        suggested_display_precision=1,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERPHASECURRENTS,
+        json_idx=[0],
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.CURRENT,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERPHASECURRENTS,
+        json_idx=[1],
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.CURRENT,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERPHASECURRENTS,
+        json_idx=[2],
+        icon="mdi:current-ac",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricCurrent.AMPERE,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.CURRENT,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERPHASEVOLTAGES,
+        json_idx=[0],
+        icon="mdi:lightning-bolt",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.VOLTAGE,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERPHASEVOLTAGES,
+        json_idx=[1],
+        icon="mdi:lightning-bolt",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.VOLTAGE,
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.EVCCCONF_METERPHASEVOLTAGES,
+        json_idx=[2],
+        icon="mdi:lightning-bolt",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfElectricPotential.VOLT,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.VOLTAGE,
+    ),
+]
+
 SENSOR_ENTITIES_PER_CIRCUIT = [
     ExtSensorEntityDescriptionStub(
         tag=Tag.CIRCUITS_POWER,

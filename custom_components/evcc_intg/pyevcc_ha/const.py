@@ -62,27 +62,62 @@ SESSIONS_KEY_TOTAL: Final = "total"
 SESSIONS_KEY_VEHICLES: Final = "vehicles"
 SESSIONS_KEY_LOADPOINTS: Final = "loadpoints"
 
+class EP_TYPE(Enum):
+    CIRCUITS    = JSONKEY_CIRCUITS
+    LOADPOINTS  = JSONKEY_LOADPOINTS
+    VEHICLES    = JSONKEY_VEHICLES
+    STATISTICS  = JSONKEY_STATISTICS
+    EVOPT       = JSONKEY_EVOPT
+    SITE        = "site"
+    TARIFF      = "tariff"
+    SESSIONS    = "sessions"
+    EVCCCONF    = "evccconf"
+
+class BATTERY_CONTENT(Enum):
+    SOC     = "soc"
+    POWER   = "power"
+
+class GRID_CONTENT(Enum):
+    CURRENTS= "currents"
+    POWER   = "power"
+
+class PV_CONTENT(Enum):
+    ENERGY= "energy"
+    POWER = "power"
+
+class FORECAST_CONTENT(Enum):
+    GRID    = "grid"
+    SOLAR   = "solar"
+    FEEDIN  = "feedin"
+    PLANNER = "planner"
+
 class EVCCCONF_DEVICE_TYPES(Enum):
-    VEHICLE = "vehicle"
-    CHARGER = "charger"
-    METER = "meter"
-    CIRCUIT = "circuit"
-    MESSENGER = "messenger"
-    TARIFF = "tariff"
+    VEHICLE     = "vehicle"
+    CHARGER     = "charger"
+    METER       = "meter"
+    CIRCUIT     = "circuit"
+    MESSENGER   = "messenger"
+    TARIFF      = "tariff"
 
 ADDITIONAL_ENDPOINTS_DATA_EVCCCONF: Final = "@@@evccconf-data"
 EVCCCONF_KEY_CONFIG: Final = "@@@config"
 EVCCCONF_KEY_DATA: Final = "@@@data"
-EVCCCONF_OBJECT_HIERARCHY: Final = {"devices":[
-                                            EVCCCONF_DEVICE_TYPES.VEHICLE.value,
-                                            EVCCCONF_DEVICE_TYPES.CHARGER.value,
-                                            EVCCCONF_DEVICE_TYPES.METER.value,
-                                            EVCCCONF_DEVICE_TYPES.CIRCUIT.value,
-                                            EVCCCONF_DEVICE_TYPES.MESSENGER.value,
-                                            EVCCCONF_DEVICE_TYPES.TARIFF.value],
-                                         "site": [],
-                                         "loadpoints":[],
-                                         "tariff":[]}
+EVCCCONF_DEVICES: Final = "devices"
+EVCCCONF_SITE: Final = "site"
+EVCCCONF_LOADPOINTS: Final = "loadpoints"
+EVCCCONF_TARIFF: Final = "tariff"
+EVCCCONF_OBJECT_HIERARCHY: Final = {
+    EVCCCONF_DEVICES:[
+        EVCCCONF_DEVICE_TYPES.VEHICLE.value,
+        EVCCCONF_DEVICE_TYPES.CHARGER.value,
+        EVCCCONF_DEVICE_TYPES.METER.value,
+        EVCCCONF_DEVICE_TYPES.CIRCUIT.value,
+        EVCCCONF_DEVICE_TYPES.MESSENGER.value,
+        EVCCCONF_DEVICE_TYPES.TARIFF.value],
+    EVCCCONF_SITE: [],
+    EVCCCONF_LOADPOINTS: [],
+    EVCCCONF_TARIFF: []
+}
 
 # STATES: Final = [JSONKEY_LOADPOINTS, JSONKEY_AUXPOWER, JSONKEY_BATTERYMODE, JSONKEY_BATTERYPOWER, JSONKEY_BATTERYSOC,
 #                  JSONKEY_GRID, JSONKEY_GRIDCURRENTS, JSONKEY_GRIDPOWER, JSONKEY_HOMEPOWER, JSONKEY_PVENERGY,
@@ -127,6 +162,11 @@ TRANSLATIONS: Final = {
         "device_name_loadpoint": "Ladepunkt",
         "device_name_vehicle": "Fahrzeug",
         "device_name_circuit": "Stromkreis",
+        "device_name_meter": "Messstelle",
+        "device_name_meter_grid": "Zähler",
+        "device_name_meter_ext": "Zusatzzähler",
+        "device_name_meter_pv": "PV-Anlage",
+        "device_name_meter_battery": "Speicherbatterie",
         "ws_connected": "WebSocket Verbindung:",
     },
     "en": {
@@ -149,6 +189,11 @@ TRANSLATIONS: Final = {
         "device_name_loadpoint": "Loadpoint",
         "device_name_vehicle": "Vehicle",
         "device_name_circuit": "Circuit",
+        "device_name_meter": "Meter",
+        "device_name_meter_grid": "Grid",
+        "device_name_meter_ext": "Additional Meter",
+        "device_name_meter_pv": "Photovoltaic",
+        "device_name_meter_battery": "Home Battery",
         "ws_connected": "WebSocket connection:",
     }
 }

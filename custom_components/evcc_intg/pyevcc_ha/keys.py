@@ -8,14 +8,9 @@ from typing import (
 from custom_components.evcc_intg.pyevcc_ha.const import (
     MIN_CURRENT_LIST,
     MAX_CURRENT_LIST,
-    JSONKEY_CIRCUITS,
-    JSONKEY_LOADPOINTS,
-    JSONKEY_VEHICLES,
-    JSONKEY_EVOPT,
     JSONKEY_EVOPT_REQ,
     JSONKEY_EVOPT_RES,
     JSONKEY_EVOPT_DETAILS,
-    JSONKEY_STATISTICS,
     JSONKEY_STATISTICS_TOTAL,
     JSONKEY_STATISTICS_THISYEAR,
     JSONKEY_STATISTICS_365D,
@@ -27,6 +22,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_VEHICLES,
     SESSIONS_KEY_LOADPOINTS,
     EVCCCONF_DEVICE_TYPES,
+    EP_TYPE,
 )
 
 # from aenum import Enum, extend_enum
@@ -45,34 +41,6 @@ def camel_to_snake(a_key: str):
     a_key = re.sub(CC_P1, r'\1_\2', a_key)
     return re.sub(CC_P2, r'\1_\2', a_key).lower()
 
-class EP_TYPE(Enum):
-    CIRCUITS = JSONKEY_CIRCUITS
-    LOADPOINTS = JSONKEY_LOADPOINTS
-    VEHICLES = JSONKEY_VEHICLES
-    STATISTICS = JSONKEY_STATISTICS
-    EVOPT = JSONKEY_EVOPT
-    SITE = "site"
-    TARIFF = "tariff"
-    SESSIONS = "sessions"
-    EVCCCONF = "evccconf"
-
-class BATTERY_CONTENT(Enum):
-    SOC = "soc"
-    POWER = "power"
-
-class GRID_CONTENT(Enum):
-    CURRENTS = "currents"
-    POWER = "power"
-
-class PV_CONTENT(Enum):
-    ENERGY = "energy"
-    POWER = "power"
-
-class FORECAST_CONTENT(Enum):
-    GRID = "grid"
-    SOLAR = "solar"
-    FEEDIN = "feedin"
-    PLANNER = "planner"
 
 class ApiKey(NamedTuple):
     type: str
@@ -518,10 +486,20 @@ class Tag(ApiKey, Enum):
     EVCCCONF_VEHICLEODOMETER    = ApiKey(entity_key="configvehicle_odometer", json_key="odometer", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.VEHICLE.value)
     EVCCCONF_VEHICLERANGE       = ApiKey(entity_key="configvehicle_range", json_key="range", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.VEHICLE.value)
 
+    #EVCCCONF_CHARGER = ApiKey(entity_key="configcharger_", json_key="", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.CHARGER.value)
     # request: http://{host}/api/config/devices/charger/go-e/status
     # response: {'chargeStatus': {'value': 'A', 'error': ''}, 'enabled': {'value': False, 'error': ''}, 'energy': {'value': 3844.383, 'error': ''}, 'identifier': {'value': '', 'error': ''}, 'phaseCurrents': {'value': [0, 0, 0], 'error': ''}, 'phaseVoltages': {'value': [233.7400055, 235.2899933, 233.7400055], 'error': ''}, 'phases1p3p': {'value': True, 'error': ''}, 'power': {'value': 0, 'error': ''}}
     # request: http://{host}/api/config/devices/charger/heatpump-water_ha_switch/status
     # response: {'chargeStatus': {'value': 'C', 'error': ''}, 'enabled': {'value': True, 'error': ''}, 'heating': {'value': True, 'error': ''}, 'icon': {'value': 'waterheater', 'error': ''}, 'integratedDevice': {'value': True, 'error': ''}, 'power': {'value': 19.051, 'error': ''}, 'singlePhase': {'value': True, 'error': ''}}
+
+    # https://github.com/evcc-io/evcc/blob/master/server/http_config_helper.go -> func testInstance(instance any) map[string]testResult
+    EVCCCONF_METERPOWER         = ApiKey(entity_key="configmeter_power", json_key="power", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
+    EVCCCONF_METERENERGY        = ApiKey(entity_key="configmeter_energy", json_key="energy", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
+    EVCCCONF_METERSOC           = ApiKey(entity_key="configmeter_soc", json_key="soc", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
+    EVCCCONF_METERTEMP          = ApiKey(entity_key="configmeter_temp", json_key="temp", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
+    EVCCCONF_METERPHASECURRENTS = ApiKey(entity_key="configmeter_phasecurrents", json_key="phaseCurrents", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
+    EVCCCONF_METERPHASEVOLTAGES = ApiKey(entity_key="configmeter_phasevoltages", json_key="phaseVoltages", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
+    EVCCCONF_METERPHASEPOWERS   = ApiKey(entity_key="configmeter_phasepowers", json_key="phasePowers", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
 
     # request: http://{host}/api/config/devices/meter/SENEC.bat/status
     # response: {'capacity': {'value': 12, 'error': ''}, 'power': {'value': 0, 'error': ''}, 'soc': {'value': 100, 'error': ''}}

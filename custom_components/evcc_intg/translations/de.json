@@ -398,7 +398,21 @@
       "configvehicle_soc": {"name": "Ladestand"},
       "configvehicle_limitsoc": {"name": "Ladelimit"},
       "configvehicle_odometer": {"name": "Kilometerstand"},
-      "configvehicle_range": {"name": "Reichweite"}
+      "configvehicle_range": {"name": "Reichweite"},
+
+      "configmeter_power": {"name": "Leistung"},
+      "configmeter_energy": {"name": "Energie"},
+      "configmeter_soc": {"name": "Ladestand"},
+      "configmeter_temp": {"name": "Temperatur"},
+      "configmeter_phasecurrents_0": {"name": "Strom P1"},
+      "configmeter_phasecurrents_1": {"name": "Strom P2"},
+      "configmeter_phasecurrents_2": {"name": "Strom P3"},
+      "configmeter_phasevoltages_0": {"name": "Spannung P1"},
+      "configmeter_phasevoltages_1": {"name": "Spannung P2"},
+      "configmeter_phasevoltages_2": {"name": "Spannung P3"},
+      "configmeter_phasepowers_0": {"name": "Leistung P1"},
+      "configmeter_phasepowers_1": {"name": "Leistung P2"},
+      "configmeter_phasepowers_2": {"name": "Leistung P3"}
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},
