@@ -484,8 +484,8 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     elif "ts" in a_entry:
                         timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
                         if (timestamp_dt.day == current_time.day and
-                            timestamp_dt.hour == current_time.hour and
-                            int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
+                                timestamp_dt.hour == current_time.hour and
+                                int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
                         ):
                             if "val" in a_entry:
                                 self._last_calculated_value = a_entry["val"]
@@ -556,7 +556,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
 
                     if isZeroVal and self._previous_float_value is not None and self._previous_float_value > 0:
                         value_from_config = self._previous_float_value
-                    elif value_from_config > 0:
+                    elif not isZeroVal and value_from_config > 0:
                         self._previous_float_value = value_from_config
 
                 return value_from_config
@@ -645,7 +645,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
 
             if isZeroVal and self._previous_float_value is not None and self._previous_float_value > 0:
                 value = self._previous_float_value
-            elif value > 0:
+            elif not isZeroVal and value > 0:
                 self._previous_float_value = value
 
         # final return statement...

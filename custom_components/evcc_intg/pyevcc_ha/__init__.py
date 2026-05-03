@@ -335,12 +335,12 @@ class EvccApiBridge:
 
                                 # END of for loop
                                 # _LOGGER.debug(f"key: {key} value: {value}")
-                                self._ws_update_data_debounced()
+                                self._ws_notify_coordinator_for_updated_data_debounced()
 
                         except Exception as e:
                             _LOGGER.info(f"Could not read JSON from: {msg} - caused {e}")
                             # Ensure we still update the coordinator even if processing failed
-                            self._ws_update_data_debounced()
+                            self._ws_notify_coordinator_for_updated_data_debounced()
 
                         # launch a task to update the session & tariff data (if needed)
                         self._ws_start_async_additional_data_update_task_if_needed()
@@ -365,13 +365,13 @@ class EvccApiBridge:
             async def _task():
                 await self.read_all_data(request_all=False, request_tariffs=True, request_sessions=True, request_config=True)
                 if self.coordinator is not None and self._data_coordinator_update_needed:
-                    self._ws_update_data_debounced()
+                    self._ws_notify_coordinator_for_updated_data_debounced()
             self._debounced_additional_data_update_task = asyncio.create_task(_task())
         else:
             # if the task is already running, we don't need to do anything...'
             pass
 
-    def _ws_update_data_debounced(self):
+    def _ws_notify_coordinator_for_updated_data_debounced(self):
         if self._debounced_update_task is not None:
             self._debounced_update_task.cancel()
 
