@@ -85,9 +85,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         entity = EvccSensor(coordinator, description)
         entities.append(entity)
 
-    multi_loadpoint_config = len(coordinator._loadpoint) > 1 #or len(coordinator._vehicle) > 1
-
     # loadpoint sensors...
+    multi_loadpoint_config = len(coordinator._loadpoint) > 1
     for a_lp_key in coordinator._loadpoint:
         load_point_config = coordinator._loadpoint[a_lp_key]
         lp_api_index = int(a_lp_key)
@@ -161,6 +160,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entities.append(entity)
 
     # vehicle sensors...
+    multi_vehicle_config = len(coordinator._vehicle) > 1
     for a_vehicle_key in coordinator._vehicle:
         a_vehicle_obj = coordinator._vehicle[a_vehicle_key]
         veh_id_addon = a_vehicle_obj["id"]
@@ -168,7 +168,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
         for a_stub in SENSOR_ENTITIES_PER_VEHICLE:
             force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
-            # only when the json_idx has a length of 1 we must patch our key & translation_key
+            # only when the json_idx has a length of 1, we must patch our key & translation_key
             patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
             the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
 
@@ -177,7 +177,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 key=f"{veh_id_addon}_{the_key}" if not patch_keys else f"{veh_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                 translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                 evcc_config_id=a_vehicle_key,
-                name_addon=veh_name_addon if multi_loadpoint_config else None,
+                name_addon=veh_name_addon if multi_vehicle_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
                 unit_of_measurement=a_stub.unit_of_measurement,
@@ -266,7 +266,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                         key=f"{meter_id_addon}_{the_key}" if not patch_keys else f"{meter_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                         translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                         evcc_config_id=a_meter_key,
-                        name_addon=meter_name_addon if multi_loadpoint_config else None,
+                        name_addon=meter_name_addon,
                         icon=a_stub.icon,
                         device_class=a_stub.device_class,
                         unit_of_measurement=a_stub.unit_of_measurement,

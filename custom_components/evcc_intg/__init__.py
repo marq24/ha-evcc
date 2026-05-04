@@ -1088,32 +1088,33 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
 
     @property
     def device_info(self) -> dict:
-        if self.tag.type == EP_TYPE.EVCCCONF:
-            if self.tag.subtype == EVCCCONF_DEVICE_TYPES.VEHICLE.value:
-                return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
-            # elif self.tag.subtype == EVCCCONF_DEVICE_TYPES.CIRCUIT.value:
+        if self._attr_name_addon is not None:
+            if self.tag.type == EP_TYPE.EVCCCONF:
+                if self.tag.subtype == EVCCCONF_DEVICE_TYPES.VEHICLE.value:
+                    return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
+                # elif self.tag.subtype == EVCCCONF_DEVICE_TYPES.CIRCUIT.value:
+                #     return self.coordinator.device_info_dict_for_circuit(self._attr_name_addon)
+                elif self.tag.subtype == EVCCCONF_DEVICE_TYPES.METER.value:
+                    return self.coordinator.device_info_dict_for_meter(self._attr_name_addon)
+
+            # if self.tag.type is EP_TYPE.CIRCUITS:
             #     return self.coordinator.device_info_dict_for_circuit(self._attr_name_addon)
-            elif self.tag.subtype == EVCCCONF_DEVICE_TYPES.METER.value:
-                return self.coordinator.device_info_dict_for_meter(self._attr_name_addon)
 
-        # if self.tag.type is EP_TYPE.CIRCUITS and self._attr_name_addon is not None:
-        #     return self.coordinator.device_info_dict_for_circuit(self._attr_name_addon)
+            if self.tag.type == EP_TYPE.SESSIONS and self.tag.subtype is not None:
+                if self.tag.subtype == SESSIONS_KEY_LOADPOINTS:
+                    return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
 
-        if self.tag.type == EP_TYPE.SESSIONS and self.tag.subtype is not None and self._attr_name_addon is not None:
-            if self.tag.subtype == SESSIONS_KEY_LOADPOINTS:
+                elif self.tag.subtype == SESSIONS_KEY_VEHICLES:
+                    return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
+
+            # all other sensors with a _attr_name_addon (except CIRCUITS) must be loadpoint data...
+            if self.tag.type is not EP_TYPE.CIRCUITS:
                 return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
 
-            elif self.tag.subtype == SESSIONS_KEY_VEHICLES:
-                return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
-
-        # all other sensors with a _attr_name_addon (except CIRCUITS) must be loadpoint data...
-        if self.tag.type is not EP_TYPE.CIRCUITS and self._attr_name_addon is not None:
-            return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
-        else:
-            # only the main/site device information should show the connection status of a
-            # possible existing websocket connection
-            self.coordinator._device_info_show_ws_state = self.coordinator.use_ws
-            return self.coordinator.device_info_dict
+        # only the main/site device information should show the connection status of a
+        # possible existing websocket connection
+        self.coordinator._device_info_show_ws_state = self.coordinator.use_ws
+        return self.coordinator.device_info_dict
 
     @property
     def available(self):
