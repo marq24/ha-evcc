@@ -127,6 +127,8 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
 
     async def _test_host_and_optional_pwd(self, host, adm_pwd:str=None):
         try:
+            _LOGGER.debug(f"test_host_and_optional_pwd(): starting")
+
             # for the test we must still ensure that our adm_pwd is stripped...
             if adm_pwd is not None:
                 adm_pwd = adm_pwd.strip()
@@ -141,24 +143,30 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             server_is_valid = False
             pwd_is_valid = True if adm_pwd is None else False
 
-            ret = await client.read_all_data()
-            if ret is not None and len(ret) > 0:
+            ret = await client.read_state_data()
+            _LOGGER.debug(f"_test_host_and_optional_pwd(): read data from evcc@{host} - result-size: {len(ret.keys()) if ret is not None else 'None'}")
+
+            if ret is not None and isinstance(ret, dict) and len(ret) > 0:
                 if Tag.VERSION.json_key in ret:
                     self._version = ret[Tag.VERSION.json_key]
                 elif Tag.AVAILABLEVERSION.json_key in ret:
                     self._version = ret[Tag.AVAILABLEVERSION.json_key]
                 else:
-                    _LOGGER.warning("No Version could be detected - ignore for now")
+                    _LOGGER.warning("_test_host_and_optional_pwd(): No Version could be detected - ignore for now")
 
-                _LOGGER.info(f"successfully validated host -> result: {list(ret.keys())}")
+                _LOGGER.info(f"_test_host_and_optional_pwd(): successfully validated host -> result: {list(ret.keys())}")
                 server_is_valid = True
                 if not pwd_is_valid:
                     pwd_is_valid = await client.ensure_session_is_authorized()
 
+            if adm_pwd is not None:
+                _LOGGER.debug(f"test_host_and_optional_pwd(): for HOST-AND-PWD ended with result: server_is_valid={server_is_valid}, pwd_is_valid={pwd_is_valid}")
+            else:
+                _LOGGER.debug(f"test_host_and_optional_pwd(): for HOST ended with result: server_is_valid={server_is_valid}")
             return server_is_valid, pwd_is_valid
 
         except Exception as exc:
-            _LOGGER.error(f"Exception while test host/credentials: {exc}")
+            _LOGGER.error(f"_test_host_and_optional_pwd(): Exception while test host/credentials: {exc}")
 
         return False, False
 

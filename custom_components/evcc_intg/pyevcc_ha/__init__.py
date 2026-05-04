@@ -49,18 +49,30 @@ async def _do_request(method: Callable, return_raw_client_response:bool=False) -
                         if "application/json" in res.content_type.lower():
                             try:
                                 data = await res.json()
-
-                                # if we have NO DATA in the response, we will return the response itself...
-                                if data is None or len(data) == 0:
+                                if data is None:
                                     if return_raw_client_response:
                                         return {RAW_CLIENT_RESPONSE_KEY: res}
                                     else:
                                         return {}
-                                else:
+
+                                elif isinstance(data, dict):
                                     # check if the data is a dict with a single key "result" - this 'result' container
                                     # will be removed in the future [https://github.com/evcc-io/evcc/pull/22299]
-                                    if isinstance(data, dict) and "result" in data and len(data) == 1:
+                                    if "result" in data and len(data) == 1:
                                         data = data["result"]
+                                    return data
+
+                                elif isinstance(data, list):
+                                    return data
+
+                                elif len(str(data).strip()) == 0:
+                                    if return_raw_client_response:
+                                        return {RAW_CLIENT_RESPONSE_KEY: res}
+                                    else:
+                                        return {}
+
+                                else:
+                                    # it's a single plain value (number, string, bool)
                                     return data
 
                             except JSONDecodeError as json_exc:
@@ -400,15 +412,14 @@ class EvccApiBridge:
     async def read_all_data(self, request_all:bool=True,
                             request_tariffs:bool=False,
                             request_sessions:bool=False,
-                            request_config:bool=False) -> dict:
-        if request_all:
-            _LOGGER.debug(f"going to read all data from evcc@{self.host}")
-            req = f"{self.host}/api/state"
-            _LOGGER.debug(f"GET request: {req}")
-            json_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+                            request_config:bool=False,
+                            log_config_requests:bool=False) -> dict:
 
-            if json_resp is not None and len(json_resp) == 0:
-                _LOGGER.info(f"could not read data from evcc@{self.host} - using empty data")
+        _LOGGER.debug(f"read_all_data(): from evcc@{self.host}")
+        if request_all:
+            json_resp = await self.read_state_data()
+            if len(json_resp) == 0:
+                return {}
         else:
             if self._data is None:
                 self._data = {}
@@ -445,12 +456,23 @@ class EvccApiBridge:
         if request_all or request_config:
             now_time = time()
             if self._CONFIG_LAST_UPDATE + self._CONFIG_UPDATE_INTERVAL_IN_SECONDS <= time():
-                json_resp = await self.read_config_data(json_resp)
+                json_resp = await self.read_config_data(json_resp, log_requests=log_config_requests)
                 self._data_coordinator_update_needed = True
                 self._CONFIG_LAST_UPDATE = now_time
 
         self._data = json_resp
         return json_resp
+
+    async def read_state_data(self) -> dict:
+        req = f"{self.host}/api/state"
+        _LOGGER.debug(f"GET request: {req}")
+        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+
+        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or len(str(r_json).strip()) > 0):
+            return r_json
+        else:
+            _LOGGER.warning(f"could not read any json data from evcc@{self.host} - read: '{r_json}' -> will return an empty dict!")
+            return {}
 
     async def read_tariff_data(self, json_resp: dict) -> dict:
         # _LOGGER.info(f"going to request additional tariff data from evcc@{self.host}")
@@ -517,7 +539,6 @@ class EvccApiBridge:
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type][a_device_id.lower()] = a_status_resp
                         if log_requests:
                             _LOGGER.debug(f"Response received for {req}: {a_status_resp}")
-
 
             _LOGGER.debug(f"read_config_data(): configuration data read {list(json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA].keys())}")
 

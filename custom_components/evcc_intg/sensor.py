@@ -160,7 +160,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entities.append(entity)
 
     # vehicle sensors...
-    multi_vehicle_config = len(coordinator._vehicle) > 1
+    multi_vehicle_config = multi_loadpoint_config or len(coordinator._vehicle) > 1
     for a_vehicle_key in coordinator._vehicle:
         a_vehicle_obj = coordinator._vehicle[a_vehicle_key]
         veh_id_addon = a_vehicle_obj["id"]
@@ -250,7 +250,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     if configuration_data_available:
         meter_data = coordinator.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.METER.value, {})
         for a_meter_key in meter_data:
-            # we MUST ensure, that the meter_id_addon is a valid HA entity-id
+            # we MUST ensure that the meter_id_addon is a valid HA entity-id
             # (at least 'meter_id_addon' will become part of an entity-id)
             meter_id_addon = camel_to_snake(a_meter_key).replace(".", "_")
             meter_name_addon = a_meter_key
@@ -258,6 +258,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             for a_stub in SENSOR_ENTITIES_PER_METER:
                 value = coordinator.read_tag_configuration(a_stub.tag, a_meter_key)
                 if value is not None:
+                    _LOGGER.debug(f"{a_stub.tag.entity_key} for meter '{a_meter_key}' -> {value}")
                     patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
                     the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
 

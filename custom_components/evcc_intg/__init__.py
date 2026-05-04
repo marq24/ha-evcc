@@ -111,7 +111,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         _LOGGER.info(STARTUP_MESSAGE % intg_version)
         hass.data.setdefault(DOMAIN, {"manifest_version": intg_version})
 
-    # yes - hurray! we can now cleanup the device registry...
+    # yes - hurray! we can now clean up the device registry...
     purge_all_devices = config_entry.data.get(CONF_PURGE_ALL, False)
     asyncio.create_task(check_device_registry(hass, purge_all_devices, config_entry.entry_id))
     if purge_all_devices:
@@ -119,10 +119,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         new_data_dict = config_entry.data.copy()
         del new_data_dict[CONF_PURGE_ALL]
         hass.config_entries.async_update_entry(config_entry, data=new_data_dict, options={}, version=CONFIG_VERSION, minor_version=CONFIG_MINOR_VERSION)
-        _LOGGER.debug(f"Updated configuration (PURGE_ALL removed): {new_data_dict}")
+        _LOGGER.debug(f"async_setup_entry(): Updated configuration (PURGE_ALL removed): {new_data_dict}")
 
-
+    # loading a possible existing cookie file (from the .storage so we don't have the need
+    # to login to the evcc backend with every startup
     cookie_path = str(Path(hass.config.config_dir).joinpath(STORAGE_DIR, f"cookies_evcc_intg_{config_entry.entry_id}.txt"))
+
     # ensure that our storage directory exists...
     def prepare_dir():
         os.makedirs(os.path.dirname(cookie_path), exist_ok=True)
@@ -133,9 +135,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         if config_entry.data.get(CONF_PASSWORD):
             try:
                 await hass.async_add_executor_job(the_persistent_cookie_jar.load, cookie_path)
-                _LOGGER.debug(f"Loaded cookies from file: '{cookie_path}'")
+                _LOGGER.debug(f"async_setup_entry(): Loaded cookies from file: '{cookie_path}'")
             except Exception as err:
-                _LOGGER.info(f"Could not load cookies from {cookie_path}: {type(err).__name__} - {err}")
+                _LOGGER.info(f"async_setup_entry(): Could not load cookies from {cookie_path}: {type(err).__name__} - {err}")
         else:
             # when there is no password BUT the cookie file still exist... we should delete it!
             def delete_cookie_file():
@@ -146,7 +148,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # using the same http client for test and final integration...
     http_session = async_create_clientsession(hass, verify_ssl=False, cookie_jar=the_persistent_cookie_jar)
 
-    # simple check, IF the evcc serve is up and running ... raise an 'ConfigEntryNotReady' if
+    # simple check, IF the evcc server is up and running ... raise an 'ConfigEntryNotReady' if
     # the configured backend could not be reached - then let HA deal with an optional retry
     await check_evcc_is_available(http_session, config_entry)
 
@@ -157,7 +159,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     else:
         # now we can attempt to initialize our coordinator with the data already read...
         if not await coordinator.read_evcc_config_on_startup(hass):
-            _LOGGER.warning(f"coordinator.read_evcc_config_on_startup() was not completed successfully - please enable debug-log option in order to find a posiible root cause.")
+            _LOGGER.warning(f"async_setup_entry(): coordinator.read_evcc_config_on_startup() was not completed successfully - please enable debug-log option in order to find a posiible root cause.")
 
         # then we can start the entity registrations...
         hass.data[DOMAIN][config_entry.entry_id] = coordinator
@@ -178,19 +180,20 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         # immediately, else trigger it after Home Assistant has finished starting.
         if coordinator.use_ws:
             if hass.state is CoreState.running:
-                _LOGGER.debug(f"starting watchdog INSTANTLY")
+                _LOGGER.debug(f"async_setup_entry(): starting watchdog INSTANTLY")
                 await coordinator.start_watchdog()
             else:
-                _LOGGER.debug(f"starting watchdog delayed... (when EVENT_HOMEASSISTANT_STARTED is fired)")
+                _LOGGER.debug(f"async_setup_entry(): starting watchdog delayed... (when EVENT_HOMEASSISTANT_STARTED is fired)")
                 hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
 
         config_entry.async_on_unload(config_entry.add_update_listener(entry_update_listener))
         # ok we are done...
+        _LOGGER.debug(f"async_setup_entry(): completed successfully for entry: {config_entry.entry_id}")
         return True
 
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
-    _LOGGER.debug(f"async_unload_entry() called for entry: {config_entry.entry_id}")
+    _LOGGER.debug(f"async_unload_entry(): called for entry: {config_entry.entry_id}")
     unload_ok = await hass.config_entries.async_unload_platforms(config_entry, PLATFORMS)
 
     if unload_ok:
@@ -249,7 +252,7 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
     global DEVICE_REG_CLEANUP_RUNNING
     if not DEVICE_REG_CLEANUP_RUNNING:
         DEVICE_REG_CLEANUP_RUNNING = True
-        _LOGGER.debug(f"check device registry for outdated {DOMAIN} devices...")
+        _LOGGER.debug(f"check_device_registry(): check device registry for outdated {DOMAIN} devices...")
         if hass is not None:
             a_device_reg = device_reg.async_get(hass)
             if a_device_reg is not None:
@@ -267,7 +270,7 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
                             elif hasattr(a_device_entry, "manufacturer"):
                                 manufacturer_value = a_device_entry.manufacturer
                                 if not f"{manufacturer_value}".__eq__(MANUFACTURER):
-                                    _LOGGER.info(f"found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
+                                    _LOGGER.info(f"check_device_registry(): found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
                                     devices_to_delete.append(a_device_entry.id)
 
                             #elif intg_version != "UNKNOWN":
@@ -277,9 +280,9 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
                 if len(devices_to_delete) > 0:
                     devices_to_delete = list(dict.fromkeys(devices_to_delete))
                     if purge_all:
-                        _LOGGER.info(f"CLEAN ALL {DOMAIN} DeviceEntries: {devices_to_delete}")
+                        _LOGGER.info(f"check_device_registry(): CLEAN ALL {DOMAIN} DeviceEntries: {devices_to_delete}")
                     else:
-                        _LOGGER.info(f"NEED TO DELETE old {DOMAIN} DeviceEntries: {devices_to_delete}")
+                        _LOGGER.info(f"check_device_registry(): NEED TO DELETE old {DOMAIN} DeviceEntries: {devices_to_delete}")
 
                     for a_device_entry_id in devices_to_delete:
                         a_device_reg.async_remove_device(device_id=a_device_entry_id)
@@ -472,7 +475,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # Something I just learned - the 'identifiers' is a LIST of keys which are used to identify one device...
         # E.g., if the identifiers contain just the 'domain', then all instances (config_entries) will be shown
         # together in the device registry... [which just sucks!]
-        # Please note, that the identifiers object must be a (...)
+        # Please note that the identifiers object must be a (...)
         # for the 'unique_device_id' we will use the initial specified HOST/IP (if it is later overwritten with
         # a changed host, we're going still use the initial one)
         unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}")
@@ -487,7 +490,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # IF we have a evcc-admin password in our configuration, we can also take the config from the
         # bridge to the coordinator... [not so sure what we will do, when this configuration will not
         # match our "default" loadpoint & vehicle config... ?!]
-        if self.config_entry.data.get(CONF_PASSWORD):
+        if self._config_entry.data.get(CONF_PASSWORD):
             self._config_entities = initdata.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {})
             if len(self._config_entities) == 0:
                 _LOGGER.debug(f"read_evcc_config_on_startup(): no configuration entities found")
