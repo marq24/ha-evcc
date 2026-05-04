@@ -7,7 +7,9 @@ from homeassistant.components.sensor import SensorEntity, SensorDeviceClass
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import UnitOfTemperature, Platform
 from homeassistant.core import HomeAssistant
+from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
+from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
@@ -256,36 +258,36 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             meter_name_addon = a_meter_key
 
             for a_stub in SENSOR_ENTITIES_PER_METER:
-                value = coordinator.read_tag_configuration(a_stub.tag, a_meter_key)
-                if value is not None:
-                    _LOGGER.debug(f"{a_stub.tag.entity_key} for meter '{a_meter_key}' -> {value}")
-                    patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
-                    the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
+                #value = coordinator.read_tag_configuration(a_stub.tag, a_meter_key)
+                #if value is not None:
+                    # _LOGGER.debug(f"{a_stub.tag.entity_key} for meter '{a_meter_key}' -> {value}")
+                patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
+                the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
 
-                    description = ExtSensorEntityDescription(
-                        tag=a_stub.tag,
-                        key=f"{meter_id_addon}_{the_key}" if not patch_keys else f"{meter_id_addon}_{the_key}_{a_stub.json_idx[0]}",
-                        translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
-                        evcc_config_id=a_meter_key,
-                        name_addon=meter_name_addon,
-                        icon=a_stub.icon,
-                        device_class=a_stub.device_class,
-                        unit_of_measurement=a_stub.unit_of_measurement,
-                        entity_category=a_stub.entity_category,
-                        entity_registry_enabled_default=True,
+                description = ExtSensorEntityDescription(
+                    tag=a_stub.tag,
+                    key=f"{meter_id_addon}_{the_key}" if not patch_keys else f"{meter_id_addon}_{the_key}_{a_stub.json_idx[0]}",
+                    translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
+                    evcc_config_id=a_meter_key,
+                    name_addon=meter_name_addon,
+                    icon=a_stub.icon,
+                    device_class=a_stub.device_class,
+                    unit_of_measurement=a_stub.unit_of_measurement,
+                    entity_category=a_stub.entity_category,
+                    entity_registry_enabled_default=True,
 
-                        # the entity type specific values...
-                        state_class=a_stub.state_class,
-                        native_unit_of_measurement=a_stub.native_unit_of_measurement,
-                        suggested_display_precision=a_stub.suggested_display_precision,
-                        json_idx=a_stub.json_idx,
-                        factor=a_stub.factor,
-                        lookup=a_stub.lookup,
-                        ignore_zero=a_stub.ignore_zero
-                    )
+                    # the entity type specific values...
+                    state_class=a_stub.state_class,
+                    native_unit_of_measurement=a_stub.native_unit_of_measurement,
+                    suggested_display_precision=a_stub.suggested_display_precision,
+                    json_idx=a_stub.json_idx,
+                    factor=a_stub.factor,
+                    lookup=a_stub.lookup,
+                    ignore_zero=a_stub.ignore_zero
+                )
 
-                    entity = EvccSensor(coordinator, description)
-                    entities.append(entity)
+                entity = EvccSensor(coordinator, description, do_check=True)
+                entities.append(entity)
 
     add_entity_cb(entities)
 
@@ -341,12 +343,52 @@ def compress_general(data, time_key:str, value_key:str):
 
 
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
-    def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
+    def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription, do_check:bool=False):
         super().__init__(entity_type=Platform.SENSOR, coordinator=coordinator, description=description)
+        self._do_check = do_check
         self._previous_float_value: float | None = None
+        self._cancel_delayed_check = None
         if self.tag.type == EP_TYPE.TARIFF or self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
             self._last_calculated_key = None
             self._last_calculated_value = None
+
+    async def async_added_to_hass(self):
+        """Run when entity about to be added to hass."""
+        await super().async_added_to_hass()
+        # Schedule the check code for 120 seconds (2 minutes)
+        # Note: The callback is a function, not a coroutine
+        if self._do_check:
+            self._cancel_delayed_check = async_call_later(self.hass,120, self._perform_delayed_check)
+
+    async def async_will_remove_from_hass(self):
+        """Run when the entity is removed from hass."""
+        if self._do_check:
+            if self._cancel_delayed_check is not None:
+                self._cancel_delayed_check()
+                self._cancel_delayed_check = None
+        await super().async_will_remove_from_hass()
+
+    async def _perform_delayed_check(self, _now):
+        value = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
+        _LOGGER.debug(f"_perform_delayed_check(): {self.entity_description.key}: {value}")
+        registry = er.async_get(self.hass)
+        if registry is not None:
+            entry = registry.async_get(self.entity_id)
+            if entry is not None:
+                if value is None:
+                    if entry.disabled_by is None:
+                        _LOGGER.debug(f"_perform_delayed_check(): Disabling entity {self.entity_id} due to missing data from evcc")
+                        registry.async_update_entity(
+                            self.entity_id,
+                            disabled_by=er.RegistryEntryDisabler.INTEGRATION
+                        )
+                else:
+                    if entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                        _LOGGER.debug(f"_perform_delayed_check(): Enable entity {self.entity_id} due since data is available")
+                        registry.async_update_entity(
+                            self.entity_id,
+                            disabled_by=None
+                        )
 
     @property
     def extra_state_attributes(self):
@@ -536,29 +578,30 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 return None
             try:
                 value_from_config = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
-                if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
-                    for idx, key in enumerate(self.entity_description.json_idx):
-                        if isinstance(value_from_config, (list, dict)):
-                            if isinstance(key, int) and len(value_from_config) > key:
-                                value_from_config = value_from_config[key]
-                            elif key in value_from_config:
-                                value_from_config = value_from_config[key]
-                        else:
-                            try:
-                                value_from_config = value_from_config[key]
-                            except (IndexError, KeyError, TypeError):
-                                _LOGGER.info(f"native_value(): index {idx+1} ({key}) not found in {value_from_config}")
-                                value_from_config = None
-                                break
+                if value_from_config is not None:
+                    if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
+                        for idx, key in enumerate(self.entity_description.json_idx):
+                            if isinstance(value_from_config, (list, dict)):
+                                if isinstance(key, int) and len(value_from_config) > key:
+                                    value_from_config = value_from_config[key]
+                                elif key in value_from_config:
+                                    value_from_config = value_from_config[key]
+                            else:
+                                try:
+                                    value_from_config = value_from_config[key]
+                                except (IndexError, KeyError, TypeError):
+                                    _LOGGER.info(f"native_value(): index {idx+1} ({key}) not found in {value_from_config}")
+                                    value_from_config = None
+                                    break
 
-                # special handling for odometers...
-                if self.entity_description.ignore_zero:
-                    isZeroVal = value_from_config is None or value_from_config == "unknown" or value_from_config <= 0.1
+                    # special handling for odometers...
+                    if self.entity_description.ignore_zero:
+                        isZeroVal = value_from_config is None or value_from_config == "unknown" or value_from_config <= 0.1
 
-                    if isZeroVal and self._previous_float_value is not None and self._previous_float_value > 0:
-                        value_from_config = self._previous_float_value
-                    elif not isZeroVal and value_from_config > 0:
-                        self._previous_float_value = value_from_config
+                        if isZeroVal and self._previous_float_value is not None and self._previous_float_value > 0:
+                            value_from_config = self._previous_float_value
+                        elif not isZeroVal and value_from_config > 0:
+                            self._previous_float_value = value_from_config
 
                 return value_from_config
 

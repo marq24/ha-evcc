@@ -1945,7 +1945,7 @@ SENSOR_ENTITIES_PER_METER = [
     ExtSensorEntityDescriptionStub(
         tag=Tag.EVCCCONF_METERENERGY,
         icon="mdi:transmission-tower",
-        state_class=SensorStateClass.MEASUREMENT,
+        state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
         suggested_display_precision=2

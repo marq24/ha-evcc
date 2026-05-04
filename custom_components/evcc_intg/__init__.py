@@ -152,6 +152,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # the configured backend could not be reached - then let HA deal with an optional retry
     await check_evcc_is_available(http_session, config_entry)
 
+    # ok - when the evcc-server is available we can continue with the init process...
     coordinator = EvccDataUpdateCoordinator(hass, http_session, config_entry, cookie_path)
     await coordinator.async_refresh()
     if not coordinator.last_update_success:
@@ -187,10 +188,18 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                 hass.bus.async_listen_once(EVENT_HOMEASSISTANT_STARTED, coordinator.start_watchdog)
 
         config_entry.async_on_unload(config_entry.add_update_listener(entry_update_listener))
+
+        # async def delayed_startup_logic(hass):
+        #     _LOGGER.debug(f"delayed_startup_logic(): STARTING delayed_startup_logic... [will wait another 30sec...]")
+        #     await asyncio.sleep(30)
+        #     _LOGGER.debug(f"delayed_startup_logic(): finally trigger an integration RELOAD!")
+        #     await hass.config_entries.async_reload(config_entry.entry_id)
+        #
+        # async_at_start(hass, delayed_startup_logic)
+
         # ok we are done...
         _LOGGER.debug(f"async_setup_entry(): completed successfully for entry: {config_entry.entry_id}")
         return True
-
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
     _LOGGER.debug(f"async_unload_entry(): called for entry: {config_entry.entry_id}")

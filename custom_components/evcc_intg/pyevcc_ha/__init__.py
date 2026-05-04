@@ -378,6 +378,9 @@ class EvccApiBridge:
                 await self.read_all_data(request_all=False, request_tariffs=True, request_sessions=True, request_config=True)
                 if self.coordinator is not None and self._data_coordinator_update_needed:
                     self._ws_notify_coordinator_for_updated_data_debounced()
+                # we sleep the current task for 0.5 seconds since we don't want to check with every websocket message
+                # IF we must update other data...
+                await asyncio.sleep(0.5)
             self._debounced_additional_data_update_task = asyncio.create_task(_task())
         else:
             # if the task is already running, we don't need to do anything...'
@@ -415,8 +418,9 @@ class EvccApiBridge:
                             request_config:bool=False,
                             log_config_requests:bool=False) -> dict:
 
-        _LOGGER.debug(f"read_all_data(): from evcc@{self.host}")
+        #_LOGGER.debug(f"read_all_data(): from evcc@{self.host} all={request_all}, tariffs={request_tariffs}, sessions={request_sessions}, config={request_config}")
         if request_all:
+            _LOGGER.debug(f"going to request 'state' data from evcc@{self.host}")
             json_resp = await self.read_state_data()
             if len(json_resp) == 0:
                 return {}
@@ -432,7 +436,7 @@ class EvccApiBridge:
             if self.request_tariff_endpoints:
                 # we only update the tariff data once per hour...
                 if self._TARIFF_LAST_UPDATE_QUARTER_HOUR != current_quarter_hour:
-                    _LOGGER.debug(f"going to request tariff data from evcc@{self.host}")
+                    _LOGGER.debug(f"going to request 'tariff' data from evcc@{self.host}")
                     json_resp = await self.read_tariff_data(json_resp)
                     self._data_coordinator_update_needed = True
                     self._TARIFF_LAST_UPDATE_QUARTER_HOUR = current_quarter_hour
@@ -444,7 +448,7 @@ class EvccApiBridge:
         if request_all or request_sessions:
             # we only update the session's data once per hour...
             if self._SESSIONS_LAST_UPDATE_HOUR != current_hour:
-                _LOGGER.debug(f"going to request sessions data from evcc@{self.host}")
+                _LOGGER.debug(f"going to request 'sessions' data from evcc@{self.host}")
                 json_resp = await self.read_sessions_data(json_resp)
                 self._data_coordinator_update_needed = True
                 self._SESSIONS_LAST_UPDATE_HOUR = current_hour
@@ -456,6 +460,7 @@ class EvccApiBridge:
         if request_all or request_config:
             now_time = time()
             if self._CONFIG_LAST_UPDATE + self._CONFIG_UPDATE_INTERVAL_IN_SECONDS <= time():
+                _LOGGER.debug(f"going to request 'configuration' data from evcc@{self.host}")
                 json_resp = await self.read_config_data(json_resp, log_requests=log_config_requests)
                 self._data_coordinator_update_needed = True
                 self._CONFIG_LAST_UPDATE = now_time
