@@ -15,7 +15,7 @@
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
           "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
           "extended_vehicle_data": "Collect extended Vehicle data from evcc configuration",
-          "extended_meter_data": "Collect extended Meter data from evcc configuration",
+          "extended_meter_data": "Collect Meter data from evcc configuration",
           "purge_all_devices": "Remove an recreate all Devices"
         },
         "data_description": {

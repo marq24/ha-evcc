@@ -48,6 +48,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._default_include_evcc = DEFAULT_INCLUDE_EVCC
         self._default_extended_vehicle_data = DEFAULT_EXTENDED_VEHICLE_DATA
         self._default_extended_meter_data = DEFAULT_EXTENDED_METER_DATA
+        self._need_purge_all_list = None
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         entry_data = self._get_reconfigure_entry().data
@@ -59,7 +60,7 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._default_include_evcc = entry_data.get(CONF_INCLUDE_EVCC, DEFAULT_INCLUDE_EVCC)
         self._default_extended_vehicle_data = entry_data.get(CONF_EXTENDED_VEHICLE_DATA, DEFAULT_EXTENDED_VEHICLE_DATA)
         self._default_extended_meter_data = entry_data.get(CONF_EXTENDED_METER_DATA, DEFAULT_EXTENDED_METER_DATA)
-
+        self._need_purge_all_list = [self._default_extended_vehicle_data, self._default_extended_meter_data]
         return await self.async_step_user()
 
     async def async_step_user(self, user_input=None):
@@ -95,10 +96,15 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                     user_input.pop(CONF_PASSWORD)
 
                 if self.source == SOURCE_RECONFIGURE:
-                    # when the hostname has changed, the device_entries must be purged (since they will include
-                    # the hostname)
-                    if self._default_host != user_input[CONF_HOST]:
-                        user_input[CONF_PURGE_ALL] = True
+                    if not user_input[CONF_PURGE_ALL]:
+                        # when the hostname has changed, the device_entries must be purged (since they will include
+                        # the hostname)
+                        if self._default_host != user_input[CONF_HOST]:
+                            user_input[CONF_PURGE_ALL] = True
+                        elif self._need_purge_all_list is not None:
+                            # when one of the ext. vehicle or meter properties has changed, the device_entries must be purged
+                            user_input[CONF_PURGE_ALL] = self._need_purge_all_list[0] != user_input[CONF_EXTENDED_VEHICLE_DATA] or self._need_purge_all_list[1] != user_input[CONF_EXTENDED_METER_DATA]
+
                     return self.async_update_reload_and_abort(entry=self._get_reconfigure_entry(), data=user_input)
                 else:
                     return self.async_create_entry(title=user_input[CONF_NAME], data=user_input)
@@ -124,12 +130,12 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             data_schema=vol.Schema({
                 vol.Required(CONF_NAME, default=user_input.get(CONF_NAME)): str,
                 vol.Required(CONF_HOST, default=user_input.get(CONF_HOST)): str,
-                vol.Optional(CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")): str,
                 vol.Required(CONF_USE_WS, default=user_input.get(CONF_USE_WS)): bool,
                 vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
-                vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
+                vol.Optional(CONF_PASSWORD, default=user_input.get(CONF_PASSWORD, "")): str,
                 vol.Optional(CONF_EXTENDED_VEHICLE_DATA, default=user_input.get(CONF_EXTENDED_VEHICLE_DATA, DEFAULT_EXTENDED_VEHICLE_DATA)): bool,
                 vol.Optional(CONF_EXTENDED_METER_DATA, default=user_input.get(CONF_EXTENDED_METER_DATA, DEFAULT_EXTENDED_METER_DATA)): bool,
+                vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
                 vol.Optional(CONF_PURGE_ALL, default=user_input.get(CONF_PURGE_ALL)): bool,
             }),
             description_placeholders={"repo": "https://github.com/marq24/ha-evcc"},

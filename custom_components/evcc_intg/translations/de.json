@@ -16,7 +16,7 @@
           "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
           "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen",
           "extended_vehicle_data": "Erweiterte Fahrzeugdaten von der evcc Konfiguration abrufen",
-          "extended_meter_data": "Erweiterte Zählerdaten von der evcc Konfiguration abrufen",
+          "extended_meter_data": "Zählerdaten von der evcc Konfiguration abrufen",
           "purge_all_devices": "Alle Geräte (Devices) Löschen und neu Erstellen"
         },
         "data_description": {
