@@ -37,7 +37,8 @@ from custom_components.evcc_intg.pyevcc_ha.keys import Tag, IS_TRIGGER
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
-static_timeout: Final = ClientTimeout(total=5)
+static_5sec_timeout: Final = ClientTimeout(total=5)
+static_30sec_timeout: Final = ClientTimeout(total=30)
 RAW_CLIENT_RESPONSE_KEY = "aiohttp.ClientResponse"
 
 async def _do_request(method: Callable, return_raw_client_response:bool=False) -> dict:
@@ -471,7 +472,7 @@ class EvccApiBridge:
     async def read_state_data(self) -> dict:
         req = f"{self.host}/api/state"
         _LOGGER.debug(f"GET request: {req}")
-        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
 
         if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or len(str(r_json).strip()) > 0):
             return r_json
@@ -488,7 +489,7 @@ class EvccApiBridge:
             try:
                 req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{a_key}"
                 _LOGGER.debug(f"GET request: {req}")
-                tariff_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+                tariff_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
                 if tariff_resp is not None and len(tariff_resp) > 0:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF][a_key] = tariff_resp
 
@@ -505,7 +506,7 @@ class EvccApiBridge:
         try:
             req = f"{self.host}/api/{EP_TYPE.SESSIONS.value}"
             _LOGGER.debug(f"GET request: {req}")
-            sessions_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+            sessions_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
             if sessions_resp is not None and len(sessions_resp) > 0:
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_TOTAL] = len(sessions_resp)
                 # raw data will exceed maximum size of 16384 bytes - so we can't store this
@@ -537,7 +538,8 @@ class EvccApiBridge:
                     req = f"{self.host}/api/config/devices/{a_device_type}/{a_device_id}/status"
                     if log_requests:
                         _LOGGER.debug(f"GET request: {req}")
-                    a_status_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+
+                    a_status_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_30sec_timeout))
                     if a_status_resp is not None and len(a_status_resp) > 0:
                         # make sure that we always use lower case device-ids
                         # compare also with the reading code in 'read_tag_configuration'
@@ -559,20 +561,30 @@ class EvccApiBridge:
                     req = f"{self.host}/api/config/{a_object_type}/{a_sub_type}"
                     if log_requests:
                         _LOGGER.debug(f"GET request: {req}")
-                    config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+                    config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_30sec_timeout))
                     if config_resp is not None and len(config_resp) > 0:
                         the_configuration[a_object_type][a_sub_type] = config_resp
                         if log_requests:
                             _LOGGER.debug(f"Response received for {req}: {config_resp}")
+                    else:
+                        # ensure that at least something exists for the sub-type
+                        _LOGGER.info(f"No configuration found for sub-object type '{a_object_type}/{a_sub_type}', creating empty entry")
+                        the_configuration[a_object_type][a_sub_type] = {}
             else:
                 req = f"{self.host}/api/config/{a_object_type}"
                 if log_requests:
                     _LOGGER.debug(f"GET request: {req}")
-                config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_timeout))
+                config_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_30sec_timeout))
                 if config_resp is not None and len(config_resp) > 0:
                     the_configuration[a_object_type] = config_resp
                     if log_requests:
                         _LOGGER.debug(f"Response received for {req}: {config_resp}")
+                else:
+                    # ensure that at least something exists for the object-type (e.g. when there is
+                    # no loadpoints)
+                    _LOGGER.info(f"No configuration found for object type '{a_object_type}', creating empty entry")
+                    the_configuration[a_object_type] = {}
+
         # just as object reference...
         # a_sample_config = {
         #     "devices": {
@@ -827,46 +839,49 @@ class EvccApiBridge:
         # since the_configuration has been created on basis of the EVCCCONF_OBJECT_HIERARCHY
         # we are sure that "site", "loadpoints" and "devices" are present!
         meter_to_site_key = {}
-        for key, value in the_configuration[EVCCCONF_SITE].items():
-            if value is None:
-                continue
+        if EVCCCONF_SITE in the_configuration:
+            for key, value in the_configuration[EVCCCONF_SITE].items():
+                if value is None:
+                    continue
 
-            if isinstance(value, list):
-                for meter_name in value:
-                    meter_to_site_key[meter_name] = key
-            else:
-                meter_to_site_key[value] = key
+                if isinstance(value, list):
+                    for meter_name in value:
+                        meter_to_site_key[meter_name] = key
+                else:
+                    meter_to_site_key[value] = key
 
         # generate a lookup also for the 'chargers' - since a charger is assigned to a
         # loadpoint (1:1)
-        loadpoint_by_charger = {
-            loadpoint[EVCCCONF_DEVICE_TYPES.CHARGER.value]: loadpoint
-            for loadpoint in the_configuration[EVCCCONF_LOADPOINTS]
-        }
+        if EVCCCONF_LOADPOINTS in the_configuration:
+            loadpoint_by_charger = {
+                loadpoint[EVCCCONF_DEVICE_TYPES.CHARGER.value]: loadpoint
+                for loadpoint in the_configuration[EVCCCONF_LOADPOINTS]
+            }
+        else:
+            loadpoint_by_charger = {}
 
         # so 'the_configuration' object should contain the keys:"devices", "site", "loadpoints" and "tariff"
         # currently we are ONLY interested in the devices!
         a_result = {}
-
-        for category, items in the_configuration[EVCCCONF_DEVICES].items():
-            if category == EVCCCONF_DEVICE_TYPES.METER.value:
-                a_result[category] = {
-                    item["name"]: meter_to_site_key.get(item["name"])
-                    for item in items
-                }
-            elif category == EVCCCONF_DEVICE_TYPES.CHARGER.value:
-                a_result[category] = {
-                    item["name"]: loadpoint_by_charger.get(item["name"])
-                    for item in items
-                }
-            else:
-                a_result[category] = [
-                    item["name"]
-                    for item in items
-                ]
-
-            # if we additionally need the loadpoint names (=id's)... we can use this line:
-            # a_result["loadpoints"] = [lp["name"] for lp in a_conf["loadpoints"]]
+        if EVCCCONF_DEVICES in the_configuration:
+            for category, items in the_configuration[EVCCCONF_DEVICES].items():
+                if category == EVCCCONF_DEVICE_TYPES.METER.value:
+                    a_result[category] = {
+                        item["name"]: meter_to_site_key.get(item["name"])
+                        for item in items
+                    }
+                elif category == EVCCCONF_DEVICE_TYPES.CHARGER.value:
+                    a_result[category] = {
+                        item["name"]: loadpoint_by_charger.get(item["name"])
+                        for item in items
+                    }
+                else:
+                    a_result[category] = [
+                        item["name"]
+                        for item in items
+                    ]
+                # if we additionally need the loadpoint names (=id's)... we can use this line:
+                # a_result["loadpoints"] = [lp["name"] for lp in a_conf["loadpoints"]]
 
         _LOGGER.debug(f"_read_config_setup(): configuration setup read successfully {list(a_result.keys())}")
         return a_result
@@ -883,7 +898,7 @@ class EvccApiBridge:
             # the default code will ask the evcc-backend if our session is authorized?!
             # I assume this will happen with every HA restart...
             try:
-                async with self.web_session.get(url=f"{self.host}/api/auth/status", ssl=False, timeout=static_timeout) as resp_status:
+                async with self.web_session.get(url=f"{self.host}/api/auth/status", ssl=False, timeout=static_5sec_timeout) as resp_status:
                     if resp_status.status == 200:
                         status_response_from_evcc_server_if_seesion_is_authorized = await resp_status.json()
                     else:
@@ -892,7 +907,7 @@ class EvccApiBridge:
                     if status_response_from_evcc_server_if_seesion_is_authorized is not True:
                         # we need to authenticate...
                         _LOGGER.debug(f"ensure_session_is_authorized(): auth status returned {resp_status.status} - trying to authenticate")
-                        async with self.web_session.post(url=f"{self.host}/api/auth/login", json={"password": self._admin_password}, ssl=False, timeout=static_timeout) as resp_auth:
+                        async with self.web_session.post(url=f"{self.host}/api/auth/login", json={"password": self._admin_password}, ssl=False, timeout=static_5sec_timeout) as resp_auth:
                             if resp_auth.status != 200:
                                 _LOGGER.warning(f"ensure_session_is_authorized(): authentication failed with status {resp_auth.status}")
                                 return False
@@ -984,7 +999,7 @@ class EvccApiBridge:
     async def press_trigger_key(self, write_key, expected_response_http_status:int=None) -> dict:
         req = f"{self.host}/api/{write_key}"
         _LOGGER.debug(f"press_trigger_key(): POST request: {req}")
-        resp = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout), return_raw_client_response=True)
+        resp = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout), return_raw_client_response=True)
         raw_resp = resp.get(RAW_CLIENT_RESPONSE_KEY, None)
         if raw_resp is not None and expected_response_http_status is not None:
             if raw_resp.status == expected_response_http_status:
@@ -1008,15 +1023,15 @@ class EvccApiBridge:
             if write_key == Tag.LP_DETECTVEHICLE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/vehicle"
                 _LOGGER.debug(f"PATCH request: {req}")
-                r_json = await _do_request(method=self.web_session.patch(url=req, ssl=False, timeout=static_timeout))
+                r_json = await _do_request(method=self.web_session.patch(url=req, ssl=False, timeout=static_5sec_timeout))
             else:
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_timeout))
+                r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
         else:
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
         if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
             return r_json
@@ -1035,13 +1050,13 @@ class EvccApiBridge:
             if write_key == Tag.VEHICLEPLANSDELETE.write_key:
                 req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_timeout))
+                r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
             else:
                 pass
         else:
             req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
         if r_json is not None:
             if (hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str)):
@@ -1089,11 +1104,11 @@ class EvccApiBridge:
         if value is None:
             req = f"{self.host}/api/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_timeout))
+            r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
         else:
             req = f"{self.host}/api/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
         if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
             return r_json
@@ -1113,14 +1128,14 @@ class EvccApiBridge:
             # DELETE...
             req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
             _LOGGER.debug(f"DELETE request: {req}")
-            r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_timeout))
+            r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
         else:
 
             if not write_key.startswith("plan/strategy"):
                 # default handling for all other keys...
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}/{value}"
                 _LOGGER.debug(f"POST request: {req}")
-                r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+                r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
             else:
                 # VERY SPECIAL HANDLING for 'plan/strategy' write process... [this is still quite a HACK!]
@@ -1151,7 +1166,7 @@ class EvccApiBridge:
                                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
 
                             _LOGGER.debug(f"POST request: {req} - sending payload: {payload_json}")
-                            r_json = await _do_request(method=self.web_session.post(url=req, json=payload_json, ssl=False, timeout=static_timeout))
+                            r_json = await _do_request(method=self.web_session.post(url=req, json=payload_json, ssl=False, timeout=static_5sec_timeout))
                         else:
                             _LOGGER.info(f"no previous 'effectivePlanStrategy' object found for loadpoint: {lp_idx_str} - {lp_object}")
 
@@ -1172,7 +1187,7 @@ class EvccApiBridge:
         _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
         req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
         _LOGGER.debug(f"POST request: {req}")
-        r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+        r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
         if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
             return r_json
@@ -1186,12 +1201,12 @@ class EvccApiBridge:
                 # WRITE PLAN...
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy/{energy}/{rfc_date}"
                 _LOGGER.debug(f"POST request: {req}")
-                r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+                r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
             else:
                 # DELETE PLAN...
                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{idx}/plan/energy"
                 _LOGGER.debug(f"DELETE request: {req}")
-                r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_timeout))
+                r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
 
             if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
                 return r_json
@@ -1211,12 +1226,12 @@ class EvccApiBridge:
                     if precondition is not None and precondition > 0:
                         req += f"?precondition={precondition}"
                     _LOGGER.debug(f"POST request: {req}")
-                    r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_timeout))
+                    r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
                 else:
                     # DELETE PLAN...
                     req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/plan/soc"
                     _LOGGER.debug(f"DELETE request: {req}")
-                    r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_timeout))
+                    r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
 
                 if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
                     return r_json
