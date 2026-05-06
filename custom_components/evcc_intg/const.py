@@ -56,6 +56,8 @@ If you have any issues with this you need to open an issue here:
 CONF_INCLUDE_EVCC: Final = "include_evcc"
 CONF_PURGE_ALL: Final = "purge_all_devices"
 CONF_USE_WS= "use_websocket"
+CONF_EXTENDED_VEHICLE_DATA: Final = "extended_vehicle_data"
+CONF_EXTENDED_METER_DATA: Final = "extended_meter_data"
 
 EVCC_JSON_KEY_NAME: Final = "evccName"
 EVCC_JSON_ORIGIN_OBJECT = "originObject"
@@ -1899,7 +1901,7 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfLength.KILOMETERS,
         suggested_display_precision=0,
-        entity_registry_enabled_default=False
+        entity_registry_enabled_default=False,
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.EVCCCONF_VEHICLEODOMETER,
@@ -1909,7 +1911,7 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         device_class=None,
         suggested_display_precision=0,
         ignore_zero=True,
-        entity_registry_enabled_default=False
+        entity_registry_enabled_default=False,
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.EVCCCONF_VEHICLESOC,
@@ -1918,7 +1920,7 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
         suggested_display_precision=0,
-        entity_registry_enabled_default=False
+        entity_registry_enabled_default=False,
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.EVCCCONF_VEHICLELIMITSOC,
@@ -1927,7 +1929,7 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         native_unit_of_measurement=PERCENTAGE,
         device_class=None,
         suggested_display_precision=0,
-        entity_registry_enabled_default=False
+        entity_registry_enabled_default=False,
     )
 ]
 # the meters are coming from the evcc configuration endpoints (and require the evcc-admin pwd)
@@ -1940,7 +1942,7 @@ SENSOR_ENTITIES_PER_METER = [
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=UnitOfPower.WATT,
         suggested_display_precision=2,
-        device_class=SensorDeviceClass.POWER
+        device_class=SensorDeviceClass.POWER,
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.EVCCCONF_METERENERGY,
@@ -1948,7 +1950,7 @@ SENSOR_ENTITIES_PER_METER = [
         state_class=SensorStateClass.TOTAL,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
-        suggested_display_precision=2
+        suggested_display_precision=2,
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.EVCCCONF_METERSOC,

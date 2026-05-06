@@ -189,7 +189,8 @@ def _add_to_sums(a_sums_dict: dict, key: str, val_charge_duration, val_charged_e
         a_sums_dict[key]["cost"] += val_cost
 
 class EvccApiBridge:
-    def __init__(self, host: str, web_session, coordinator: DataUpdateCoordinator = None, lang: str = "en", opt_password: str = None) -> None:
+    def __init__(self, host: str, web_session, coordinator: DataUpdateCoordinator = None, lang: str = "en",
+                 opt_password: str = None, ext_vehicle_data: bool = False, ext_meter_data: bool = False) -> None:
         # make sure we are compliant with old configurations (that does not include the schema in the host variable)
         if not host.startswith(("http://", "https://")):
             host = f"http://{host}"
@@ -210,6 +211,8 @@ class EvccApiBridge:
         self.host = host
         self._admin_password = opt_password
         self._admin_cookie_expire_datetime = None
+        self._request_ext_vehicle_data = ext_vehicle_data
+        self._request_ext_meter_data = ext_meter_data
 
         self.web_session = web_session
         self.lang_map = None
@@ -430,41 +433,67 @@ class EvccApiBridge:
                 self._data = {}
             json_resp = self._data
 
+
         self._data_coordinator_update_needed = False
-        current_hour = datetime.now(timezone.utc).hour
-        current_quarter_hour = datetime.now(timezone.utc).minute//15
+        now_utc = datetime.now(timezone.utc)
+        current_hour = now_utc.hour
+        current_minute = now_utc.minute
+        current_quarter_hour = current_minute // 15
+
+
+        # additional tariffs endpoint data
         if request_all or request_tariffs:
             if self.request_tariff_endpoints:
                 # we only update the tariff data once per hour...
                 if self._TARIFF_LAST_UPDATE_QUARTER_HOUR != current_quarter_hour:
                     _LOGGER.debug(f"going to request 'tariff' data from evcc@{self.host}")
-                    json_resp = await self.read_tariff_data(json_resp)
-                    self._data_coordinator_update_needed = True
+                    json_resp, data_was_fetched = await self.read_tariff_data(json_resp)
+                    if data_was_fetched:
+                        self._data_coordinator_update_needed = True
                     self._TARIFF_LAST_UPDATE_QUARTER_HOUR = current_quarter_hour
                 else:
                     # we must copy the previous existing data to the new json_resp!
                     if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]
 
+        # additional sessions endpoint data
         if request_all or request_sessions:
-            # we only update the session's data once per hour...
-            if self._SESSIONS_LAST_UPDATE_HOUR != current_hour:
+            # update session data twice per hour:
+            #   window A → minutes 55–59 (5 minutes before the full hour)
+            #   window B → minutes 00–54 (start of the new hour)
+            if current_minute >= 55:
+                _sessions_slot = current_hour * 100 + 55     # e.g. 1455 at 14:55–14:59
+            else:
+                _sessions_slot = current_hour * 100          # e.g. 1400 at 14:00–14:54
+
+            _sessions_should_fetch = (
+                self._SESSIONS_LAST_UPDATE_HOUR == -1        # first run: fetch immediately
+                or (self._SESSIONS_LAST_UPDATE_HOUR != _sessions_slot)
+            )
+            if _sessions_should_fetch:
                 _LOGGER.debug(f"going to request 'sessions' data from evcc@{self.host}")
-                json_resp = await self.read_sessions_data(json_resp)
-                self._data_coordinator_update_needed = True
-                self._SESSIONS_LAST_UPDATE_HOUR = current_hour
+                json_resp, data_was_fetched = await self.read_sessions_data(json_resp)
+                if data_was_fetched:
+                    self._data_coordinator_update_needed = True
+                self._SESSIONS_LAST_UPDATE_HOUR = _sessions_slot
             else:
                 # we must copy the previous existing data to the new json_resp!
                 if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
 
+        # additional configuration endpoint data
         if request_all or request_config:
             now_time = time()
             if self._CONFIG_LAST_UPDATE + self._CONFIG_UPDATE_INTERVAL_IN_SECONDS <= time():
                 _LOGGER.debug(f"going to request 'configuration' data from evcc@{self.host}")
-                json_resp = await self.read_config_data(json_resp, log_requests=log_config_requests)
-                self._data_coordinator_update_needed = True
+                json_resp, data_was_fetched = await self.read_config_data(json_resp, log_requests=log_config_requests)
+                if data_was_fetched:
+                    self._data_coordinator_update_needed = True
                 self._CONFIG_LAST_UPDATE = now_time
+            else:
+                # we must copy the previous existing data to the new json_resp!
+                if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_EVCCCONF in self._data:
+                    json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF] = self._data[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF]
 
         self._data = json_resp
         return json_resp
@@ -482,6 +511,7 @@ class EvccApiBridge:
 
     async def read_tariff_data(self, json_resp: dict) -> dict:
         # _LOGGER.info(f"going to request additional tariff data from evcc@{self.host}")
+        tariff_data_was_fetched = False
         if ADDITIONAL_ENDPOINTS_DATA_TARIFF not in json_resp:
             json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = {}
 
@@ -492,14 +522,16 @@ class EvccApiBridge:
                 tariff_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
                 if tariff_resp is not None and len(tariff_resp) > 0:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_TARIFF][a_key] = tariff_resp
+                    tariff_data_was_fetched = True
 
             except Exception as err:
                 _LOGGER.info(f"could not read tariff data for '{a_key}' -> '{err}'")
 
-        return json_resp
+        return json_resp, tariff_data_was_fetched
 
     async def read_sessions_data(self, json_resp: dict) -> dict:
         # _LOGGER.info(f"going to request additional sessions data from evcc@{self.host}")
+        session_data_was_fetched = False
         if ADDITIONAL_ENDPOINTS_DATA_SESSIONS not in json_resp:
             json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = {}
 
@@ -514,13 +546,15 @@ class EvccApiBridge:
 
                 # do the math stuff...
                 calculate_session_sums(sessions_resp, json_resp)
+                session_data_was_fetched = True
 
         except BaseException as err:
             _LOGGER.info(f"could not read sessions data '{type(err).__name__}' -> {err}")
 
-        return json_resp
+        return json_resp, session_data_was_fetched
 
     async def read_config_data(self, json_resp: dict, log_requests:bool=False):
+        config_data_was_fetched = False
         if await self.ensure_session_is_authorized():
             if ADDITIONAL_ENDPOINTS_DATA_EVCCCONF not in json_resp:
                 # creating our core data container object...
@@ -532,6 +566,14 @@ class EvccApiBridge:
             a_config = json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG]
 
             for a_device_type, value_list in a_config.items():
+                if a_device_type == EVCCCONF_DEVICE_TYPES.VEHICLE.value and not self._request_ext_vehicle_data:
+                    _LOGGER.debug(f"skipping vehicle data since 'request_ext_vehicle_data' is set to False")
+                    continue
+
+                if a_device_type == EVCCCONF_DEVICE_TYPES.METER.value and not self._request_ext_meter_data:
+                    _LOGGER.debug(f"skipping meter data since 'request_ext_meter_data' is set to False")
+                    continue
+
                 for a_device_id in value_list:
                     if a_device_type not in json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA]:
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type] = {}
@@ -544,12 +586,14 @@ class EvccApiBridge:
                         # make sure that we always use lower case device-ids
                         # compare also with the reading code in 'read_tag_configuration'
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type][a_device_id.lower()] = a_status_resp
+                        if not config_data_was_fetched:
+                            config_data_was_fetched = True
                         if log_requests:
                             _LOGGER.debug(f"Response received for {req}: {a_status_resp}")
 
             _LOGGER.debug(f"read_config_data(): configuration data read {list(json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA].keys())}")
 
-        return json_resp
+        return json_resp, config_data_was_fetched
 
     async def _read_config_setup(self, log_requests:bool=False):
         the_configuration = {}

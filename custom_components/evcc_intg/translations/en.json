@@ -14,10 +14,14 @@
           "use_websocket": "Use Websocket - The Polling Interval will be ignored",
           "scan_interval": "Polling Interval in seconds [min: 5sec]",
           "include_evcc": "Include the prefix '[evcc]' in all sensor 'friendly names'",
+          "extended_vehicle_data": "Collect extended Vehicle data from evcc configuration",
+          "extended_meter_data": "Collect extended Meter data from evcc configuration",
           "purge_all_devices": "Remove an recreate all Devices"
         },
         "data_description": {
           "password": "Providing your evcc admin password is __optional__ and only necessary for advanced integration features. If you are unsure, leave the field empty!\nYou can add the password anytime later if you decide you want to use the advanced features (e.g., restarting the evcc-server from HA).\n\nWhen you want to __delete__ your current password, please enter a __SPACE__!",
+          "extended_vehicle_data": "Access to the evcc configuration API required (specified admin password). When enabled, the integration will also collect additional vehicle data such as State of Charge, Range, Odometer readings or SOC for each configured vehicle.",
+          "extended_meter_data": "Access to the evcc configuration API required (specified admin password). When enabled, the integration will also collect additional meter data such as Power, Energy, Phase Currents, Phase Voltages, SOC/temperatures for each configured meter.",
           "purge_all_devices": "This may be necessary if you have orphaned device entries in your HA. This setting (checkbox) will be reset automatically."
         }
       }

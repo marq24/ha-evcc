@@ -15,10 +15,14 @@
           "use_websocket": "Websocket verwenden - Aktualisierungsintervall wird ignoriert",
           "scan_interval": "Aktualisierungsintervall in Sekunden [min: 5sek]",
           "include_evcc": "Allen Namen der Sensoren den Präfix '[evcc]' voranstellen",
+          "extended_vehicle_data": "Erweiterte Fahrzeugdaten von der evcc Konfiguration abrufen",
+          "extended_meter_data": "Erweiterte Zählerdaten von der evcc Konfiguration abrufen",
           "purge_all_devices": "Alle Geräte (Devices) Löschen und neu Erstellen"
         },
         "data_description": {
           "password": "Die Angabe Deines evcc Admin-Passwort ist __optional__ und nur für erweiterte Features der Integration notwendig. Wenn Du Dir unsicher bist, lass dieses Feld bitte leer.\nDu kannst das Passwort auch jederzeit nachträglich hinzufügen, wenn Du feststellst, dass Du die erweiterten Funktionen der Integration verwendne möchtest (z.B. Neustart des evcc-Servers via HA).\n\nWenn Du Dein aktuelles Passwort __entfernen__ möchtest, dann mußt Du ein __LEERZEICHEN__ eingeben (sonst erkennt HA keine Änderung)!",
+          "extended_vehicle_data": "Erfordert Zugriff auf die evcc Konfigurations-API (Admin Passwort notwendig). Wenn aktiviert, sammelt die Integration zusätzliche Fahrzeugdaten wie Ladestatus, Reichweite, Kilometerstand oder Ladestand für jedes konfigurierte Fahrzeug.",
+          "extended_meter_data": "Erfordert Zugriff auf die evcc Konfigurations-API (Admin Passwort notwendig). Wenn aktiviert, sammelt die Integration zusätzliche Zählerdaten wie Leistung, Energie, Phasenströme, Phasenspannungen oder Ladestand/Temperaturen für jeden konfigurierten Zähler.",
           "purge_all_devices": "Dies kann notwendig werden, wenn Du verwaiste Geräte (Einträge) bei Dir in HA hast. Diese Einstellung wird automatisch zurückgesetzt."
         }
       }

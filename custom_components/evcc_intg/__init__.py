@@ -66,6 +66,8 @@ from .const import (
     SERVICE_DEL_VEHICLE_PLAN,
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
+    CONF_EXTENDED_VEHICLE_DATA,
+    CONF_EXTENDED_METER_DATA,
     CONF_PURGE_ALL,
     CONFIG_VERSION,
     CONFIG_MINOR_VERSION,
@@ -319,13 +321,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         # we need to set the 'config_update_interval_in_seconds' before we init the bridge, cause we need
         # the interval from the coordinator in the bridge (for the config updates)...
-        self.update_interval_in_seconds_from_config_entry = config_entry.data.get(CONF_SCAN_INTERVAL, 30)
+        self._update_interval_in_seconds_from_config_entry = config_entry.data.get(CONF_SCAN_INTERVAL, 30)
+        self._request_ext_vehicle_data = config_entry.data.get(CONF_EXTENDED_VEHICLE_DATA, False)
+        self._request_ext_meter_data = config_entry.data.get(CONF_EXTENDED_METER_DATA, False)
 
         self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
                                     web_session=http_session,
                                     coordinator=self,
                                     lang=lang,
-                                    opt_password=config_entry.data.get(CONF_PASSWORD, None))
+                                    opt_password=config_entry.data.get(CONF_PASSWORD, None),
+                                    ext_vehicle_data=self._request_ext_vehicle_data,
+                                    ext_meter_data=self._request_ext_meter_data)
 
 
         self.include_evcc_prefix = config_entry.data.get(CONF_INCLUDE_EVCC, False)
@@ -371,7 +377,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             super().__init__(hass, _LOGGER, name=DOMAIN)
         else:
             super().__init__(hass, _LOGGER, name=DOMAIN,
-                             update_interval=timedelta(seconds=self.update_interval_in_seconds_from_config_entry))
+                             update_interval=timedelta(seconds=self._update_interval_in_seconds_from_config_entry))
 
     # Callable[[Event], Any]
     def __call__(self, evt: Event) -> bool:

@@ -169,6 +169,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         veh_name_addon = a_vehicle_obj["name"]
 
         for a_stub in SENSOR_ENTITIES_PER_VEHICLE:
+            if configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF and not coordinator._request_ext_vehicle_data:
+                _LOGGER.debug(f"Skipping EVCCCONF sensor {a_stub.tag} for vehicle {veh_name_addon} due to _request_ext_vehicle_data = FALSE")
+                continue
+
             force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
             # only when the json_idx has a length of 1, we must patch our key & translation_key
             patch_keys = a_stub.json_idx is not None and len(a_stub.json_idx) == 1
@@ -249,7 +253,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     entities.append(entity)
 
     # the additional meter entities (from the configuration)
-    if configuration_data_available:
+    if configuration_data_available and coordinator._request_ext_meter_data:
         meter_data = coordinator.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.METER.value, {})
         for a_meter_key in meter_data:
             # we MUST ensure that the meter_id_addon is a valid HA entity-id

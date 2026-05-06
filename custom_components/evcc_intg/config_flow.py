@@ -15,6 +15,8 @@ from .const import (
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
     CONF_PURGE_ALL,
+    CONF_EXTENDED_VEHICLE_DATA,
+    CONF_EXTENDED_METER_DATA,
     CONFIG_VERSION, CONFIG_MINOR_VERSION
 )
 
@@ -25,6 +27,8 @@ DEFAULT_HOST = "http://your-evcc-ip:7070"
 DEFAULT_SCAN_INTERVAL = 15
 DEFAULT_USE_WS = True
 DEFAULT_INCLUDE_EVCC = False
+DEFAULT_EXTENDED_VEHICLE_DATA = True
+DEFAULT_EXTENDED_METER_DATA = True
 
 class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for evcc_intg."""
@@ -42,6 +46,8 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._default_scan_interval = DEFAULT_SCAN_INTERVAL
         self._default_use_ws = DEFAULT_USE_WS
         self._default_include_evcc = DEFAULT_INCLUDE_EVCC
+        self._default_extended_vehicle_data = DEFAULT_EXTENDED_VEHICLE_DATA
+        self._default_extended_meter_data = DEFAULT_EXTENDED_METER_DATA
 
     async def async_step_reconfigure(self, user_input: dict[str, Any] | None = None) -> ConfigFlowResult:
         entry_data = self._get_reconfigure_entry().data
@@ -51,6 +57,8 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
         self._default_scan_interval = entry_data.get(CONF_SCAN_INTERVAL, DEFAULT_SCAN_INTERVAL)
         self._default_use_ws = entry_data.get(CONF_USE_WS, DEFAULT_USE_WS)
         self._default_include_evcc = entry_data.get(CONF_INCLUDE_EVCC, DEFAULT_INCLUDE_EVCC)
+        self._default_extended_vehicle_data = entry_data.get(CONF_EXTENDED_VEHICLE_DATA, DEFAULT_EXTENDED_VEHICLE_DATA)
+        self._default_extended_meter_data = entry_data.get(CONF_EXTENDED_METER_DATA, DEFAULT_EXTENDED_METER_DATA)
 
         return await self.async_step_user()
 
@@ -107,6 +115,8 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             user_input[CONF_SCAN_INTERVAL] = self._default_scan_interval
             user_input[CONF_USE_WS] = self._default_use_ws
             user_input[CONF_INCLUDE_EVCC] = self._default_include_evcc
+            user_input[CONF_EXTENDED_VEHICLE_DATA] = self._default_extended_vehicle_data
+            user_input[CONF_EXTENDED_METER_DATA] = self._default_extended_meter_data
             user_input[CONF_PURGE_ALL] = False
 
         return self.async_show_form(
@@ -118,6 +128,8 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 vol.Required(CONF_USE_WS, default=user_input.get(CONF_USE_WS)): bool,
                 vol.Required(CONF_SCAN_INTERVAL, default=user_input.get(CONF_SCAN_INTERVAL)): int,
                 vol.Required(CONF_INCLUDE_EVCC, default=user_input.get(CONF_INCLUDE_EVCC)): bool,
+                vol.Optional(CONF_EXTENDED_VEHICLE_DATA, default=user_input.get(CONF_EXTENDED_VEHICLE_DATA, DEFAULT_EXTENDED_VEHICLE_DATA)): bool,
+                vol.Optional(CONF_EXTENDED_METER_DATA, default=user_input.get(CONF_EXTENDED_METER_DATA, DEFAULT_EXTENDED_METER_DATA)): bool,
                 vol.Optional(CONF_PURGE_ALL, default=user_input.get(CONF_PURGE_ALL)): bool,
             }),
             description_placeholders={"repo": "https://github.com/marq24/ha-evcc"},
