@@ -64,7 +64,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     mode=a_stub.mode,
                     native_max_value=a_stub.native_max_value,
                     native_min_value=a_stub.native_min_value,
-                    native_step=a_stub.native_step,
+                    native_step=1 if force_celsius else a_stub.native_step,
                     native_unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.native_unit_of_measurement,
                     step=a_stub.step,
                 )
