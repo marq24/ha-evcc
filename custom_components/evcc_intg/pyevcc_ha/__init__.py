@@ -120,8 +120,14 @@ def calculate_session_sums(sessions_resp, json_resp: dict):
         try:
             a_vehicle = a_session_entry.get("vehicle", "")
             a_loadpoint = a_session_entry.get("loadpoint", "")
-            if a_vehicle is None or len(a_vehicle) == 0 or a_loadpoint is None or len(a_loadpoint) == 0:
-                _LOGGER.info(f"calculate_session_sums(): missing a key in session entry: {a_session_entry}")
+            no_veh_data_avail = a_vehicle is None or len(a_vehicle) == 0
+            no_lp_data_avail = a_loadpoint is None or len(a_loadpoint) == 0
+            if no_veh_data_avail and no_lp_data_avail:
+                _LOGGER.info(f"calculate_session_sums(): missing ANY-keyinfo in session entry: {a_session_entry}")
+            elif no_veh_data_avail:
+                _LOGGER.debug(f"calculate_session_sums(): missing 'vehicle' info in session entry: {a_session_entry}")
+            elif no_lp_data_avail:
+                _LOGGER.debug(f"calculate_session_sums(): missing 'loadpoint' info in session entry: {a_session_entry}")
 
             charge_duration_in_nano_seconds = a_session_entry.get("chargeDuration", 0)
             if (charge_duration_in_nano_seconds is None or
@@ -450,7 +456,7 @@ class EvccApiBridge:
                     json_resp, data_was_fetched = await self.read_tariff_data(json_resp)
                     if data_was_fetched:
                         self._data_coordinator_update_needed = True
-                    self._TARIFF_LAST_UPDATE_QUARTER_HOUR = current_quarter_hour
+                        self._TARIFF_LAST_UPDATE_QUARTER_HOUR = current_quarter_hour
                 else:
                     # we must copy the previous existing data to the new json_resp!
                     if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
@@ -475,7 +481,7 @@ class EvccApiBridge:
                 json_resp, data_was_fetched = await self.read_sessions_data(json_resp)
                 if data_was_fetched:
                     self._data_coordinator_update_needed = True
-                self._SESSIONS_LAST_UPDATE_HOUR = _sessions_slot
+                    self._SESSIONS_LAST_UPDATE_HOUR = _sessions_slot
             else:
                 # we must copy the previous existing data to the new json_resp!
                 if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
@@ -489,7 +495,7 @@ class EvccApiBridge:
                 json_resp, data_was_fetched = await self.read_config_data(json_resp, log_requests=log_config_requests)
                 if data_was_fetched:
                     self._data_coordinator_update_needed = True
-                self._CONFIG_LAST_UPDATE = now_time
+                    self._CONFIG_LAST_UPDATE = now_time
             else:
                 # we must copy the previous existing data to the new json_resp!
                 if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_EVCCCONF in self._data:

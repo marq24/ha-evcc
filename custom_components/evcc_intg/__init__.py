@@ -322,8 +322,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # we need to set the 'config_update_interval_in_seconds' before we init the bridge, cause we need
         # the interval from the coordinator in the bridge (for the config updates)...
         self._update_interval_in_seconds_from_config_entry = config_entry.data.get(CONF_SCAN_INTERVAL, 30)
-        self._request_ext_vehicle_data = config_entry.data.get(CONF_EXTENDED_VEHICLE_DATA, False)
-        self._request_ext_meter_data = config_entry.data.get(CONF_EXTENDED_METER_DATA, False)
+        self._request_ext_vehicle_data = config_entry.data.get(CONF_EXTENDED_VEHICLE_DATA, True)
+        self._request_ext_meter_data = config_entry.data.get(CONF_EXTENDED_METER_DATA, True)
 
         self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
                                     web_session=http_session,
