@@ -446,7 +446,6 @@ class EvccApiBridge:
         current_minute = now_utc.minute
         current_quarter_hour = current_minute // 15
 
-
         # additional tariffs endpoint data
         if request_all or request_tariffs:
             if self.request_tariff_endpoints:
@@ -936,6 +935,12 @@ class EvccApiBridge:
         _LOGGER.debug(f"_read_config_setup(): configuration setup read successfully {list(a_result.keys())}")
         return a_result
 
+    async def force_config_update(self):
+        _LOGGER.debug(f"force_config_update(): forcing config update")
+        self._CONFIG_LAST_UPDATE = -1
+        await self.read_all_data(request_all=False, request_config=True)
+        if self.coordinator is not None:
+            self.coordinator.async_set_updated_data(self._data)
 
     async def ensure_session_is_authorized(self):
         if self._admin_password is not None:

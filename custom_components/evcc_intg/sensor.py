@@ -1,3 +1,4 @@
+import asyncio
 import logging
 from dataclasses import replace
 from datetime import datetime, timezone
@@ -9,7 +10,6 @@ from homeassistant.const import UnitOfTemperature, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers import entity_registry as er
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
-from homeassistant.helpers.event import async_call_later
 from homeassistant.helpers.restore_state import RestoreEntity
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
@@ -23,7 +23,8 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     FORECAST_CONTENT,
     SESSIONS_KEY_TOTAL,
     EVCCCONF_KEY_CONFIG,
-    EVCCCONF_DEVICE_TYPES
+    EVCCCONF_DEVICE_TYPES,
+    EVCCCONF_KEY_DATA
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, camel_to_snake
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
@@ -46,7 +47,7 @@ _LOGGER = logging.getLogger(__name__)
 
 
 async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_entity_cb: AddEntitiesCallback):
-    _LOGGER.debug("SENSOR async_setup_entry")
+    _LOGGER.debug("SENSOR async_setup_entry()")
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
 
     configuration_data_available = False
@@ -54,24 +55,25 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         configuration_data_available = True
 
     entities = []
+    entries_to_check = {}
     the_sensors_list = SENSOR_ENTITIES
 
     # we need to check if the grid data (power & currents) is available as a separate object...
     # or if it's still part of the main/site object (as gridPower, gridCurrents)
     if coordinator.grid_data_as_object:
-        _LOGGER.debug("evcc 'grid' data is available in separate object")
+        _LOGGER.debug("SENSOR async_setup_entry(): evcc 'grid' data is available in separate object")
         the_sensors_list = the_sensors_list + SENSOR_ENTITIES_GRID_AS_OBJECT
     else:
-        _LOGGER.debug("evcc 'grid' as prefix")
+        _LOGGER.debug("SENSOR async_setup_entry(): evcc 'grid' as prefix")
         the_sensors_list = the_sensors_list + SENSOR_ENTITIES_GRID_AS_PREFIX
 
     # additionally, the battery sensors can be either with prefix (at least till
     # evcc 0.209.7), or as a separate 'battery' object
     if coordinator.battery_data_as_object:
-        _LOGGER.debug("evcc 'battery' data is available in separate object")
+        _LOGGER.debug("SENSOR async_setup_entry(): evcc 'battery' data is available in separate object")
         the_sensors_list = the_sensors_list + SENSOR_ENTITIES_BATTERY_AS_OBJECT
     else:
-        _LOGGER.debug("evcc 'battery' as prefix")
+        _LOGGER.debug("SENSOR async_setup_entry(): evcc 'battery' as prefix")
         the_sensors_list = the_sensors_list + SENSOR_ENTITIES_BATTERY_AS_PREFIX
 
     # finally creating all the Sensors, based on the descriptions
@@ -289,11 +291,80 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     lookup=a_stub.lookup,
                     ignore_zero=a_stub.ignore_zero
                 )
-
-                entity = EvccSensor(coordinator, description, do_check=True)
+                entity = EvccSensor(coordinator, description)
                 entities.append(entity)
+                entries_to_check[entity.entity_id] = {
+                    "tag": description.tag,
+                    "evcc_config_id": description.evcc_config_id,
+                    "description_key": description.key
+                }
 
     add_entity_cb(entities)
+
+    async def _check_for_entities_to_enabled():
+        if len(entries_to_check) == 0:
+            _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): no entries to check - exiting")
+            return
+
+        _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): Launched... (pause now for 2 minutes)")
+        try:
+            await asyncio.sleep(120)
+            _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): Wakeup (after 2 minutes) - reset CONFIG_LAST_UPDATE")
+            await coordinator.bridge.force_config_update()
+
+            need_to_wait = True
+            check_run_counter = 0
+            while check_run_counter < 11 and need_to_wait:
+                check_run_counter += 1
+                meter_devices_data = coordinator.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_DATA, {}).get(EVCCCONF_DEVICE_TYPES.METER.value)
+                if meter_devices_data is not None:
+                    avail_data_count = 0
+                    for a_meter_device_id, a_meter_object in meter_devices_data.items():
+                        a_meter_device_has_error = False
+                        for a_key, a_value in a_meter_object.items():
+                            if "error" in a_value and a_value["error"] is not None and len(a_value["error"]) > 0:
+                                a_meter_device_has_error = True
+                                break
+                        if not a_meter_device_has_error:
+                            avail_data_count +=1
+
+                    if avail_data_count == len(meter_devices_data):
+                        need_to_wait = False
+
+                if need_to_wait:
+                    _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): No meters data found (or they are marked with 'errors'), waiting another 30 seconds... {meter_devices_data}")
+                    await coordinator.bridge.force_config_update()
+                    await asyncio.sleep(30)
+
+            _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): Will finally start now... {meter_devices_data}")
+            registry = er.async_get(hass)
+            if registry is not None:
+                for a_entity_id in entries_to_check:
+                    a_entity_data = entries_to_check[a_entity_id]
+                    value = coordinator.read_tag_configuration(a_entity_data["tag"], a_entity_data["evcc_config_id"])
+                    #_LOGGER.debug(f"_check_for_entities_to_enabled(): {a_entity_data["description_key"]}: {value}")
+                    entry = registry.async_get(a_entity_id)
+                    if entry is not None:
+                        if value is None:
+                            if entry.disabled_by is None:
+                                _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): DISABLING entity {a_entity_id} due to missing data from evcc")
+                                registry.async_update_entity(
+                                    a_entity_id,
+                                    disabled_by=er.RegistryEntryDisabler.INTEGRATION
+                                )
+                        else:
+                            if entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
+                                _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): ENABLE entity {a_entity_id} due since data is available")
+                                registry.async_update_entity(
+                                    a_entity_id,
+                                    disabled_by=None
+                                )
+                _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): init is COMPLETED")
+
+        except BaseException as err:
+            _LOGGER.warning(f"SENSOR _check_for_entities_to_enabled(): Error: {type(err).__name__} {err}")
+
+    asyncio.create_task(_check_for_entities_to_enabled())
 
 def compress_data(data):
     return compress_general(data, "start", "value")
@@ -347,52 +418,12 @@ def compress_general(data, time_key:str, value_key:str):
 
 
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
-    def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription, do_check:bool=False):
+    def __init__(self, coordinator: EvccDataUpdateCoordinator, description: ExtSensorEntityDescription):
         super().__init__(entity_type=Platform.SENSOR, coordinator=coordinator, description=description)
-        self._do_check = do_check
         self._previous_float_value: float | None = None
-        self._cancel_delayed_check = None
         if self.tag.type == EP_TYPE.TARIFF or self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
             self._last_calculated_key = None
             self._last_calculated_value = None
-
-    async def async_added_to_hass(self):
-        """Run when entity about to be added to hass."""
-        await super().async_added_to_hass()
-        # Schedule the check code for 120 seconds (2 minutes)
-        # Note: The callback is a function, not a coroutine
-        if self._do_check:
-            self._cancel_delayed_check = async_call_later(self.hass,120, self._perform_delayed_check)
-
-    async def async_will_remove_from_hass(self):
-        """Run when the entity is removed from hass."""
-        if self._do_check:
-            if self._cancel_delayed_check is not None:
-                self._cancel_delayed_check()
-                self._cancel_delayed_check = None
-        await super().async_will_remove_from_hass()
-
-    async def _perform_delayed_check(self, _now):
-        value = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
-        _LOGGER.debug(f"_perform_delayed_check(): {self.entity_description.key}: {value}")
-        registry = er.async_get(self.hass)
-        if registry is not None:
-            entry = registry.async_get(self.entity_id)
-            if entry is not None:
-                if value is None:
-                    if entry.disabled_by is None:
-                        _LOGGER.debug(f"_perform_delayed_check(): Disabling entity {self.entity_id} due to missing data from evcc")
-                        registry.async_update_entity(
-                            self.entity_id,
-                            disabled_by=er.RegistryEntryDisabler.INTEGRATION
-                        )
-                else:
-                    if entry.disabled_by == er.RegistryEntryDisabler.INTEGRATION:
-                        _LOGGER.debug(f"_perform_delayed_check(): Enable entity {self.entity_id} due since data is available")
-                        registry.async_update_entity(
-                            self.entity_id,
-                            disabled_by=None
-                        )
 
     @property
     def extra_state_attributes(self):
