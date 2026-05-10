@@ -230,8 +230,8 @@ class EvccApiBridge:
         self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
         self._CONFIG_LAST_UPDATE = -1
-        if self.coordinator is not None and hasattr(self.coordinator, 'update_interval_in_seconds_from_config_entry'):
-            self._CONFIG_UPDATE_INTERVAL_IN_SECONDS = self.coordinator.update_interval_in_seconds_from_config_entry
+        if self.coordinator is not None and hasattr(self.coordinator, '_update_interval_in_seconds_from_config_entry'):
+            self._CONFIG_UPDATE_INTERVAL_IN_SECONDS = self.coordinator._update_interval_in_seconds_from_config_entry
         else:
             self._CONFIG_UPDATE_INTERVAL_IN_SECONDS = 60 * 15 # the default update will be every 15 minutes
 
