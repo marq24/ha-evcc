@@ -1038,9 +1038,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}_{addon}")
         device_name_meter = "device_name_meter"
         if self.data is not None:
-            meter_data = self.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.METER.value, {})
-            if addon in meter_data:
-                device_name_meter = f"device_name_meter_{meter_data[addon].lower()}"
+            meter_config_data = self.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.METER.value, {})
+            if meter_config_data is not None and addon in meter_config_data and meter_config_data[addon] is not None and len(str(meter_config_data[addon])) > 0:
+                device_name_meter = f"device_name_meter_{meter_config_data[addon].lower()}"
         a_device_info_dict = {
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
