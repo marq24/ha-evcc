@@ -69,7 +69,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     step=a_stub.step,
                 )
 
-                if a_stub.tag == Tag.SMARTCOSTLIMIT or a_stub.tag == Tag.BATTERYGRIDCHARGELIMIT:
+                if a_stub.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
                     if coordinator._cost_type == "co2":
                         description = replace(
                             description,
@@ -106,7 +106,7 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
             if value is None or value == "":
                 return "unknown"
             else:
-                if self.tag == Tag.SMARTCOSTLIMIT or self.tag == Tag.BATTERYGRIDCHARGELIMIT:
+                if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
                     value = round(float(value), 3)
                 else:
                     value = int(value)
@@ -126,7 +126,7 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
 
     async def async_set_native_value(self, value) -> None:
         try:
-            if self.tag == Tag.SMARTCOSTLIMIT or self.tag == Tag.BATTERYGRIDCHARGELIMIT:
+            if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
                 await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self.lp_idx, self)
             else:
                 await self.coordinator.async_write_tag(self.tag, int(value), self.lp_idx, self)

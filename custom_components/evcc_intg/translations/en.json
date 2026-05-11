@@ -74,6 +74,7 @@
       "connected": {"name": "Connected"},
       "enabled": {"name": "Enabled"},
       "smartcostactive": {"name": "Smart Grid Charging"},
+      "smartfeedinpriorityactive": {"name": "Smart Feedin limit"},
       "vehicledetectionactive": {"name": "Vehicle detection"},
       "batterygridchargeactive": {"name": "Home-Battery: grid charging"},
       "vehicleclimateractive": {"name": "Vehicle Air Conditioning"},
@@ -88,7 +89,8 @@
       "vehicleplansdelete": {"name": "Charging plan: Delete Departure (Vehicle/SOC)"},
       "plandelete": {"name": "Charging plan: Delete Departure (Loadpoint/Energy)"},
       "detectvehicle": {"name": "Start vehicle detection"},
-      "smartcostlimit": {"name": "@@@ Limit remove"}
+      "smartcostlimit": {"name": "@@@ Limit remove"},
+      "smartfeedinprioritylimit": {"name": "@@@ Feedin limit remove"}
     },
     "number": {
       "limitsoc": {"name": "Default Charging limit (SOC)"},
@@ -98,6 +100,8 @@
       "residualpower": {"name": "Residual power"},
       "smartcostlimit_co2": {"name": "CO₂ limit ≤"},
       "smartcostlimit": {"name": "@@@ limit ≤"},
+      "smartfeedinprioritylimit_co2": {"name": "CO₂ Feedin limit ≤"},
+      "smartfeedinprioritylimit": {"name": "@@@ Feedin limit ≤"},
       "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"},
       "enabledelay": {"name": "Delay Enable"},
       "disabledelay": {"name": "Delay Disable"},
