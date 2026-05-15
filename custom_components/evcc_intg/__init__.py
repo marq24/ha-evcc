@@ -935,6 +935,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.info(f"could not write value: '{value}' to: {a_tag} result was: {result}")
         else:
             # IMH0 it's quite tricky to patch the self.data object here... but we try!
+            # 2026/05/15: actually patching the self.data object should not be required anylonger,
+            # when the websocket connection is in use - since with the websocket connection the
+            # updated evcc data will/should be insantly populated into out HA integration...
             if a_tag.type == EP_TYPE.SITE:
                 if a_tag.json_key in self.data:
                     self.data[a_tag.json_key] = value
@@ -943,8 +946,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if idx_str is not None:
                     idx = int(idx_str)
                     if len(self.data[JSONKEY_LOADPOINTS]) > idx - 1:
-                        if a_tag.json_key in self.data[JSONKEY_LOADPOINTS][idx - 1]:
-                            self.data[JSONKEY_LOADPOINTS][idx - 1][a_tag.json_key] = value
+                        lp_data_at_index = self.data[JSONKEY_LOADPOINTS][idx - 1]
+                        if a_tag.json_key in lp_data_at_index:
+                            if a_tag.subtype is not None and isinstance(lp_data_at_index[a_tag.json_key], dict):
+                                lp_data_at_index[a_tag.json_key][a_tag.subtype] = value
+                            else:
+                                lp_data_at_index[a_tag.json_key] = value
 
             elif a_tag.type == EP_TYPE.VEHICLES:
                 # TODO ?!
