@@ -260,7 +260,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         for a_meter_key in meter_data:
             # we MUST ensure that the meter_id_addon is a valid HA entity-id
             # (at least 'meter_id_addon' will become part of an entity-id)
-            meter_id_addon = camel_to_snake(a_meter_key).replace(".", "_")
+            meter_id_addon = camel_to_snake(a_meter_key).replace(".", "_").replace(":", "_")
             meter_name_addon = a_meter_key
 
             for a_stub in SENSOR_ENTITIES_PER_METER:
@@ -606,46 +606,18 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 _LOGGER.debug(f"no tariff data found for {self.tag}")
                 return None
 
-        if self.tag.type == EP_TYPE.EVCCCONF:
-            # for the entities that read the data from the CONFIGURATION, we need
-            # some special handling...
-            if self.entity_description.evcc_config_id is None:
-                return None
-            try:
-                value_from_config = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
-                if value_from_config is not None:
-                    if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
-                        for idx, key in enumerate(self.entity_description.json_idx):
-                            if isinstance(value_from_config, (list, dict)):
-                                if isinstance(key, int) and len(value_from_config) > key:
-                                    value_from_config = value_from_config[key]
-                                elif key in value_from_config:
-                                    value_from_config = value_from_config[key]
-                            else:
-                                try:
-                                    value_from_config = value_from_config[key]
-                                except (IndexError, KeyError, TypeError):
-                                    _LOGGER.info(f"native_value(): index {idx+1} ({key}) not found in {value_from_config}")
-                                    value_from_config = None
-                                    break
-
-                    # special handling for odometers...
-                    if self.entity_description.ignore_zero:
-                        isZeroVal = value_from_config is None or value_from_config == "unknown" or value_from_config <= 0.1
-
-                        if isZeroVal and self._previous_float_value is not None and self._previous_float_value > 0:
-                            value_from_config = self._previous_float_value
-                        elif not isZeroVal and value_from_config > 0:
-                            self._previous_float_value = value_from_config
-
-                return value_from_config
-
-            except BaseException as exc:
-                _LOGGER.error(f"Error reading CONFIGURATION tag for {self.entity_id}: {type(exc).__name__} - {exc}")
-                return None
-
         try:
-            value = self.coordinator.read_tag(self.tag, self.lp_idx)
+            if self.tag.type == EP_TYPE.EVCCCONF:
+                # for the entities that read the data from the CONFIGURATION, we need
+                # some special handling (since the tag is not enough to find the data
+                # in the JSON structure...)
+                if self.entity_description.evcc_config_id is None:
+                    return None
+                value = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
+            else:
+                value = self.coordinator.read_tag(self.tag, self.lp_idx)
+
+
             if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
                 for idx, key in enumerate(self.entity_description.json_idx):
                     if isinstance(value, (list, dict)):
