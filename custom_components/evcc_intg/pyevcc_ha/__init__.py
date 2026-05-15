@@ -214,6 +214,11 @@ class EvccApiBridge:
         self._debounced_update_task = None
         self._debounced_additional_data_update_task = None
 
+        # serialize concurrent plan/strategy writes per loadpoint — evcc does not strictly
+        # serialize concurrent POSTs to /api/vehicles/<id>/plan/strategy, so rapid clicks
+        # on the same select/switch can race and the earlier value occasionally wins.
+        self._plan_strategy_locks: dict[str, asyncio.Lock] = {}
+
         self.host = host
         self._admin_password = opt_password
         self._admin_cookie_expire_datetime = None
@@ -1170,6 +1175,13 @@ class EvccApiBridge:
         else:
             return {"err": "no response from evcc"}
 
+    def _plan_strategy_lock(self, lp_idx_str: str) -> asyncio.Lock:
+        lock = self._plan_strategy_locks.get(lp_idx_str)
+        if lock is None:
+            lock = asyncio.Lock()
+            self._plan_strategy_locks[lp_idx_str] = lock
+        return lock
+
     async def write_loadpoint_key(self, lp_idx_str, write_key, value) -> dict:
         # lp_idx_str will start with 1!
         if isinstance(value, (bool, int, float)):
@@ -1194,39 +1206,40 @@ class EvccApiBridge:
 
             else:
                 # VERY SPECIAL HANDLING for 'plan/strategy' write process... [this is still quite a HACK!]
-                if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
-                    try:
-                        array_idx = int(lp_idx_str) - 1
-                        lp_object = self._data[JSONKEY_LOADPOINTS][array_idx]
-                        if "effectivePlanStrategy" in lp_object:
+                async with self._plan_strategy_lock(lp_idx_str):
+                    if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
+                        try:
+                            array_idx = int(lp_idx_str) - 1
+                            lp_object = self._data[JSONKEY_LOADPOINTS][array_idx]
+                            if "effectivePlanStrategy" in lp_object:
 
-                            # 1'st we must create the payload...
-                            payload_json = lp_object["effectivePlanStrategy"].copy()
-                            if write_key == "plan/strategy/continuous":
-                                # the switch code will give us "1" or "0"... (and we need to convert it to a boolean)
-                                payload_json["continuous"] = value == "1"
+                                # 1'st we must create the payload...
+                                payload_json = lp_object["effectivePlanStrategy"].copy()
+                                if write_key == "plan/strategy/continuous":
+                                    # the switch code will give us "1" or "0"... (and we need to convert it to a boolean)
+                                    payload_json["continuous"] = value == "1"
+                                else:
+                                    # make sure that the precondition is an integer...
+                                    payload_json["precondition"] = int(value)
+
+                                # setting the final write_key to 'plan/strategy'...
+                                # -> this is the only way to write the 'plan/strategy' to the 'vehicle' or to the 'loadpoint'!
+                                write_key = "plan/strategy"
+
+                                # 2'nd we must check if we need to write the 'plan/strategy' to the 'vehicle' or to the 'loadpoint'!
+                                vehicle_id = lp_object[Tag.LP_VEHICLENAME.json_key]
+                                if vehicle_id is not None and len(vehicle_id) > 0:
+                                    req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
+                                else:
+                                    req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
+
+                                _LOGGER.debug(f"POST request: {req} - sending payload: {payload_json}")
+                                r_json = await _do_request(method=self.web_session.post(url=req, json=payload_json, ssl=False, timeout=static_5sec_timeout))
                             else:
-                                # make sure that the precondition is an integer...
-                                payload_json["precondition"] = int(value)
+                                _LOGGER.info(f"no previous 'effectivePlanStrategy' object found for loadpoint: {lp_idx_str} - {lp_object}")
 
-                            # setting the final write_key to 'plan/strategy'...
-                            # -> this is the only way to write the 'plan/strategy' to the 'vehicle' or to the 'loadpoint'!
-                            write_key = "plan/strategy"
-
-                            # 2'nd we must check if we need to write the 'plan/strategy' to the 'vehicle' or to the 'loadpoint'!
-                            vehicle_id = lp_object[Tag.LP_VEHICLENAME.json_key]
-                            if vehicle_id is not None and len(vehicle_id) > 0:
-                                req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
-                            else:
-                                req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
-
-                            _LOGGER.debug(f"POST request: {req} - sending payload: {payload_json}")
-                            r_json = await _do_request(method=self.web_session.post(url=req, json=payload_json, ssl=False, timeout=static_5sec_timeout))
-                        else:
-                            _LOGGER.info(f"no previous 'effectivePlanStrategy' object found for loadpoint: {lp_idx_str} - {lp_object}")
-
-                    except Exception as err:
-                        _LOGGER.info(f"could not find a connected vehicle at loadpoint: {lp_idx_str} - {type(err).__name__} - {err}")
+                        except Exception as err:
+                            _LOGGER.info(f"could not find a connected vehicle at loadpoint: {lp_idx_str} - {type(err).__name__} - {err}")
 
         if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str, dict))):
             return r_json
