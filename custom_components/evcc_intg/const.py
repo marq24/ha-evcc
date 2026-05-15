@@ -232,6 +232,13 @@ BINARY_ENTITIES_PER_LOADPOINT = [
         icon_off=None
     ),
     ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.SMARTFEEDINPRIORITYACTIVE,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon=None,
+        icon_off=None,
+        entity_registry_enabled_default=False
+    ),
+    ExtBinarySensorEntityDescriptionStub(
         tag=Tag.LP_VEHICLEDETECTIONACTIVE,
         entity_category=EntityCategory.DIAGNOSTIC,
         icon="mdi:car-search",
@@ -306,8 +313,14 @@ BUTTONS_ENTITIES_PER_LOADPOINT = [
         entity_category=EntityCategory.CONFIG,
         device_class=None,
         icon = "mdi:cash-off",
-        entity_registry_enabled_default=False,
-        integrated_supported = False
+        entity_registry_enabled_default=False
+    ),
+    ExtButtonEntityDescriptionStub(
+        tag=Tag.SMARTFEEDINPRIORITYLIMIT,
+        entity_category=EntityCategory.CONFIG,
+        device_class=None,
+        icon = "mdi:cash-off",
+        entity_registry_enabled_default=False
     )
 ]
 
@@ -390,6 +403,17 @@ NUMBER_ENTITIES_PER_LOADPOINT = [
         native_min_value=-0.50,
         native_step=0.005,
         native_unit_of_measurement="@@@/kWh",
+    ),
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.SMARTFEEDINPRIORITYLIMIT,
+        entity_category=EntityCategory.CONFIG,
+        icon = "mdi:cash-multiple",
+        mode = NumberMode.BOX,
+        native_max_value=2.50,
+        native_min_value=-0.50,
+        native_step=0.005,
+        native_unit_of_measurement="@@@/kWh",
+        entity_registry_enabled_default=False
     ),
     ExtNumberEntityDescriptionStub(
         tag=Tag.ENABLEDELAY,

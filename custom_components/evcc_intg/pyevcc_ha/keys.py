@@ -322,6 +322,13 @@ class Tag(ApiKey, Enum):
     # "smartCostLimit": 0.22,
     SMARTCOSTLIMIT = ApiKey(json_key="smartCostLimit", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="smartcostlimit")
 
+    # "smartFeedInPriorityActive": false,
+    SMARTFEEDINPRIORITYACTIVE = ApiKey(json_key="smartFeedInPriorityActive", type=EP_TYPE.LOADPOINTS)
+
+    # "smartFeedInPriorityLimit": null,
+    SMARTFEEDINPRIORITYLIMIT = ApiKey(json_key="smartFeedInPriorityLimit", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="smartfeedinprioritylimit")
+
+
     # "title": "HH-7",
     # -> USED during startup phase
 
