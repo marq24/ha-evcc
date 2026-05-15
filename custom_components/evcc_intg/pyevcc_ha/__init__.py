@@ -1226,7 +1226,7 @@ class EvccApiBridge:
                             _LOGGER.info(f"no previous 'effectivePlanStrategy' object found for loadpoint: {lp_idx_str} - {lp_object}")
 
                     except Exception as err:
-                        _LOGGER.info(f"could not find a connected vehicle at loadpoint: {lp_idx_str}")
+                        _LOGGER.warning(f"plan/strategy write failed for loadpoint {lp_idx_str}: {err}", exc_info=True)
 
         if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str, dict))):
             return r_json

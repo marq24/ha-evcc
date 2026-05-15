@@ -943,8 +943,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if idx_str is not None:
                     idx = int(idx_str)
                     if len(self.data[JSONKEY_LOADPOINTS]) > idx - 1:
-                        if a_tag.json_key in self.data[JSONKEY_LOADPOINTS][idx - 1]:
-                            self.data[JSONKEY_LOADPOINTS][idx - 1][a_tag.json_key] = value
+                        lp = self.data[JSONKEY_LOADPOINTS][idx - 1]
+                        if a_tag.json_key in lp:
+                            if a_tag.subtype is not None and isinstance(lp[a_tag.json_key], dict):
+                                lp[a_tag.json_key][a_tag.subtype] = value
+                            else:
+                                lp[a_tag.json_key] = value
 
             elif a_tag.type == EP_TYPE.VEHICLES:
                 # TODO ?!
