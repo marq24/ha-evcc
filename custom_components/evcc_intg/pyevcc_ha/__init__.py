@@ -1215,7 +1215,7 @@ class EvccApiBridge:
 
                             # 2'nd we must check if we need to write the 'plan/strategy' to the 'vehicle' or to the 'loadpoint'!
                             vehicle_id = lp_object[Tag.LP_VEHICLENAME.json_key]
-                            if vehicle_id is not None:
+                            if vehicle_id is not None and len(vehicle_id) > 0:
                                 req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
                             else:
                                 req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx_str}/{write_key}"
@@ -1226,7 +1226,7 @@ class EvccApiBridge:
                             _LOGGER.info(f"no previous 'effectivePlanStrategy' object found for loadpoint: {lp_idx_str} - {lp_object}")
 
                     except Exception as err:
-                        _LOGGER.warning(f"plan/strategy write failed for loadpoint {lp_idx_str}: {err}", exc_info=True)
+                        _LOGGER.info(f"could not find a connected vehicle at loadpoint: {lp_idx_str} - {type(err).__name__} - {err}")
 
         if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str, dict))):
             return r_json
