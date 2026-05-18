@@ -665,7 +665,11 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     # self.entity_description.lookup values are always 'strings' - so there we should not
                     # have an additional 'factor'
                     if self.entity_description.factor is not None:
-                        value = float(value)/self.entity_description.factor
+                        try:
+                            value = float(value)/self.entity_description.factor
+                        except (TypeError, ValueError):
+                            _LOGGER.debug(f"failed to apply factor {self.entity_description.factor} to value '{value}' for {self._attr_translation_key}")
+                            value = None
 
         except (IndexError, ValueError, TypeError, KeyError) as err:
             _LOGGER.debug(f"tag: {self.tag} (lp_idx: '{self.lp_idx}') (value: '{value}') caused {err}")
@@ -683,12 +687,16 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 if self._previous_float_value is not None:
                     return self._previous_float_value
             else:
-                a_float_value = float(value)
-                if self._previous_float_value is not None and a_float_value < self._previous_float_value:
-                    _LOGGER.debug(f"prev>new for key {self._attr_translation_key} [prev: '{self._previous_float_value}' new: '{a_float_value}']")
-                    return self._previous_float_value
-                else:
-                    self._previous_float_value = a_float_value
+                try:
+                    a_float_value = float(value)
+                    if self._previous_float_value is not None and a_float_value < self._previous_float_value:
+                        _LOGGER.debug(f"prev>new for key {self._attr_translation_key} [prev: '{self._previous_float_value}' new: '{a_float_value}']")
+                        return self._previous_float_value
+                    else:
+                        self._previous_float_value = a_float_value
+
+                except (TypeError, ValueError):
+                    _LOGGER.debug(f"failed to convert value '{value}' for {self._attr_translation_key} to float in CHARGETOTALIMPORT")
 
         # make sure that we only return values > 0
         if self.entity_description.ignore_zero:
