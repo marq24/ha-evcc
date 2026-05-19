@@ -24,11 +24,11 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 DEFAULT_NAME = "evcc"
 DEFAULT_HOST = "http://your-evcc-ip:7070"
-DEFAULT_SCAN_INTERVAL = 15
+DEFAULT_SCAN_INTERVAL = 60
 DEFAULT_USE_WS = True
 DEFAULT_INCLUDE_EVCC = False
-DEFAULT_EXTENDED_VEHICLE_DATA = True
-DEFAULT_EXTENDED_METER_DATA = True
+DEFAULT_EXTENDED_VEHICLE_DATA = False
+DEFAULT_EXTENDED_METER_DATA = False
 
 class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for evcc_intg."""
