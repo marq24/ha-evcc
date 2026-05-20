@@ -67,7 +67,9 @@ from .const import (
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
     CONF_EXTENDED_VEHICLE_DATA,
+    CONF_EXTENDED_VEHICLE_DATA_INTERVAL,
     CONF_EXTENDED_METER_DATA,
+    CONF_EXTENDED_METER_DATA_INTERVAL,
     CONF_PURGE_ALL,
     CONFIG_VERSION,
     CONFIG_MINOR_VERSION,
@@ -323,7 +325,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # the interval from the coordinator in the bridge (for the config updates)...
         self._update_interval_in_seconds_from_config_entry = config_entry.data.get(CONF_SCAN_INTERVAL, 30)
         self._request_ext_vehicle_data = config_entry.data.get(CONF_EXTENDED_VEHICLE_DATA, False)
+        self._request_ext_vehicle_data_interval = config_entry.data.get(CONF_EXTENDED_VEHICLE_DATA_INTERVAL, 3600)
         self._request_ext_meter_data = config_entry.data.get(CONF_EXTENDED_METER_DATA, False)
+        self._request_ext_meter_data_interval = config_entry.data.get(CONF_EXTENDED_METER_DATA_INTERVAL, 3600)
 
         self.bridge = EvccApiBridge(host=config_entry.data.get(CONF_HOST, "NOT-CONFIGURED"),
                                     web_session=http_session,

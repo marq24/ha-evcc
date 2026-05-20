@@ -229,11 +229,17 @@ class EvccApiBridge:
 
         self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
-        self._CONFIG_LAST_UPDATE = -1
-        if self.coordinator is not None and hasattr(self.coordinator, '_update_interval_in_seconds_from_config_entry'):
-            self._CONFIG_UPDATE_INTERVAL_IN_SECONDS = self.coordinator._update_interval_in_seconds_from_config_entry
+        self._CONFIG_VEHICLE_LAST_UPDATE = -1
+        self._CONFIG_METER_LAST_UPDATE = -1
+        if self.coordinator is not None and hasattr(self.coordinator, '_request_ext_vehicle_data_interval'):
+            self._CONFIG_VEHICLE_UPDATE_INTERVAL_IN_SECONDS = self.coordinator._request_ext_vehicle_data_interval
         else:
-            self._CONFIG_UPDATE_INTERVAL_IN_SECONDS = 60 * 15 # the default update will be every 15 minutes
+            self._CONFIG_VEHICLE_UPDATE_INTERVAL_IN_SECONDS = 60 * 60
+
+        if self.coordinator is not None and hasattr(self.coordinator, '_request_ext_meter_data_interval'):
+            self._CONFIG_METER_UPDATE_INTERVAL_IN_SECONDS = self.coordinator._request_ext_meter_data_interval
+        else:
+            self._CONFIG_METER_UPDATE_INTERVAL_IN_SECONDS = 60 * 60
 
         self._data = {}
 
@@ -270,7 +276,8 @@ class EvccApiBridge:
     def clear_data(self, clear_evcc_data: bool = True):
         self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
         self._SESSIONS_LAST_UPDATE_HOUR = -1
-        self._CONFIG_LAST_UPDATE = -1
+        self._CONFIG_VEHICLE_LAST_UPDATE = -1
+        self._CONFIG_METER_LAST_UPDATE = -1
         self._ws_LAST_UPDATE = -1
         self._ws_LAST_NEW_DATA_NOTIFY = -1
         if clear_evcc_data:
@@ -298,7 +305,8 @@ class EvccApiBridge:
                             if self._data is None or len(self._data) == 0:
                                 self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
                                 self._SESSIONS_LAST_UPDATE_HOUR = -1
-                                self._CONFIG_LAST_UPDATE = -1
+                                self._CONFIG_VEHICLE_LAST_UPDATE = -1
+                                self._CONFIG_METER_LAST_UPDATE = -1
                                 await self.read_all_data()
                         except:
                             _LOGGER.info(f"could not read initial data from evcc@{self.host} - ignoring")
@@ -489,12 +497,20 @@ class EvccApiBridge:
         # additional configuration endpoint data
         if request_all or request_config:
             now_time = time()
-            if self._CONFIG_LAST_UPDATE + self._CONFIG_UPDATE_INTERVAL_IN_SECONDS <= time():
-                _LOGGER.debug(f"going to request 'configuration' data from evcc@{self.host}")
-                json_resp, data_was_fetched = await self.read_config_data(json_resp, log_requests=log_config_requests)
+            request_vehicle_data = self._request_ext_vehicle_data and self._CONFIG_VEHICLE_LAST_UPDATE + self._CONFIG_VEHICLE_UPDATE_INTERVAL_IN_SECONDS <= time()
+            request_meter_data = self._request_ext_meter_data and self._CONFIG_METER_LAST_UPDATE + self._CONFIG_METER_UPDATE_INTERVAL_IN_SECONDS <= time()
+            if request_vehicle_data or request_meter_data:
+                _LOGGER.debug(f"going to request 'configuration' data vehicle: {request_vehicle_data}, meter: {request_meter_data} from evcc@{self.host}")
+                json_resp, data_was_fetched = await self.read_config_data(json_resp,
+                                                                          request_vehicle_data=request_vehicle_data,
+                                                                          request_meter_data=request_meter_data,
+                                                                          log_requests=log_config_requests)
                 if data_was_fetched:
                     self._data_coordinator_update_needed = True
-                    self._CONFIG_LAST_UPDATE = now_time
+                    if request_vehicle_data:
+                        self._CONFIG_VEHICLE_LAST_UPDATE = now_time
+                    if request_meter_data:
+                        self._CONFIG_METER_LAST_UPDATE = now_time
             else:
                 # we must copy the previous existing data to the new json_resp!
                 if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_EVCCCONF in self._data:
@@ -558,7 +574,7 @@ class EvccApiBridge:
 
         return json_resp, session_data_was_fetched
 
-    async def read_config_data(self, json_resp: dict, log_requests:bool=False):
+    async def read_config_data(self, json_resp: dict, request_vehicle_data:bool=False, request_meter_data:bool=False, log_requests:bool=False):
         config_data_was_fetched = False
         if await self.ensure_session_is_authorized():
             if ADDITIONAL_ENDPOINTS_DATA_EVCCCONF not in json_resp:
@@ -571,12 +587,27 @@ class EvccApiBridge:
             a_config = json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG]
 
             for a_device_type, value_list in a_config.items():
-                if a_device_type == EVCCCONF_DEVICE_TYPES.VEHICLE.value and not self._request_ext_vehicle_data:
-                    _LOGGER.debug(f"skipping vehicle data since 'request_ext_vehicle_data' is set to False")
-                    continue
+                # first we check if we must fetch vehicle or meter data at all... and if not (either cause it's completely
+                # disabled by the user/config, or if the update interval is just not reached yet
+                just_copy_old_data_for_device_type = False
+                if a_device_type == EVCCCONF_DEVICE_TYPES.VEHICLE.value and (not request_vehicle_data or not self._request_ext_vehicle_data):
+                    _LOGGER.debug(f"skipping vehicle data since 'request_ext_vehicle_data' is set to False (or update-interval-not-reached-yet)")
+                    just_copy_old_data_for_device_type = True
 
-                if a_device_type == EVCCCONF_DEVICE_TYPES.METER.value and not self._request_ext_meter_data:
-                    _LOGGER.debug(f"skipping meter data since 'request_ext_meter_data' is set to False")
+                if a_device_type == EVCCCONF_DEVICE_TYPES.METER.value and (not request_meter_data or not self._request_ext_meter_data):
+                    _LOGGER.debug(f"skipping meter data since 'request_ext_meter_data' is set to False (or update-interval-not-reached-yet)")
+                    just_copy_old_data_for_device_type = True
+
+                if just_copy_old_data_for_device_type:
+                    # make sure that the data is initialized (this is requird, when self._data is not set (yet))
+                    if a_device_type not in json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA]:
+                        json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type] = {}
+
+                    if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_EVCCCONF in self._data:
+                        if EVCCCONF_KEY_DATA in self._data[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF]:
+                            if a_device_type in self._data[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA]:
+                                object_to_copy = self._data[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type]
+                                json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type] = object_to_copy
                     continue
 
                 for a_device_id in value_list:
@@ -937,7 +968,8 @@ class EvccApiBridge:
 
     async def force_config_update(self):
         _LOGGER.debug(f"force_config_update(): forcing config update")
-        self._CONFIG_LAST_UPDATE = -1
+        self._CONFIG_VEHICLE_LAST_UPDATE = -1
+        self._CONFIG_METER_LAST_UPDATE = -1
         await self.read_all_data(request_all=False, request_config=True)
         if self.coordinator is not None:
             self.coordinator.async_set_updated_data(self._data)
