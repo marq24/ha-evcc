@@ -117,8 +117,9 @@
           "null": "löschen",
           "unknown": "unbekannt",
           "normal": "normal",
-          "hold": "halten",
-          "charge": "laden"
+          "hold": "entladen sperren",
+          "charge": "laden",
+          "holdcharge": "laden sperren"
         }
       },
       "prioritysoc": {

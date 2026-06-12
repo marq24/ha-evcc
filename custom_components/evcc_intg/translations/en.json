@@ -119,8 +119,9 @@
           "null": "delete",
           "unknown": "unknown",
           "normal": "normal",
-          "hold": "hold",
-          "charge": "charge"
+          "hold": "lock discharge",
+          "charge": "charge",
+          "holdcharge": "lock charge"
         }
       },
       "prioritysoc": {

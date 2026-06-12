@@ -146,8 +146,9 @@ TRANSLATIONS: Final = {
         "batterymode": {
             "unknown": "Unbekannt",
             "normal": "normal",
-            "hold": "angehalten/gesperrt",
+            "hold": "entladen sperren",
             "charge": "laden...",
+            "holdcharge": "laden sperren",
         },
         "phaseaction":{
             "scale1p": "Reduziere auf einphasig",
@@ -173,8 +174,9 @@ TRANSLATIONS: Final = {
         "batterymode": {
             "unknown": "unknown",
             "normal": "normal",
-            "hold": "on-hold",
+            "hold": "lock discharge",
             "charge": "charging...",
+            "holdcharge": "lock charge",
         },
         "phaseaction":{
             "scale1p": "Reducing to 1-phase charging",
