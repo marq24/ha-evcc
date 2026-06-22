@@ -502,7 +502,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME} [{self._system_id}]",
-            "sw_version": self._version,
+            "sw_version": f"{self._version}",
             "model": None
         }
 
@@ -1018,7 +1018,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - {self.lang_map["device_name_loadpoint"]} {addon} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": f"{self._version}"
         }
         return a_device_info_dict
 
@@ -1029,7 +1029,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - {self.lang_map["device_name_vehicle"]} {addon} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": f"{self._version}"
         }
         return a_device_info_dict
 
@@ -1040,7 +1040,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - {self.lang_map["device_name_circuit"]} {addon} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": f"{self._version}"
         }
         return a_device_info_dict
 
@@ -1056,7 +1056,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
             "name": f"{NAME_SHORT} - {self.lang_map[device_name_meter]} {addon} [{self._system_id}]",
-            "sw_version": self._version
+            "sw_version": f"{self._version}"
         }
         return a_device_info_dict
 
