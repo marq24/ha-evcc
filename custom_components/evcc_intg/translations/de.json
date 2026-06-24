@@ -435,7 +435,16 @@
           "on": "Kontinuierlich",
           "off": "Günstigste"
         }
-      }
+      },
+      "repeating_plan_2": {"name": "Ladeplan 2 (wiederholend)"},
+      "repeating_plan_3": {"name": "Ladeplan 3 (wiederholend)"},
+      "repeating_plan_4": {"name": "Ladeplan 4 (wiederholend)"},
+      "repeating_plan_5": {"name": "Ladeplan 5 (wiederholend)"},
+      "repeating_plan_6": {"name": "Ladeplan 6 (wiederholend)"},
+      "repeating_plan_7": {"name": "Ladeplan 7 (wiederholend)"},
+      "repeating_plan_8": {"name": "Ladeplan 8 (wiederholend)"},
+      "repeating_plan_9": {"name": "Ladeplan 9 (wiederholend)"},
+      "repeating_plan_10": {"name": "Ladeplan 10 (wiederholend)"}
     }
   }
 }

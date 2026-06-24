@@ -1152,7 +1152,7 @@ class EvccApiBridge:
         else:
             return {"err": "no response from evcc"}
 
-    async def write_tag(self, tag: Tag, value, idx_str: str = None) -> dict:
+    async def write_tag(self, tag: Tag, value, idx_str: str = None, evcc_internal_id:str = None) -> dict:
         ret = {}
         if hasattr(tag, "write_type") and tag.write_type is not None:
             final_type = tag.write_type
@@ -1166,17 +1166,20 @@ class EvccApiBridge:
             ret[tag.json_key] = await self.write_loadpoint_key(idx_str, tag.write_key, value)
 
         elif final_type == EP_TYPE.VEHICLES:
-            # before we can write something to the vehicle endpoints, we must know the vehicle_id!
-            # -> so we have to grab from the loadpoint the current vehicle!
-            if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
-                try:
-                    int_idx = int(idx_str) - 1
-                    vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.json_key]
-                    if vehicle_id is not None:
-                        ret[tag.json_key] = await self.write_vehicle_key(vehicle_id, tag.write_key, value)
+            if evcc_internal_id is not None:
+                ret[tag.json_key] = await self.write_vehicle_key(evcc_internal_id, tag.write_key, value)
+            else:
+                # before we can write something to the vehicle endpoints, we must know the vehicle_id!
+                # -> so we have to grab from the loadpoint the current vehicle!
+                if self._data is not None and len(self._data) > 0 and JSONKEY_LOADPOINTS in self._data:
+                    try:
+                        int_idx = int(idx_str) - 1
+                        vehicle_id = self._data[JSONKEY_LOADPOINTS][int_idx][Tag.LP_VEHICLENAME.json_key]
+                        if vehicle_id is not None:
+                            ret[tag.json_key] = await self.write_vehicle_key(vehicle_id, tag.write_key, value)
 
-                except Exception as err:
-                    _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx_str}")
+                    except Exception as err:
+                        _LOGGER.info(f"could not find a connected vehicle at loadpoint: {idx_str}")
 
         return ret
 
@@ -1266,17 +1269,23 @@ class EvccApiBridge:
             return {"err": "no response from evcc"}
 
     async def write_vehicle_key(self, vehicle_id: str, write_key, value) -> dict:
-        if isinstance(value, (bool, int, float)):
-            value = str(value).lower()
+        post_data = None
+        if isinstance(value, (dict, list)):
+            post_data = value
+            _LOGGER.info(f"going to post: '{value}' to '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
+            req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}"
         else:
-            value = str(value)
+            if isinstance(value, (bool, int, float)):
+                value = str(value).lower()
+            else:
+                value = str(value)
+            _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
+            req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
 
-        _LOGGER.info(f"going to write '{value}' for key '{write_key}' to evcc-vehicle{vehicle_id}@{self.host}")
-        req = f"{self.host}/api/{EP_TYPE.VEHICLES.value}/{vehicle_id}/{write_key}/{value}"
         _LOGGER.debug(f"POST request: {req}")
-        r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
+        r_json = await _do_request(method=self.web_session.post(url=req, json=post_data, ssl=False, timeout=static_5sec_timeout))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (list, dict, str, Number))):
             return r_json
         else:
             return {"err": "no response from evcc"}

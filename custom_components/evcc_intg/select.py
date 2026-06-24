@@ -292,7 +292,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
     async def async_select_option(self, option: str) -> None:
         try:
             if "null" == str(option):
-                await self.coordinator.async_write_tag(self.tag, None, self.lp_idx, self)
+                await self.coordinator.async_write_tag(self.tag, None, self)
             else:
                 #if Tag.LP_VEHICLENAME == self.tag:
                 #    # me must map the value selected in the select.options to the final value
@@ -301,7 +301,7 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 #    if option in self.coordinator._vehicle:
                 #        option = self.coordinator._vehicle[option][EVCC_JSON_VEH_NAME]
 
-                await self.coordinator.async_write_tag(self.tag, option, self.lp_idx, self)
+                await self.coordinator.async_write_tag(self.tag, option, self)
 
             #_LOGGER.info(f"{self.tag} CHANGED to '{option}'")
             self._check_tags(option)

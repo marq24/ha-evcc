@@ -26,7 +26,8 @@ Please be aware that we are developing this integration to the best of our knowl
   - Configure min & max charging currents
   - Configure cost limits (€ or CO₂)
   - Adjust home-battery settings
-  - Adjust/create Vehicle & Loadpoint charging plan via HA-Services [http://[YOUR-HA-INSTANCE]:8123/developer-tools/service](http://[YOUR-HA-INSTANCE]:8123/developer-tools/service)
+  - Adjust/create vehicle & loadpoint charging plan via HA-Services [http://[YOUR-HA-INSTANCE]:8123/developer-tools/service](http://[YOUR-HA-INSTANCE]:8123/developer-tools/service)
+  - Enable/eisable repeating charging plan #2-#10 per vehicle (details about the plan can be found in the attributes of the switch entity)
   
 - Supporting most of the other loadpoint and vehicle data that is available via the API – please let me know if you miss some data – probably it just slipped through my attention during testing.
 

@@ -1,5 +1,5 @@
 import logging
-from typing import Literal
+from typing import Literal, Any
 
 from homeassistant.components.switch import SwitchEntity
 from homeassistant.config_entries import ConfigEntry
@@ -7,8 +7,8 @@ from homeassistant.const import STATE_ON, STATE_OFF, Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import EvccDataUpdateCoordinator, EvccBaseEntity
-from .const import DOMAIN, SWITCH_ENTITIES, SWITCH_ENTITIES_PER_LOADPOINT, ExtSwitchEntityDescription
+from . import EvccDataUpdateCoordinator, EvccBaseEntity, Tag
+from .const import DOMAIN, SWITCH_ENTITIES, SWITCH_ENTITIES_PER_LOADPOINT, SWITCH_ENTITIES_PER_VEHICLE, ExtSwitchEntityDescription
 
 _LOGGER = logging.getLogger(__name__)
 
@@ -54,6 +54,34 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entity = EvccSwitch(coordinator, description)
                 entities.append(entity)
 
+    # vehicle sensors...
+    multi_vehicle_config = multi_loadpoint_config or len(coordinator._vehicle) > 1
+    for a_vehicle_key in coordinator._vehicle:
+        a_vehicle_obj = coordinator._vehicle[a_vehicle_key]
+        veh_id_addon = a_vehicle_obj["id"]
+        veh_name_addon = a_vehicle_obj["name"]
+
+        for a_stub in SWITCH_ENTITIES_PER_VEHICLE:
+            the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
+
+            description = ExtSwitchEntityDescription(
+                tag=a_stub.tag,
+                key=f"{veh_id_addon}_{the_key}", # if not patch_keys else f"{veh_id_addon}_{the_key}_{a_stub.json_idx[0]}",
+                translation_key=the_key, # if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
+                evcc_internal_id=a_vehicle_key,
+                name_addon=veh_name_addon if multi_vehicle_config else None,
+                icon=a_stub.icon,
+                device_class=a_stub.device_class,
+                unit_of_measurement=a_stub.unit_of_measurement,
+                entity_category=a_stub.entity_category,
+                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+
+                # the entity type specific values...
+                icon_off=a_stub.icon_off
+            )
+            entity = EvccSwitch(coordinator, description)
+            entities.append(entity)
+
     add_entity_cb(entities)
 
 
@@ -66,7 +94,7 @@ class EvccSwitch(EvccBaseEntity, SwitchEntity):
        """Turn on the switch."""
        try:
            # cause of a minor bug in evcc, we need to write 1 instead of True
-           await self.coordinator.async_write_tag(self.tag, 1, self.lp_idx, self)
+           await self.coordinator.async_write_tag(self.tag, 1, self)
        except ValueError:
            return "unavailable"
 
@@ -74,14 +102,24 @@ class EvccSwitch(EvccBaseEntity, SwitchEntity):
        """Turn off the switch."""
        try:
             # cause of a minor bug in evcc, we need to write 0 instead of False
-            await self.coordinator.async_write_tag(self.tag, 0, self.lp_idx, self)
+            await self.coordinator.async_write_tag(self.tag, 0, self)
        except ValueError:
            return "unavailable"
 
     @property
     def is_on(self) -> bool | None:
         try:
-            value = self.coordinator.read_tag(self.tag, self.lp_idx)
+            # for special vehicle sensors, we already provide a vehicle_id, so the tag reading code
+            # can use the 'evcc_internal_id'
+            value = self.coordinator.read_tag(self.tag, self.lp_idx, self.evcc_internal_id)
+
+            # this looks quite silly - since coordinator.read_tag should already get the data from
+            # the given json_key - but the 'VEHICLEREPEATINGPLAN00n' are special, they always return
+            # the repeatingPlans dict object (at the index) of the vehicleId... [there is no other
+            # way to get on the one-hand side the switch value from the 'active' attribute and on the
+            # other side, the complete dict for the additional sensor data]
+            if value is not None and isinstance(value, dict) and self.tag.json_key in value:
+                value = value.get(self.tag.json_key, False)
 
         except KeyError:
             _LOGGER.info(f"is_on caused KeyError for: {self.tag.json_key}")
@@ -120,3 +158,29 @@ class EvccSwitch(EvccBaseEntity, SwitchEntity):
             return self._attr_icon_off
         else:
             return super().icon
+
+    @property
+    def available(self) -> bool:
+        is_avail = super().available
+        if self.tag in [Tag.VEHICLEREPEATINGPLAN002, Tag.VEHICLEREPEATINGPLAN003, Tag.VEHICLEREPEATINGPLAN004,
+                        Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006, Tag.VEHICLEREPEATINGPLAN007,
+                        Tag.VEHICLEREPEATINGPLAN008, Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
+            value = self.coordinator.read_tag(self.tag, self.lp_idx, self.evcc_internal_id)
+            if value is None or not isinstance(value, dict) or len(value) == 0:
+                return False
+        return is_avail
+
+    @property
+    def state_attributes(self) -> dict[str, Any] | None:
+        """Return the state attributes."""
+        attrs = super().state_attributes
+        if self.tag in [Tag.VEHICLEREPEATINGPLAN002, Tag.VEHICLEREPEATINGPLAN003, Tag.VEHICLEREPEATINGPLAN004,
+                        Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006, Tag.VEHICLEREPEATINGPLAN007,
+                        Tag.VEHICLEREPEATINGPLAN008, Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
+            value = self.coordinator.read_tag(self.tag, self.lp_idx, self.evcc_internal_id)
+            if value is not None and isinstance(value, dict) and len(value) > 0:
+                if attrs is None:
+                    attrs = {}
+                return attrs | value
+
+        return attrs

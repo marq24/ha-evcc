@@ -1,6 +1,7 @@
 import asyncio
 import logging
 import os
+import copy
 from dataclasses import replace
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
@@ -716,7 +717,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             _LOGGER.warning(f"UpdateFailed unexpected: {type(other)} - {other}")
             raise UpdateFailed() from other
 
-    def read_tag(self, a_tag: Tag, idx: int = None):
+    def read_tag(self, a_tag: Tag, idx: int = None, evcc_internal_id:str = None):
         ret = None
         if self.data is not None:
             if a_tag.type == EP_TYPE.LOADPOINTS:
@@ -726,7 +727,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     ret = ret.get(a_tag.subtype, ret)
 
             elif a_tag.type == EP_TYPE.VEHICLES:
-                ret = self.read_tag_vehicle_int(a_tag=a_tag, loadpoint_idx=idx)
+                ret = self.read_tag_vehicle_int(a_tag=a_tag, loadpoint_idx=idx, vehicle_id=evcc_internal_id)
                 # quick hack for subtype support
                 if isinstance(ret, dict) and a_tag.subtype is not None:
                     ret = ret.get(a_tag.subtype, ret)
@@ -846,28 +847,30 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
                 return value
 
-    def read_tag_vehicle_int(self, a_tag: Tag, loadpoint_idx: int = None):
-        if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data and loadpoint_idx is not None:
-            try:
-                if len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
-                    if Tag.LP_VEHICLENAME.json_key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
-                        vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.LP_VEHICLENAME.json_key]
-                        if vehicle_id is not None:
-                            if len(vehicle_id) > 0:
-                                return self.read_tag_vehicle_str(a_tag=a_tag, vehicle_id=vehicle_id)
-                            else:
-                                # NO logging of empty vehicleName's -> since this just means no vehicle connected to
-                                # the loadpoint...
-                                pass
+    def read_tag_vehicle_int(self, a_tag: Tag, loadpoint_idx: int = None, vehicle_id: str = None):
+        if vehicle_id is None or len(vehicle_id) == 0:
+            if len(self.data) > 0 and JSONKEY_LOADPOINTS in self.data and loadpoint_idx is not None:
+                try:
+                    if len(self.data[JSONKEY_LOADPOINTS]) > loadpoint_idx - 1:
+                        if Tag.LP_VEHICLENAME.json_key in self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]:
+                            vehicle_id = self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1][Tag.LP_VEHICLENAME.json_key]
                         else:
-                            _LOGGER.debug(f"read_tag_vehicle_int: vehicle_id is None for: {loadpoint_idx}")
+                            _LOGGER.debug(f"read_tag_vehicle_int: {Tag.LP_VEHICLENAME.json_key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
                     else:
-                        _LOGGER.debug(f"read_tag_vehicle_int: {Tag.LP_VEHICLENAME.json_key} not in {self.data[JSONKEY_LOADPOINTS][loadpoint_idx - 1]} for: {loadpoint_idx}")
-                else:
-                    _LOGGER.debug(f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
+                        _LOGGER.debug(f"read_tag_vehicle_int: len of 'loadpoints' {len(self.data[JSONKEY_LOADPOINTS])} - requesting: {loadpoint_idx}")
 
-            except Exception as err:
-                _LOGGER.info(f"read_tag_vehicle_int: could not find a connected vehicle at loadpoint: {loadpoint_idx}")
+                except Exception as err:
+                    _LOGGER.info(f"read_tag_vehicle_int: could not find a connected vehicle at loadpoint: {loadpoint_idx}")
+
+        if vehicle_id is not None:
+            if len(vehicle_id) > 0:
+                return self.read_tag_vehicle_str(a_tag=a_tag, vehicle_id=vehicle_id)
+            else:
+                # NO logging of empty vehicleName's -> since this just means no vehicle connected to
+                # the loadpoint...
+                pass
+        else:
+            _LOGGER.debug(f"read_tag_vehicle_int: vehicle_id is None for: lp_idx:{loadpoint_idx} | veh_id: {vehicle_id}")
 
         return None
 
@@ -892,13 +895,42 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
             else:
                 return None
+
+        elif a_tag in [Tag.VEHICLEREPEATINGPLAN002, Tag.VEHICLEREPEATINGPLAN003, Tag.VEHICLEREPEATINGPLAN004,
+                       Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006, Tag.VEHICLEREPEATINGPLAN007,
+                       Tag.VEHICLEREPEATINGPLAN008, Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
+
+            data_obj = self.data[JSONKEY_VEHICLES][vehicle_id].get("repeatingPlans", [])
+            data_len = len(data_obj)
+            if a_tag == Tag.VEHICLEREPEATINGPLAN002 and data_len > 0:
+                return data_obj[0]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN003 and data_len > 1:
+                return data_obj[1]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN004 and data_len > 2:
+                return data_obj[2]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN005 and data_len > 3:
+                return data_obj[3]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN006 and data_len > 4:
+                return data_obj[4]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN007 and data_len > 5:
+                return data_obj[5]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN008 and data_len > 6:
+                return data_obj[6]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN009 and data_len > 7:
+                return data_obj[7]
+            elif a_tag == Tag.VEHICLEREPEATINGPLAN010 and data_len > 8:
+                return data_obj[8]
+            else:
+                return {}
         else:
+            # the "default" vehicle data reading code...
             if a_tag.json_key in self.data[JSONKEY_VEHICLES][vehicle_id]:
                 return self.data[JSONKEY_VEHICLES][vehicle_id][a_tag.json_key]
             elif a_tag.json_key_alias is not None and a_tag.json_key_alias in self.data[JSONKEY_VEHICLES][vehicle_id]:
                 return self.data[JSONKEY_VEHICLES][vehicle_id][a_tag.json_key_alias]
             else:
                 return "0"
+
 
     async def async_write_plan(self, vehicle_name:str, loadpoint_idx: str, soc_or_energy: str, rfc_date: str, precondition: int | None = None):
         if vehicle_name is not None and loadpoint_idx is None:
@@ -930,18 +962,59 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         return result
 
-    async def async_write_tag(self, a_tag: Tag, value, idx_str: str = None, entity: Entity = None) -> dict:
+    async def async_write_tag(self, a_tag: Tag, value, the_entity: Entity = None) -> dict:
         """Update single data"""
-        result = await self.bridge.write_tag(a_tag, value, idx_str)
+        idx_str: str = the_entity.lp_idx if the_entity is not None and hasattr(the_entity, "lp_idx") else None
+        evcc_internal_id: str = the_entity.evcc_internal_id if the_entity is not None and hasattr(the_entity, "evcc_internal_id") else None
+
+        # we need to patch the value '0 or 1' into the complete 'repeatingPlans' array!
+        # AKA this really SUCKS!
+        if a_tag.type == EP_TYPE.VEHICLES and a_tag in [Tag.VEHICLEREPEATINGPLAN002,
+                                                        Tag.VEHICLEREPEATINGPLAN003, Tag.VEHICLEREPEATINGPLAN004,
+                                                        Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006,
+                                                        Tag.VEHICLEREPEATINGPLAN007, Tag.VEHICLEREPEATINGPLAN008,
+                                                        Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
+
+            if self.data is not None and evcc_internal_id in self.data[EP_TYPE.VEHICLES.value]:
+                data_obj = self.data[EP_TYPE.VEHICLES.value][evcc_internal_id]
+                if "repeatingPlans" in data_obj:
+                    post_data = copy.deepcopy(data_obj["repeatingPlans"])
+                    post_data_len = len(post_data)
+                    new_state = str(value) == "1"
+                    if a_tag == Tag.VEHICLEREPEATINGPLAN002 and post_data_len > 0:
+                        post_data[0][Tag.VEHICLEREPEATINGPLAN002.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN003 and post_data_len > 1:
+                        post_data[1][Tag.VEHICLEREPEATINGPLAN003.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN004 and post_data_len > 2:
+                        post_data[2][Tag.VEHICLEREPEATINGPLAN004.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN005 and post_data_len > 3:
+                        post_data[3][Tag.VEHICLEREPEATINGPLAN005.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN006 and post_data_len > 4:
+                        post_data[4][Tag.VEHICLEREPEATINGPLAN006.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN007 and post_data_len > 5:
+                        post_data[5][Tag.VEHICLEREPEATINGPLAN007.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN008 and post_data_len > 6:
+                        post_data[6][Tag.VEHICLEREPEATINGPLAN008.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN009 and post_data_len > 7:
+                        post_data[6][Tag.VEHICLEREPEATINGPLAN009.json_key] = new_state
+                    elif a_tag == Tag.VEHICLEREPEATINGPLAN010 and post_data_len > 8:
+                        post_data[6][Tag.VEHICLEREPEATINGPLAN010.json_key] = new_state
+                    else:
+                        post_data = value
+
+                    # finally setting the resulting post data as value...
+                    value = post_data
+
+        result = await self.bridge.write_tag(a_tag, value, idx_str, evcc_internal_id)
         _LOGGER.debug(f"write result: {result}")
 
         if a_tag.json_key not in result or result[a_tag.json_key] is None:
             _LOGGER.info(f"could not write value: '{value}' to: {a_tag} result was: {result}")
         else:
             # IMH0 it's quite tricky to patch the self.data object here... but we try!
-            # 2026/05/15: actually patching the self.data object should not be required anylonger,
+            # 2026/05/15: actually patching the self.data object should not be required anylonger
             # when the websocket connection is in use - since with the websocket connection the
-            # updated evcc data will/should be insantly populated into out HA integration...
+            # updated evcc data will/should be instantly populated into our HA integration...
             if a_tag.type == EP_TYPE.SITE:
                 if a_tag.json_key in self.data:
                     self.data[a_tag.json_key] = value
@@ -959,12 +1032,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
             elif a_tag.type == EP_TYPE.VEHICLES:
                 # TODO ?!
-                _LOGGER.debug(f"{a_tag} no data update!")
+                _LOGGER.debug(f"{a_tag} no data update handling for {EP_TYPE.VEHICLES.value} implemented yet - let websocket handle it")
                 pass
 
-        if entity is not None and not self.bridge.ws_connected:
+        if the_entity is not None and not self.bridge.ws_connected:
             _LOGGER.debug(f"schedule update...")
-            entity.async_schedule_update_ha_state(force_refresh=True)
+            the_entity.async_schedule_update_ha_state(force_refresh=True)
 
         return result
 
@@ -1074,26 +1147,16 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
 
     def __init__(self, entity_type:str, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
         super().__init__(coordinator, description)
-        if hasattr(description, "tag"):
-            self.tag = description.tag
-        else:
-            self.tag = None
-
-        self.lp_idx = None
-        if hasattr(description, "lp_idx"):
-            self.lp_idx = description.lp_idx
-        else:
-            self.lp_idx = None
+        self.tag = description.tag if hasattr(description, "tag") else None
+        self.lp_idx = description.lp_idx if hasattr(description, "lp_idx") else None
+        self.evcc_internal_id = description.evcc_internal_id if hasattr(description, "evcc_internal_id") else None
+        self._attr_name_addon = description.name_addon if hasattr(description, "name_addon") else None
 
         if hasattr(description, "translation_key") and description.translation_key is not None:
             self._attr_translation_key = description.translation_key.lower()
         else:
             self._attr_translation_key = description.key.lower()
 
-        if hasattr(description, "name_addon"):
-            self._attr_name_addon = description.name_addon
-        else:
-            self._attr_name_addon = None
 
         if hasattr(description, "native_unit_of_measurement") and description.native_unit_of_measurement is not None:
             if "@@@" in description.native_unit_of_measurement:

@@ -521,7 +521,16 @@
           "on": "Continuous",
           "off": "Most favorable"
         }
-      }
+      },
+      "repeating_plan_2": {"name": "Charging plan 2 (repetitive)"},
+      "repeating_plan_3": {"name": "Charging plan 3 (repetitive)"},
+      "repeating_plan_4": {"name": "Charging plan 4 (repetitive)"},
+      "repeating_plan_5": {"name": "Charging plan 5 (repetitive)"},
+      "repeating_plan_6": {"name": "Charging plan 6 (repetitive)"},
+      "repeating_plan_7": {"name": "Charging plan 7 (repetitive)"},
+      "repeating_plan_8": {"name": "Charging plan 8 (repetitive)"},
+      "repeating_plan_9": {"name": "Charging plan 9 (repetitive)"},
+      "repeating_plan_10": {"name": "Charging plan 10 (repetitive)"}
     }
   }
 }

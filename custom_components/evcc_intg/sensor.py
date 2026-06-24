@@ -124,7 +124,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     key=f"{lp_id_addon}_{the_key}" if not patch_keys else f"{lp_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                     translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                     name_addon=lp_name_addon if multi_loadpoint_config else None,
-                    evcc_config_id=a_lp_key,
                     icon=a_stub.icon,
                     device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
                     unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
@@ -184,7 +183,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 tag=a_stub.tag,
                 key=f"{veh_id_addon}_{the_key}" if not patch_keys else f"{veh_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                 translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
-                evcc_config_id=a_vehicle_key,
+                evcc_internal_id=a_vehicle_key,
                 name_addon=veh_name_addon if multi_vehicle_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
@@ -274,7 +273,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     tag=a_stub.tag,
                     key=f"{meter_id_addon}_{the_key}" if not patch_keys else f"{meter_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                     translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
-                    evcc_config_id=a_meter_key,
+                    evcc_internal_id=a_meter_key,
                     name_addon=meter_name_addon,
                     icon=a_stub.icon,
                     device_class=a_stub.device_class,
@@ -295,7 +294,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 entities.append(entity)
                 entries_to_check[entity.entity_id] = {
                     "tag": description.tag,
-                    "evcc_config_id": description.evcc_config_id,
+                    "evcc_internal_id": description.evcc_internal_id,
                     "description_key": description.key
                 }
 
@@ -341,7 +340,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             if registry is not None:
                 for a_entity_id in entries_to_check:
                     a_entity_data = entries_to_check[a_entity_id]
-                    value = coordinator.read_tag_configuration(a_entity_data["tag"], a_entity_data["evcc_config_id"])
+                    value = coordinator.read_tag_configuration(a_entity_data["tag"], a_entity_data["evcc_internal_id"])
                     #_LOGGER.debug(f"_check_for_entities_to_enabled(): {a_entity_data["description_key"]}: {value}")
                     entry = registry.async_get(a_entity_id)
                     if entry is not None:
@@ -607,16 +606,19 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 return None
 
         try:
+            value = None
             if self.tag.type == EP_TYPE.EVCCCONF:
                 # for the entities that read the data from the CONFIGURATION, we need
                 # some special handling (since the tag is not enough to find the data
                 # in the JSON structure...)
-                if self.entity_description.evcc_config_id is None:
+                if self.evcc_internal_id is None:
                     return None
-                value = self.coordinator.read_tag_configuration(self.tag, self.entity_description.evcc_config_id)
-            else:
-                value = self.coordinator.read_tag(self.tag, self.lp_idx)
+                value = self.coordinator.read_tag_configuration(self.tag, self.evcc_internal_id)
 
+            else:
+                # for special vehicle sensors, we already provide a vehicle_id, so the tag reading code
+                # can use the 'evcc_internal_id'
+                value = self.coordinator.read_tag(self.tag, self.lp_idx, self.evcc_internal_id)
 
             if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
                 for idx, key in enumerate(self.entity_description.json_idx):
@@ -672,7 +674,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                             value = None
 
         except (IndexError, ValueError, TypeError, KeyError) as err:
-            _LOGGER.debug(f"tag: {self.tag} (lp_idx: '{self.lp_idx}') (value: '{value}') caused {err}")
+            _LOGGER.debug(f"tag: {self.tag} (lp_idx: '{self.lp_idx}') (value: '{value}') caused {type(err).__name__} - {err}")
             value = None
 
 

@@ -95,6 +95,7 @@ class ExtBinarySensorEntityDescription(BinarySensorEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    evcc_internal_id: str | None = None
     is_lp_integrated_device: bool | None = None
 
     icon_off: str | None = None
@@ -108,6 +109,7 @@ class ExtButtonEntityDescription(ButtonEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    evcc_internal_id: str | None = None
     is_lp_integrated_device: bool | None = None
 
     payload: str | None = None
@@ -129,6 +131,7 @@ class ExtNumberEntityDescription(NumberEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    evcc_internal_id: str | None = None
     is_lp_integrated_device: bool | None = None
 
 @dataclass(frozen=True)
@@ -140,6 +143,7 @@ class ExtSelectEntityDescription(SelectEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    evcc_internal_id: str | None = None
     is_lp_integrated_device: bool | None = None
 
 @dataclass(frozen=True)
@@ -159,7 +163,7 @@ class ExtSensorEntityDescription(SensorEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
-    evcc_config_id: str | None = None
+    evcc_internal_id: str | None = None
     is_lp_integrated_device: bool | None = None
 
     json_idx: list[str|int] | None = None
@@ -176,6 +180,7 @@ class ExtSwitchEntityDescription(SwitchEntityDescription):
     tag: Tag = None
     lp_idx: int | str | None = None
     name_addon: str | None = None
+    evcc_internal_id: str | None = None
     is_lp_integrated_device: bool | None = None
 
     icon_off: str | None = None
@@ -2130,5 +2135,86 @@ SWITCH_ENTITIES_PER_LOADPOINT = [
         icon_off="mdi:calendar-clock",
         device_class=None,
         integrated_supported=False
+    ),
+]
+
+SWITCH_ENTITIES_PER_VEHICLE = [
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN002,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN003,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN004,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN005,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False,
+        entity_registry_enabled_default=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN006,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False,
+        entity_registry_enabled_default=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN007,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False,
+        entity_registry_enabled_default=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN008,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False,
+        entity_registry_enabled_default=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN009,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False,
+        entity_registry_enabled_default=False
+    ),
+    ExtSwitchEntityDescriptionStub(
+        tag=Tag.VEHICLEREPEATINGPLAN010,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calendar-refresh",
+        icon_off="mdi:calendar-clock",
+        device_class=None,
+        integrated_supported=False,
+        entity_registry_enabled_default=False
     ),
 ]
