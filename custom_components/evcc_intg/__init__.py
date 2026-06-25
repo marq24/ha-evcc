@@ -900,7 +900,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                        Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006, Tag.VEHICLEREPEATINGPLAN007,
                        Tag.VEHICLEREPEATINGPLAN008, Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
 
-            data_obj = self.data[JSONKEY_VEHICLES][vehicle_id].get("repeatingPlans", [])
+            data_obj = self.data[JSONKEY_VEHICLES][vehicle_id].get("repeatingPlans") or []
             data_len = len(data_obj)
             if a_tag == Tag.VEHICLEREPEATINGPLAN002 and data_len > 0:
                 return data_obj[0]
@@ -977,7 +977,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
             if self.data is not None and evcc_internal_id in self.data[EP_TYPE.VEHICLES.value]:
                 data_obj = self.data[EP_TYPE.VEHICLES.value][evcc_internal_id]
-                if "repeatingPlans" in data_obj:
+                if data_obj.get("repeatingPlans"):
                     post_data = copy.deepcopy(data_obj["repeatingPlans"])
                     post_data_len = len(post_data)
                     new_state = str(value) == "1"
