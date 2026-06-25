@@ -900,6 +900,13 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                        Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006, Tag.VEHICLEREPEATINGPLAN007,
                        Tag.VEHICLEREPEATINGPLAN008, Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
 
+            # The key difference is when [] is used:
+            # `get("repeatingPlans", []) uses [] only if the key is missing.`
+            # while
+            # `get("repeatingPlans") or []` uses [] if the key is missing or the value is any falsy value (None,
+            # False, 0, "", [], etc.).
+            # So if "repeatingPlans" exists but is None (or another falsy non-list), the first line keeps that value,
+            # while the second line converts it to [].
             data_obj = self.data[JSONKEY_VEHICLES][vehicle_id].get("repeatingPlans") or []
             data_len = len(data_obj)
             if a_tag == Tag.VEHICLEREPEATINGPLAN002 and data_len > 0:
