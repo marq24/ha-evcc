@@ -334,7 +334,7 @@ class EvccApiBridge:
                                                     # task launched after this loop will then refetch /api/sessions
                                                     if domain == JSONKEY_LOADPOINTS and sub_key == Tag.CHARGING.json_key \
                                                             and self._data[domain][idx].get(sub_key) is True and value is False:
-                                                        _LOGGER.debug(f"loadpoint[{idx}] charging stopped -> force sessions refresh")
+                                                        _LOGGER.debug(f"loadpoint[{idx}] charging stopped -> force a session refresh")
                                                         self._SESSIONS_LAST_UPDATE_HOUR = -1
                                                     self._data[domain][idx][sub_key] = value
                                                 else:
@@ -480,24 +480,12 @@ class EvccApiBridge:
 
         # additional sessions endpoint data
         if request_all or request_sessions:
-            # update session data twice per hour:
-            #   window A → minutes 55–59 (5 minutes before the full hour)
-            #   window B → minutes 00–54 (start of the new hour)
-            if current_minute >= 55:
-                _sessions_slot = current_hour * 100 + 55     # e.g. 1455 at 14:55–14:59
-            else:
-                _sessions_slot = current_hour * 100          # e.g. 1400 at 14:00–14:54
-
-            _sessions_should_fetch = (
-                self._SESSIONS_LAST_UPDATE_HOUR == -1        # first run: fetch immediately
-                or (self._SESSIONS_LAST_UPDATE_HOUR != _sessions_slot)
-            )
-            if _sessions_should_fetch:
+            if self._SESSIONS_LAST_UPDATE_HOUR != current_hour:
                 _LOGGER.debug(f"going to request 'sessions' data from evcc@{self.host}")
                 json_resp, data_was_fetched = await self.read_sessions_data(json_resp)
                 if data_was_fetched:
                     self._data_coordinator_update_needed = True
-                    self._SESSIONS_LAST_UPDATE_HOUR = _sessions_slot
+                    self._SESSIONS_LAST_UPDATE_HOUR = current_hour
             else:
                 # we must copy the previous existing data to the new json_resp!
                 if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
@@ -1358,7 +1346,7 @@ class EvccApiBridge:
     ##################################################################################
     # EVCC CARD ADDON
     ##################################################################################
-    # the following 'read_*' methods serve the on-demand HA websocket-api commands
+    # the following 'evcc_card_read_*' methods serve the on-demand HA websocket-api commands
     # (see 'evcc_card_websocket.py') - unlike 'read_tariff_data()'/'read_sessions_data()'
     # above (which aggregate data for entities and intentionally drop large payloads)
     # these return the raw evcc response to the caller, since the websocket connection has
@@ -1396,15 +1384,10 @@ class EvccApiBridge:
         return r_json if isinstance(r_json, dict) else {}
 
     async def evcc_card_read_sessions_raw(self, year: int = None, month: int = None) -> list:
-        # CURRENT-UPDATE-STRATEGY is to fetch the session data just every hour (and shortly
-        # before midnight) -> this will be triggerd by the websocket message handler by
+        # CURRENT-UPDATE-STRATEGY is to fetch the session data just every hour or when the
+        # loadpoint charging attribute will switch (kudos @ mkshb (Bastian)
+        # -> this will be triggerd by the websocket message handler by
         # calling _ws_start_async_additional_data_update_task_if_needed()
-        # If at e.g. 13:07 a session is stopped by evcc the integration will not see it!
-
-        # so @mkshb so you are either "happy" with this strategy - or you should/must implement
-        # something in the websocket message handler in connect_ws(), that once a session is ended,
-        # the self._SESSIONS_LAST_UPDATE_HOUR will be set to '-1' -> then the next update cycle the
-        # integration will make the request to the session endpoint
 
         # first we check if we already have the sessions in our storage...
         if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW in self._data:
