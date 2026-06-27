@@ -104,6 +104,12 @@ async def async_migrate_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
 async def async_setup(hass: HomeAssistant, config: dict):  # pylint: disable=unused-argument
     """Set up this integration using YAML is not supported."""
+    # register our (global) on-demand WebSocket-API commands once - they resolve the target config
+    # entry at call time via 'entry_id', so no per-entry coordinator needs to exist here yet. The
+    # import is deferred (local) on purpose - 'websocket.py' imports 'EvccDataUpdateCoordinator'
+    # from this module, so a top-level import here would be circular.
+    from .websocket import async_register_websocket_commands
+    async_register_websocket_commands(hass)
     return True
 
 

@@ -574,6 +574,48 @@ class EvccApiBridge:
 
         return json_resp, session_data_was_fetched
 
+    # the following 'read_*' methods serve the on-demand HA websocket-api commands (see
+    # 'websocket.py') - unlike 'read_tariff_data()'/'read_sessions_data()' above (which aggregate
+    # data for entities and intentionally drop large payloads) these return the raw evcc response to
+    # the caller, since the websocket connection has no 16384-byte entity-state limit
+    async def read_tariff(self, kind: str) -> dict:
+        # GET /api/tariff/{grid|feedin|solar|planner} -> typically {"rates": [...]}
+        req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{kind}"
+        _LOGGER.debug(f"GET request: {req}")
+        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
+        return r_json if isinstance(r_json, dict) else {}
+
+    async def read_sessions_raw(self, year: int = None, month: int = None) -> list:
+        # GET /api/sessions -> the full list of individual charging sessions. evcc does not support
+        # year/month query filtering, so we filter client-side on the 'created' field
+        req = f"{self.host}/api/{EP_TYPE.SESSIONS.value}"
+        _LOGGER.debug(f"GET request: {req}")
+        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
+        if not isinstance(r_json, list):
+            return []
+        if year is None and month is None:
+            return r_json
+
+        filtered = []
+        for a_session in r_json:
+            created = a_session.get("created", None)
+            if created is not None:
+                try:
+                    created_date = parser.isoparse(created)
+                    if (year is None or created_date.year == year) and (month is None or created_date.month == month):
+                        filtered.append(a_session)
+                except Exception as err:
+                    _LOGGER.info(f"read_sessions_raw(): could not parse 'created' {created} -> {type(err).__name__}: {err}")
+        return filtered
+
+    async def read_loadpoint_plan_static_preview(self, lp_idx: str, kind: str, value: str, rfc_date: str) -> dict:
+        # GET /api/loadpoints/{idx}/plan/static/preview/{soc|energy}/{value}/{rfc_date}
+        # read-only preview - does NOT persist the plan
+        req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/plan/static/preview/{kind}/{value}/{rfc_date}"
+        _LOGGER.debug(f"GET request: {req}")
+        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
+        return r_json if isinstance(r_json, dict) else {}
+
     async def read_config_data(self, json_resp: dict, request_vehicle_data:bool=False, request_meter_data:bool=False, log_requests:bool=False):
         config_data_was_fetched = False
         if await self.ensure_session_is_authorized():
