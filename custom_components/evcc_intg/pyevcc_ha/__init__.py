@@ -40,6 +40,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 static_5sec_timeout: Final = ClientTimeout(total=5)
 static_30sec_timeout: Final = ClientTimeout(total=30)
 RAW_CLIENT_RESPONSE_KEY = "aiohttp.ClientResponse"
+ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW = f"{ADDITIONAL_ENDPOINTS_DATA_SESSIONS}@@@{SESSIONS_KEY_RAW}"
 
 async def _do_request(method: Callable, return_raw_client_response:bool=False) -> dict:
     try:
@@ -493,6 +494,9 @@ class EvccApiBridge:
                 # we must copy the previous existing data to the new json_resp!
                 if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS in self._data:
                     json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS]
+                if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW in self._data:
+                    json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW] = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW]
+
 
         # additional configuration endpoint data
         if request_all or request_config:
@@ -555,15 +559,19 @@ class EvccApiBridge:
         session_data_was_fetched = False
         if ADDITIONAL_ENDPOINTS_DATA_SESSIONS not in json_resp:
             json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS] = {}
+            json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW] = {}
 
         try:
             req = f"{self.host}/api/{EP_TYPE.SESSIONS.value}"
             _LOGGER.debug(f"GET request: {req}")
             sessions_resp = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
             if sessions_resp is not None and len(sessions_resp) > 0:
+                # raw data will exceed maximum size of 16384 bytes - so we can't RETURN THIS to the
+                # integration!!! (but we store it in our data cache)
+                json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW] = sessions_resp
+
+                # but for the "charging sessions" sensor we will store the length (number of sessions)
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_TOTAL] = len(sessions_resp)
-                # raw data will exceed maximum size of 16384 bytes - so we can't store this
-                # json_resp[ADDITIONAL_ENDPOINTS_DATA_SESSIONS][SESSIONS_KEY_RAW] = sessions_resp
 
                 # do the math stuff...
                 calculate_session_sums(sessions_resp, json_resp)
@@ -573,48 +581,6 @@ class EvccApiBridge:
             _LOGGER.info(f"could not read sessions data '{type(err).__name__}' -> {err}")
 
         return json_resp, session_data_was_fetched
-
-    # the following 'read_*' methods serve the on-demand HA websocket-api commands (see
-    # 'websocket.py') - unlike 'read_tariff_data()'/'read_sessions_data()' above (which aggregate
-    # data for entities and intentionally drop large payloads) these return the raw evcc response to
-    # the caller, since the websocket connection has no 16384-byte entity-state limit
-    async def read_tariff(self, kind: str) -> dict:
-        # GET /api/tariff/{grid|feedin|solar|planner} -> typically {"rates": [...]}
-        req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{kind}"
-        _LOGGER.debug(f"GET request: {req}")
-        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
-        return r_json if isinstance(r_json, dict) else {}
-
-    async def read_sessions_raw(self, year: int = None, month: int = None) -> list:
-        # GET /api/sessions -> the full list of individual charging sessions. evcc does not support
-        # year/month query filtering, so we filter client-side on the 'created' field
-        req = f"{self.host}/api/{EP_TYPE.SESSIONS.value}"
-        _LOGGER.debug(f"GET request: {req}")
-        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
-        if not isinstance(r_json, list):
-            return []
-        if year is None and month is None:
-            return r_json
-
-        filtered = []
-        for a_session in r_json:
-            created = a_session.get("created", None)
-            if created is not None:
-                try:
-                    created_date = parser.isoparse(created)
-                    if (year is None or created_date.year == year) and (month is None or created_date.month == month):
-                        filtered.append(a_session)
-                except Exception as err:
-                    _LOGGER.info(f"read_sessions_raw(): could not parse 'created' {created} -> {type(err).__name__}: {err}")
-        return filtered
-
-    async def read_loadpoint_plan_static_preview(self, lp_idx: str, kind: str, value: str, rfc_date: str) -> dict:
-        # GET /api/loadpoints/{idx}/plan/static/preview/{soc|energy}/{value}/{rfc_date}
-        # read-only preview - does NOT persist the plan
-        req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/plan/static/preview/{kind}/{value}/{rfc_date}"
-        _LOGGER.debug(f"GET request: {req}")
-        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
-        return r_json if isinstance(r_json, dict) else {}
 
     async def read_config_data(self, json_resp: dict, request_vehicle_data:bool=False, request_meter_data:bool=False, log_requests:bool=False):
         config_data_was_fetched = False
@@ -1379,3 +1345,95 @@ class EvccApiBridge:
             except Exception as err:
                 _LOGGER.error(f"could not write vehicle plan for vehicle: {vehicle_id}, error: {err}")
                 return {"err": f"could not write vehicle plan: {err}"}
+
+
+    ##################################################################################
+    # EVCC CARD ADDON
+    ##################################################################################
+    # the following 'read_*' methods serve the on-demand HA websocket-api commands
+    # (see 'evcc_card_websocket.py') - unlike 'read_tariff_data()'/'read_sessions_data()'
+    # above (which aggregate data for entities and intentionally drop large payloads)
+    # these return the raw evcc response to the caller, since the websocket connection has
+    # no 16384-byte entity-state limit
+    async def evcc_card_read_tariff(self, kind: str) -> dict:
+        # CURRENT-UPDATE-STRATEGY is to fetch the data every 15min from the evcc
+        # backend... -> this will be triggerd by the websocket message handler by
+        # calling _ws_start_async_additional_data_update_task_if_needed()
+
+        # first we check if we already have the tariff data in our storage...
+        r_json = None
+        if self._data is not None:
+            if not ADDITIONAL_ENDPOINTS_DATA_TARIFF in self.data:
+                self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = {}
+
+            if kind in self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
+                r_json = self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][kind]
+
+        if r_json is None:
+            # ok for whatever reason, we have not fetched the tariff data yet... could be
+            # that the `kind` is not part of the `request_tariff_keys` (or we did not
+            # fetch any tariff data yet) - make sure that we update it in our next cycle
+            if kind not in self.request_tariff_keys:
+                if not self.request_tariff_endpoints:
+                    self.request_tariff_endpoints = True
+                self.request_tariff_keys.append(kind)
+
+            # GET /api/tariff/{grid|feedin|solar|planner} -> typically {"rates": [...]}
+            req = f"{self.host}/api/{EP_TYPE.TARIFF.value}/{kind}"
+            _LOGGER.debug(f"GET request: {req}")
+            r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
+            if self._data is not None and r_json is not None and len(r_json) > 0:
+                self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF][kind] = r_json
+
+        return r_json if isinstance(r_json, dict) else {}
+
+    async def evcc_card_read_sessions_raw(self, year: int = None, month: int = None) -> list:
+        # CURRENT-UPDATE-STRATEGY is to fetch the session data just every hour (and shortly
+        # before midnight) -> this will be triggerd by the websocket message handler by
+        # calling _ws_start_async_additional_data_update_task_if_needed()
+        # If at e.g. 13:07 a session is stopped by evcc the integration will not see it!
+
+        # so @mkshb so you are either "happy" with this strategy - or you should/must implement
+        # something in the websocket message handler in connect_ws(), that once a session is ended,
+        # the self._SESSIONS_LAST_UPDATE_HOUR will be set to '-1' -> then the next update cycle the
+        # integration will make the request to the session endpoint
+
+        # first we check if we already have the sessions in our storage...
+        if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW in self.data:
+            r_json = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW]
+            session_data_was_fetched = True
+
+        else:
+            if self._data is None:
+                self._data = {}
+            r_json, session_data_was_fetched = self.read_sessions_data(self._data)
+
+        if not session_data_was_fetched or not isinstance(r_json, list):
+            return []
+
+        if year is None and month is None:
+            return r_json
+
+        filtered = []
+        for a_session in r_json:
+            created = a_session.get("created", None)
+            if created is not None:
+                try:
+                    created_date = parser.isoparse(created)
+                    if (year is None or created_date.year == year) and (month is None or created_date.month == month):
+                        filtered.append(a_session)
+                except Exception as err:
+                    _LOGGER.info(f"read_sessions_raw(): could not parse 'created' {created} -> {type(err).__name__}: {err}")
+        return filtered
+
+
+    async def evcc_card_read_loadpoint_plan_static_preview(self, lp_idx: str, kind: str, value: str, rfc_date: str) -> dict:
+        # here we have no caching strategy... so we must 'hope' the evcc-card will not hammer
+        # requests to our bridge
+
+        # GET /api/loadpoints/{idx}/plan/static/preview/{soc|energy}/{value}/{rfc_date}
+        # read-only preview - does NOT persist the plan
+        req = f"{self.host}/api/{EP_TYPE.LOADPOINTS.value}/{lp_idx}/plan/static/preview/{kind}/{value}/{rfc_date}"
+        _LOGGER.debug(f"GET request: {req}")
+        r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
+        return r_json if isinstance(r_json, dict) else {}

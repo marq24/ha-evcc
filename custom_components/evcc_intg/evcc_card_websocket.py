@@ -40,10 +40,10 @@ def coordinator_for(hass: HomeAssistant, connection, msg) -> EvccDataUpdateCoord
     vol.Required("kind"): vol.In(TARIFF_KINDS),
 })
 @websocket_api.async_response
-async def ws_forecast(hass: HomeAssistant, connection, msg):
+async def extension_forecast_data(hass: HomeAssistant, connection, msg):
     coordinator = coordinator_for(hass, connection, msg)
     if coordinator is not None:
-        rates = await coordinator.bridge.read_tariff(msg["kind"])
+        rates = await coordinator.bridge.evcc_card_read_tariff(msg["kind"])
         # the rates carry no unit field - tell the card whether the 'value' fields are a price
         # (currency/kWh) or CO2 (g/kWh, when smartCostType is 'co2'), same enrichment as ws_plan_preview
         connection.send_result(msg["id"], {
@@ -61,10 +61,10 @@ async def ws_forecast(hass: HomeAssistant, connection, msg):
     vol.Optional("month"): int,
 })
 @websocket_api.async_response
-async def ws_sessions(hass: HomeAssistant, connection, msg):
+async def extension_session_data(hass: HomeAssistant, connection, msg):
     coordinator = coordinator_for(hass, connection, msg)
     if coordinator is not None:
-        sessions = await coordinator.bridge.read_sessions_raw(msg.get("year", None), msg.get("month", None))
+        sessions = await coordinator.bridge.evcc_card_read_sessions_raw(msg.get("year", None), msg.get("month", None))
         connection.send_result(msg["id"], {"sessions": sessions})
 
 
@@ -77,13 +77,13 @@ async def ws_sessions(hass: HomeAssistant, connection, msg):
     vol.Required("timestamp"): str,
 })
 @websocket_api.async_response
-async def ws_plan_preview(hass: HomeAssistant, connection, msg):
+async def extension_plan_preview(hass: HomeAssistant, connection, msg):
     coordinator = coordinator_for(hass, connection, msg)
     if coordinator is None:
         return
 
     lp_idx = str(msg["loadpoint"])
-    result = await coordinator.bridge.read_loadpoint_plan_static_preview(lp_idx, msg["kind"], msg["value"], msg["timestamp"])
+    result = await coordinator.bridge.evcc_card_read_loadpoint_plan_static_preview(lp_idx, msg["kind"], msg["value"], msg["timestamp"])
 
     # enrich the raw evcc response with the cost type and currency so the card knows whether
     # the plan slot 'value' fields represent a price (EUR/kWh) or CO2 (g/kWh)
@@ -97,14 +97,14 @@ async def ws_plan_preview(hass: HomeAssistant, connection, msg):
     vol.Optional("entry_id"): str,
 })
 @callback
-def ws_capabilities(hass: HomeAssistant, connection, msg):
+def extension_capabilities(hass: HomeAssistant, connection, msg):
     version = hass.data.get(DOMAIN, {}).get("manifest_version", "UNKNOWN")
     connection.send_result(msg["id"], {"version": version, "commands": SUPPORTED_COMMANDS})
 
 
 @callback
-def async_register_websocket_commands(hass: HomeAssistant):
-    websocket_api.async_register_command(hass, ws_forecast)
-    websocket_api.async_register_command(hass, ws_sessions)
-    websocket_api.async_register_command(hass, ws_plan_preview)
-    websocket_api.async_register_command(hass, ws_capabilities)
+def async_register_evcc_card_websocket_commands(hass: HomeAssistant):
+    websocket_api.async_register_command(hass, extension_forecast_data)
+    websocket_api.async_register_command(hass, extension_session_data)
+    websocket_api.async_register_command(hass, extension_plan_preview)
+    websocket_api.async_register_command(hass, extension_capabilities)
