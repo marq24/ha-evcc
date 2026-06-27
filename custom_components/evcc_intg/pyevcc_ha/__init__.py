@@ -328,6 +328,14 @@ class EvccApiBridge:
                                                 if len(self._data[domain]) > idx:
                                                     if not sub_key in self._data[domain][idx]:
                                                         _LOGGER.debug(f"adding '{sub_key}' to {domain}[{idx}]")
+                                                    # a loadpoint 'charging' transition true->false means a charging
+                                                    # session has just finished - evcc creates the session record now,
+                                                    # so we invalidate our sessions update-window: the additional-data
+                                                    # task launched after this loop will then refetch /api/sessions
+                                                    if domain == JSONKEY_LOADPOINTS and sub_key == Tag.CHARGING.json_key \
+                                                            and self._data[domain][idx].get(sub_key) is True and value is False:
+                                                        _LOGGER.debug(f"loadpoint[{idx}] charging stopped -> force sessions refresh")
+                                                        self._SESSIONS_LAST_UPDATE_HOUR = -1
                                                     self._data[domain][idx][sub_key] = value
                                                 else:
                                                     # we need to add a new entry to the list... - well
@@ -1363,7 +1371,7 @@ class EvccApiBridge:
         # first we check if we already have the tariff data in our storage...
         r_json = None
         if self._data is not None:
-            if not ADDITIONAL_ENDPOINTS_DATA_TARIFF in self.data:
+            if not ADDITIONAL_ENDPOINTS_DATA_TARIFF in self._data:
                 self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF] = {}
 
             if kind in self._data[ADDITIONAL_ENDPOINTS_DATA_TARIFF]:
@@ -1399,14 +1407,17 @@ class EvccApiBridge:
         # integration will make the request to the session endpoint
 
         # first we check if we already have the sessions in our storage...
-        if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW in self.data:
+        if self._data is not None and ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW in self._data:
             r_json = self._data[ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW]
             session_data_was_fetched = True
 
         else:
             if self._data is None:
                 self._data = {}
-            r_json, session_data_was_fetched = self.read_sessions_data(self._data)
+            # read_sessions_data() is async and returns (json_resp, was_fetched) - it stores the raw
+            # list under ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW in the passed dict, so read it back
+            self._data, session_data_was_fetched = await self.read_sessions_data(self._data)
+            r_json = self._data.get(ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW)
 
         if not session_data_was_fetched or not isinstance(r_json, list):
             return []
