@@ -1214,6 +1214,12 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
                 elif self.tag.subtype == SESSIONS_KEY_VEHICLES:
                     return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
 
+            # hardcoded vehicle device for the repeating plan TAGs...
+            if self.tag in [Tag.VEHICLEREPEATINGPLAN002, Tag.VEHICLEREPEATINGPLAN003, Tag.VEHICLEREPEATINGPLAN004,
+                            Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006, Tag.VEHICLEREPEATINGPLAN007,
+                            Tag.VEHICLEREPEATINGPLAN008, Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
+                return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
+
             # all other sensors with a _attr_name_addon (except CIRCUITS) must be loadpoint data...
             if self.tag.type is not EP_TYPE.CIRCUITS:
                 return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
