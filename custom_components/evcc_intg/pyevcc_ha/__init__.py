@@ -335,7 +335,9 @@ class EvccApiBridge:
                                                     # task launched after this loop will then refetch /api/sessions
                                                     if domain == JSONKEY_LOADPOINTS:
                                                         # for integrated devices we must monitor the 'CONNECTED' key...
-                                                        if self._data[domain][idx].get("chargerFeatureIntegratedDevice", False):
+                                                        is_integrated = self._data[domain][idx].get("chargerFeatureIntegratedDevice", False)
+                                                        is_heating = self._data[domain][idx].get("chargerFeatureHeating", False)
+                                                        if not is_heating and is_integrated:
                                                             key_to_check = Tag.CONNECTED.json_key
                                                         else:
                                                             key_to_check = Tag.CHARGING.json_key
