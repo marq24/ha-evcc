@@ -99,7 +99,27 @@ async def extension_plan_preview(hass: HomeAssistant, connection, msg):
 @callback
 def extension_capabilities(hass: HomeAssistant, connection, msg):
     version = hass.data.get(DOMAIN, {}).get("manifest_version", "UNKNOWN")
-    connection.send_result(msg["id"], {"version": version, "commands": SUPPORTED_COMMANDS})
+    result = {"version": version, "commands": SUPPORTED_COMMANDS}
+
+    # a frontend card that wants to target a specific loadpoint (e.g. for the
+    # 'plan_preview' command) needs the evcc loadpoint index (1-based) - but that
+    # index is not exposed through any entity state or attribute. The integration
+    # knows it (it is the key of coordinator._loadpoint), so we hand out the
+    # id -> index mapping here. 'entry_id' is optional for this command, so the
+    # loadpoint list is only added when a matching coordinator is available.
+    coordinator = hass.data.get(DOMAIN, {}).get(msg.get("entry_id"))
+    if isinstance(coordinator, EvccDataUpdateCoordinator):
+        result["loadpoints"] = [
+            {
+                "index": int(a_lp_key),
+                "id": a_lp_cfg.get("id"),
+                "name": a_lp_cfg.get("name"),
+                "heating": a_lp_cfg.get("is_heating", False),
+            }
+            for a_lp_key, a_lp_cfg in coordinator._loadpoint.items()
+        ]
+
+    connection.send_result(msg["id"], result)
 
 
 @callback
