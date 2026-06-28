@@ -334,17 +334,16 @@ class EvccApiBridge:
                                                     # so we invalidate our session update-window: the additional-data
                                                     # task launched after this loop will then refetch /api/sessions
                                                     if domain == JSONKEY_LOADPOINTS:
-                                                        # for integrated devices we must monitor the 'CONNECTED' key...
-                                                        is_integrated = self._data[domain][idx].get("chargerFeatureIntegratedDevice", False)
-                                                        is_heating = self._data[domain][idx].get("chargerFeatureHeating", False)
-                                                        if not is_heating and is_integrated:
-                                                            key_to_check = Tag.CONNECTED.json_key
-                                                        else:
-                                                            key_to_check = Tag.CHARGING.json_key
-
-                                                        if sub_key == key_to_check \
+                                                        # # for integrated devices we must monitor the 'CONNECTED' key...
+                                                        # is_integrated = self._data[domain][idx].get("chargerFeatureIntegratedDevice", False)
+                                                        # is_heating = self._data[domain][idx].get("chargerFeatureHeating", False)
+                                                        # if not is_heating and is_integrated:
+                                                        #     key_to_check = Tag.CONNECTED.json_key
+                                                        # else:
+                                                        #     key_to_check = Tag.CHARGING.json_key
+                                                        if sub_key == Tag.CHARGING.json_key \
                                                             and self._data[domain][idx].get(sub_key) is True and value is False:
-                                                            _LOGGER.debug(f"loadpoint[{idx}] '{key_to_check}' changed from TRUE to FALSE -> force a session refresh")
+                                                            _LOGGER.debug(f"loadpoint[{idx}] '{sub_key}' changed from TRUE to FALSE -> force a session refresh")
                                                             self._SESSIONS_LAST_UPDATE_HOUR = -1
 
                                                     self._data[domain][idx][sub_key] = value
