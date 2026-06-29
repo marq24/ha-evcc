@@ -37,6 +37,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
+        lp_is_switch_device = load_point_config["is_switch_device"]
         lp_is_single_phase_only = load_point_config["only_single_phase"]
 
         for a_stub in SELECT_ENTITIES_PER_LOADPOINT:
@@ -58,6 +59,18 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     # the entity type specific values...
                     options=["null"] + list(coordinator._vehicle.keys()) if a_stub.tag == Tag.LP_VEHICLENAME else a_stub.tag.options,
                 )
+
+                if lp_is_switch_device:
+                    # switch devices don't offer 'MIN+PV' any longer (since 0.310)
+                    if a_stub.tag == Tag.MODE:
+                        description = replace(
+                            description,
+                            options = [x for x in description.options if x != "minpv"]
+                        )
+
+                    # switch devices don't offer MAXCURRENT or PHASES selector any longer (since 0.310)
+                    if a_stub.tag in [Tag.MAXCURRENT, Tag.PHASES]:
+                        continue
 
                 # we might need to patch(remove) the 'auto-mode' from the phases selector
                 if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:

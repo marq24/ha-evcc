@@ -580,6 +580,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if "chargerFeatureIntegratedDevice" in a_loadpoint_object:
                     is_integrated = a_loadpoint_object["chargerFeatureIntegratedDevice"]
 
+                # sind 0.310.0 no MIN+PV mode + no MAX_CURRENT for 'SwitchDevice'
+                is_switch_device = False
+                if "chargerFeatureSwitchDevice" in a_loadpoint_object:
+                    is_switch_device = a_loadpoint_object["chargerFeatureSwitchDevice"]
+
                 self._loadpoint[f"{api_index}"] = {
                     EVCC_JSON_KEY_NAME: f"{api_index}",
                     EVCC_JSON_ORIGIN_OBJECT: a_loadpoint_object,
@@ -589,6 +594,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "only_single_phase": single_phase_only,
                     "is_heating": is_heating,
                     "is_integrated": is_integrated,
+                    "is_switch_device": is_switch_device,
                     "vehicle_key": a_loadpoint_object["vehicleName"]
                 }
 
