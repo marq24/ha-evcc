@@ -534,7 +534,7 @@ class EvccApiBridge:
         _LOGGER.debug(f"GET request: {req}")
         r_json = await _do_request(method=self.web_session.get(url=req, ssl=False, timeout=static_5sec_timeout))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or len(str(r_json).strip()) > 0):
+        if r_json:
             return r_json
         else:
             _LOGGER.warning(f"could not read any json data from evcc@{self.host} - read: '{r_json}' -> will return an empty dict!")
@@ -1134,7 +1134,7 @@ class EvccApiBridge:
             _LOGGER.debug(f"POST request: {req}")
             r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+        if r_json or (r_json is not None and isinstance(r_json, (dict, list))):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -1159,8 +1159,8 @@ class EvccApiBridge:
             _LOGGER.debug(f"POST request: {req}")
             r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
-        if r_json is not None:
-            if (hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str)):
+        if r_json or (r_json is not None and isinstance(r_json, (dict, list))):
+            if (hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str, dict)):
                 r_json[write_key] = "OK"
             return r_json
         else:
@@ -1214,7 +1214,7 @@ class EvccApiBridge:
             _LOGGER.debug(f"POST request: {req}")
             r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+        if r_json or (r_json is not None and isinstance(r_json, (dict, list))):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -1277,7 +1277,7 @@ class EvccApiBridge:
                     except Exception as err:
                         _LOGGER.info(f"could not find a connected vehicle at loadpoint: {lp_idx_str} - {type(err).__name__} - {err}")
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str, dict))):
+        if r_json or (r_json is not None and isinstance(r_json, (dict, list))):
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -1299,7 +1299,7 @@ class EvccApiBridge:
         _LOGGER.debug(f"POST request: {req}")
         r_json = await _do_request(method=self.web_session.post(url=req, json=post_data, ssl=False, timeout=static_5sec_timeout))
 
-        if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (list, dict, str, Number))):
+        if r_json:
             return r_json
         else:
             return {"err": "no response from evcc"}
@@ -1318,7 +1318,7 @@ class EvccApiBridge:
                 _LOGGER.debug(f"DELETE request: {req}")
                 r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
 
-            if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+            if r_json or (r_json is not None and isinstance(r_json, (dict, list))):
                 return r_json
             else:
                 return {"err": "no response from evcc"}
@@ -1343,7 +1343,7 @@ class EvccApiBridge:
                     _LOGGER.debug(f"DELETE request: {req}")
                     r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
 
-                if r_json is not None and ((hasattr(r_json, "len") and len(r_json) > 0) or isinstance(r_json, (Number, str))):
+                if r_json or (r_json is not None and isinstance(r_json, (dict, list))):
                     return r_json
                 else:
                     return {"err": "no response from evcc"}
