@@ -378,16 +378,27 @@ def compress_general(data, time_key:str, value_key:str):
                 "deltas_in_minutes": [],
                 "values": []}
 
-    # Convert the timestamps to UTC and prepare the output
-    start_timestamp_utc = datetime.fromisoformat(data[0][time_key]).astimezone(timezone.utc).isoformat()
-    values = [round(entry[value_key], 4) if not float(entry[value_key]).is_integer() else entry[value_key] for entry in data]
-    deltas = []
-    for i in range(1, len(data)):
-        # Calculate time difference in minutes
-        ts_current = datetime.fromisoformat(data[i][time_key]).astimezone(timezone.utc)
-        ts_previous = datetime.fromisoformat(data[i - 1][time_key]).astimezone(timezone.utc)
-        delta = int((ts_current - ts_previous).total_seconds() // 60.0)
-        deltas.append(delta)
+    start_value = data[0][time_key]
+    parse_from_RFC3339 = None
+    if isinstance(start_value, (int, float, Number)):
+        parse_from_RFC3339 = False
+    elif isinstance(start_value, str):
+        parse_from_RFC3339 = True
+    else:
+        _LOGGER.debug(f"Unsupported time format: for '{start_value}' {type(start_value).__name__}")
+
+    if parse_from_RFC3339 is not None:
+        # Convert the timestamps to UTC and prepare the output
+        dt_obj = datetime.fromisoformat(start_value).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(start_value, tz=timezone.utc)
+        start_timestamp_utc = dt_obj.isoformat()
+        values = [round(entry[value_key], 4) if not float(entry[value_key]).is_integer() else entry[value_key] for entry in data]
+        deltas = []
+        for i in range(1, len(data)):
+            # Calculate time difference in minutes
+            ts_current = datetime.fromisoformat(data[i][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i][time_key]
+            ts_previous = datetime.fromisoformat(data[i - 1][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i - 1][time_key]
+            delta = int((ts_current - ts_previous).total_seconds() // 60.0)
+            deltas.append(delta)
 
     # {%set json_data=state_attr('sensor.evcc_forecast_grid', 'rates')%}
     # {% set total_minutes_since_start = (( now() - strptime(json_data['start_utc'], '%Y-%m-%dT%H:%M:%S%z')).total_seconds() // 60)|int %}
@@ -545,33 +556,55 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 self._last_calculated_key = a_key
                 for a_entry in data_list:
                     if "start" in a_entry and "end" in a_entry:
-                        start_dt = datetime.fromisoformat(a_entry["start"]).astimezone(timezone.utc)
-                        end_dt = datetime.fromisoformat(a_entry["end"]).astimezone(timezone.utc)
-                        if start_dt < current_time < end_dt:
-                            if "val" in a_entry:
-                                self._last_calculated_value = a_entry["val"]
-                                break
-                            elif "value" in a_entry:
-                                self._last_calculated_value = a_entry["value"]
-                                break
-                            elif "price" in a_entry:
-                                self._last_calculated_value = a_entry["price"]
-                                break
+                        start_entry = a_entry["start"]
+                        end_entry = a_entry["end"]
+
+                        parse_from_RFC3339 = None
+                        if isinstance(start_entry, (int, float, Number)):
+                            parse_from_RFC3339 = False
+                        elif isinstance(start_entry, str):
+                            parse_from_RFC3339 = True
+                        else:
+                            _LOGGER.error(f"Invalid start_entry type {ts_entry} {type(ts_entry).__name__}")
+
+                        if parse_from_RFC3339 is not None:
+                            start_dt = datetime.fromisoformat(start_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(start_entry, tz=timezone.utc)
+                            end_dt = datetime.fromisoformat(end_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(end_entry, tz=timezone.utc)
+                            if start_dt < current_time < end_dt:
+                                if "val" in a_entry:
+                                    self._last_calculated_value = a_entry["val"]
+                                    break
+                                elif "value" in a_entry:
+                                    self._last_calculated_value = a_entry["value"]
+                                    break
+                                elif "price" in a_entry:
+                                    self._last_calculated_value = a_entry["price"]
+                                    break
 
                     elif "ts" in a_entry:
-                        timestamp_dt = datetime.fromisoformat(a_entry["ts"]).astimezone(timezone.utc)
-                        if (timestamp_dt.day == current_time.day and
-                                timestamp_dt.hour == current_time.hour and
-                                int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
-                        ):
-                            if "val" in a_entry:
-                                self._last_calculated_value = a_entry["val"]
-                                break
-                            elif "value" in a_entry:
-                                self._last_calculated_value = a_entry["value"]
-                                break
-                            elif "price" in a_entry:
-                                self._last_calculated_value = a_entry["price"]
+                        ts_entry = a_entry["ts"]
+                        parse_from_RFC3339 = None
+                        if isinstance(ts_entry, (int, float, Number)):
+                            parse_from_RFC3339 = False
+                        elif isinstance(ts_entry, str):
+                            parse_from_RFC3339 = True
+                        else:
+                            _LOGGER.error(f"Invalid ts_entry type {ts_entry} {type(ts_entry).__name__}")
+
+                        if parse_from_RFC3339 is not None:
+                            timestamp_dt = datetime.fromisoformat(ts_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(ts_entry, tz=timezone.utc)
+                            if (timestamp_dt.day == current_time.day and
+                                    timestamp_dt.hour == current_time.hour and
+                                    int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
+                            ):
+                                if "val" in a_entry:
+                                    self._last_calculated_value = a_entry["val"]
+                                    break
+                                elif "value" in a_entry:
+                                    self._last_calculated_value = a_entry["value"]
+                                    break
+                                elif "price" in a_entry:
+                                    self._last_calculated_value = a_entry["price"]
 
             return self._last_calculated_value
         return None
