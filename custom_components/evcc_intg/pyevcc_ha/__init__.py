@@ -507,8 +507,8 @@ class EvccApiBridge:
         # additional configuration endpoint data
         if request_all or request_config:
             now_time = time()
-            request_vehicle_data = self._request_ext_vehicle_data and self._CONFIG_VEHICLE_LAST_UPDATE + self._CONFIG_VEHICLE_UPDATE_INTERVAL_IN_SECONDS <= time()
-            request_meter_data = self._request_ext_meter_data and self._CONFIG_METER_LAST_UPDATE + self._CONFIG_METER_UPDATE_INTERVAL_IN_SECONDS <= time()
+            request_vehicle_data = self._request_ext_vehicle_data and self._CONFIG_VEHICLE_LAST_UPDATE + self._CONFIG_VEHICLE_UPDATE_INTERVAL_IN_SECONDS <= now_time
+            request_meter_data = self._request_ext_meter_data and self._CONFIG_METER_LAST_UPDATE + self._CONFIG_METER_UPDATE_INTERVAL_IN_SECONDS <= now_time
             if request_vehicle_data or request_meter_data:
                 _LOGGER.debug(f"going to request 'configuration' data vehicle: {request_vehicle_data}, meter: {request_meter_data} from evcc@{self.host}")
                 json_resp, data_was_fetched = await self.read_config_data(json_resp,
