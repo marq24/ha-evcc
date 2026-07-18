@@ -889,9 +889,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         return None
 
     def read_tag_vehicle_str(self, a_tag: Tag, vehicle_id: str):
+        if self.data is None or JSONKEY_VEHICLES not in self.data:
+            return None
+
         is_veh_PLANSSOC = a_tag == Tag.VEHICLEPLANSOC
         is_veh_PLANSTIME = a_tag == Tag.VEHICLEPLANTIME
         if is_veh_PLANSSOC or is_veh_PLANSTIME:
+            if vehicle_id not in self.data[JSONKEY_VEHICLES]:
+                return {}
+
             # yes this is really a hack! [at a certain point the API just returned 'plan' and 'plans' have been removed] ?!
             if JSONKEY_PLAN in self.data[JSONKEY_VEHICLES][vehicle_id] and len(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLAN]) > 0:
                 if is_veh_PLANSSOC:
@@ -906,13 +912,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     return str(int(value))  # float(int(value))/100
                 elif is_veh_PLANSTIME:
                     return self._convert_time(self.data[JSONKEY_VEHICLES][vehicle_id][JSONKEY_PLANS_DEPRECATED][0][JSONKEY_PLAN_TIME])
-
             else:
-                return None
+                return {}
 
         elif a_tag in [Tag.VEHICLEREPEATINGPLAN002, Tag.VEHICLEREPEATINGPLAN003, Tag.VEHICLEREPEATINGPLAN004,
                        Tag.VEHICLEREPEATINGPLAN005, Tag.VEHICLEREPEATINGPLAN006, Tag.VEHICLEREPEATINGPLAN007,
                        Tag.VEHICLEREPEATINGPLAN008, Tag.VEHICLEREPEATINGPLAN009, Tag.VEHICLEREPEATINGPLAN010]:
+
+            if vehicle_id not in self.data[JSONKEY_VEHICLES]:
+                return {}
 
             # The key difference is when [] is used:
             # `get("repeatingPlans", []) uses [] only if the key is missing.`
@@ -944,6 +952,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             else:
                 return {}
         else:
+            if vehicle_id not in self.data[JSONKEY_VEHICLES]:
+                return "0"
+
             # the "default" vehicle data reading code...
             if a_tag.json_key in self.data[JSONKEY_VEHICLES][vehicle_id]:
                 return self.data[JSONKEY_VEHICLES][vehicle_id][a_tag.json_key]
