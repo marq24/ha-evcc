@@ -168,7 +168,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     # ok - when the evcc-server is available we can continue with the init process...
     coordinator = EvccDataUpdateCoordinator(hass, http_session, config_entry, cookie_path)
     await coordinator.async_refresh()
-    if not coordinator.last_update_success:
+    if not coordinator.last_update_success or coordinator.data is None or len(coordinator.data) == 0:
         raise ConfigEntryNotReady
     else:
         # now we can attempt to initialize our coordinator with the data already read...
@@ -1253,7 +1253,7 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
     @property
     def available(self):
         """Return True if entity is available."""
-        return self.coordinator.last_update_success
+        return self.coordinator.last_update_success and self.coordinator.data is not None and len(self.coordinator.data) > 0
 
     @property
     def unique_id(self):
