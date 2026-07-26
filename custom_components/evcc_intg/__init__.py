@@ -167,7 +167,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     # ok - when the evcc-server is available we can continue with the init process...
     coordinator = EvccDataUpdateCoordinator(hass, http_session, config_entry, cookie_path)
+    coordinator.is_initphase = True
     await coordinator.async_refresh()
+    coordinator.is_initphase = False
     if not coordinator.last_update_success or coordinator.data is None or len(coordinator.data) == 0:
         raise ConfigEntryNotReady(f"No data from host: {config_entry.data.get(CONF_HOST, "NOT-CONFIGURED")}")
 
@@ -328,6 +330,7 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         self.name = config_entry.title
         self.use_ws = config_entry.data.get(CONF_USE_WS, True)
+        self.is_initphase = False
 
         lang = hass.config.language.lower()
         if lang in TRANSLATIONS:
@@ -707,16 +710,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 return self.bridge._data
             else:
                 should_call_update = True
-                # if websocket connection is not established yet, but cause of the configured
-                # integration update interval we migt run into some sort of race condition, where
-                # the coorinator already request the "next" update...
-                if self.use_ws:
-                    if self.bridge._ws_LAST_UPDATE == -1:
-                        if len(self.bridge._data) > 0:
-                            should_call_update = False
-                            _LOGGER.info(f"_async_update_data(): skipping cause the use of websocket is configured, but we have not read yet a message from the socket yet - but we have bridge 'data' already - we are probably still in the init phase")
-                        else:
-                            _LOGGER.warning(f"_async_update_data(): websocket is configured, but not started yet - but we also don't have any 'data' from the bridge?!")
+                if not self.is_initphase:
+                    # if websocket connection is not established yet, but cause of the configured
+                    # integration update interval we migt run into some sort of race condition, where
+                    # the coorinator already request the "next" update...
+                    if self.use_ws:
+                        if self.bridge._ws_LAST_UPDATE == -1:
+                            if len(self.bridge._data) > 0:
+                                should_call_update = False
+                                _LOGGER.info(f"_async_update_data(): skipping cause the use of websocket is configured, but we have not read yet a message from the socket yet - but we have bridge 'data' already - we are probably still in the init phase")
+                            else:
+                                _LOGGER.warning(f"_async_update_data(): websocket is configured, but not started yet - but we also don't have any 'data' from the bridge?!")
 
                 if should_call_update:
                     _LOGGER.debug(f"_async_update_data called")
