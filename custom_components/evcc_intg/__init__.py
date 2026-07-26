@@ -169,7 +169,8 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
     coordinator = EvccDataUpdateCoordinator(hass, http_session, config_entry, cookie_path)
     await coordinator.async_refresh()
     if not coordinator.last_update_success or coordinator.data is None or len(coordinator.data) == 0:
-        raise ConfigEntryNotReady
+        raise ConfigEntryNotReady(f"No data from host: {config_entry.data.get(CONF_HOST, "NOT-CONFIGURED")}")
+
     else:
         # now we can attempt to initialize our coordinator with the data already read...
         if not await coordinator.read_evcc_config_on_startup(hass):
@@ -223,6 +224,10 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
             coordinator = hass.data[DOMAIN][config_entry.entry_id]
             coordinator.stop_watchdog()
             coordinator.clear_data()
+            try:
+                coordinator._http_session.detach()
+            except BaseException as ex:
+                pass
             hass.data[DOMAIN].pop(config_entry.entry_id)
 
         hass.services.async_remove(DOMAIN, SERVICE_SET_LOADPOINT_PLAN)
@@ -265,7 +270,7 @@ async def check_evcc_is_available(http_session: aiohttp.ClientSession, config_en
         await bridge.is_evcc_available()
         return True
 
-    except Exception as err:
+    except BaseException as err:
         raise ConfigEntryNotReady(f"evcc instance '{a_host}' not available (yet) - HA will keep trying") from err
 
 
@@ -701,25 +706,26 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 _LOGGER.debug("_async_update_data called (but websocket is active - no data will be requested!)")
                 return self.bridge._data
             else:
-                _LOGGER.debug(f"_async_update_data called")
-                # if self.data is not None:
-                #    _LOGGER.debug(f"number of fields before query: {len(self.data)} ")
-                # result = await self.bridge.read_all()
-                # _LOGGER.debug(f"number of fields after query: {len(result)}")
-                # return result
+                should_call_update = True
+                # if websocket connection is not established yet, but cause of the configured
+                # integration update interval we migt run into some sort of race condition, where
+                # the coorinator already request the "next" update...
+                if self.use_ws:
+                    if self.bridge._ws_LAST_UPDATE == -1:
+                        if len(self.bridge._data) > 0:
+                            should_call_update = False
+                            _LOGGER.info(f"_async_update_data(): skipping cause the use of websocket is configured, but we have not read yet a message from the socket yet - but we have bridge 'data' already - we are probably still in the init phase")
+                        else:
+                            _LOGGER.warning(f"_async_update_data(): websocket is configured, but not started yet - but we also don't have any 'data' from the bridge?!")
 
-                result = await self.bridge.read_all_data()
-                if result is not None:
-                    _LOGGER.debug(f"number of fields after query: {len(result)}")
-
-                # if self.data is not None:
-                #     if 'prioritySoc' in self.data:
-                #         _LOGGER.debug(f"... and prioritySoc also in self.data")
-                #     else:
-                #         _LOGGER.debug(f"... but prioritySoc NOT IN self.data {self.data}")
-                # else:
-                #     _LOGGER.debug(f"... and self.data is None?!")
-                return result
+                if should_call_update:
+                    _LOGGER.debug(f"_async_update_data called")
+                    result = await self.bridge.read_all_data()
+                    if result is not None:
+                        _LOGGER.debug(f"number of fields after query: {len(result)}")
+                    return result
+                else:
+                    return self.bridge._data
 
         except UpdateFailed as exception:
             _LOGGER.warning(f"UpdateFailed: {exception}")

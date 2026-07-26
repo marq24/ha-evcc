@@ -101,14 +101,14 @@ class EvccBinarySensor(EvccBaseEntity, BinarySensorEntity):
             else:
                 value = self.coordinator.read_tag(self.tag, self.lp_idx)
 
-        except IndexError:
+        except (IndexError, KeyError) as err:
             if self.lp_idx is not None:
-                _LOGGER.debug(f"lc-key: {self.tag.json_key.lower()} value: {value} idx: {self.lp_idx} -> {self.coordinator.data[self.tag.json_key]}")
+                if self.tag.json_key in self.coordinator.data:
+                    _LOGGER.debug(f"tag:{self.tag} lc-key: {self.tag.json_key.lower()} value: {value} idx: {self.lp_idx} -> {self.coordinator.data[self.tag.json_key]}")
+                else:
+                    _LOGGER.debug(f"tag:{self.tag} lc-key: {self.tag.json_key.lower()} value: {value} idx: {self.lp_idx} -> NO DATA for json_key in 'self.coordinator.data'")
             else:
-                _LOGGER.debug(f"lc-key: {self.tag.json_key.lower()} caused IndexError")
-            value = None
-        except KeyError:
-            _LOGGER.warning(f"is_on caused KeyError for: {self.tag.json_key}")
+                _LOGGER.debug(f"tag:{self.tag} lc-key: {self.tag.json_key.lower()} caused {type(err).__name__} - {err}")
             value = None
         except TypeError:
             return None

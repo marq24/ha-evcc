@@ -107,10 +107,11 @@ async def _do_request(method: Callable, return_raw_client_response:bool=False) -
             return {}
 
     except ClientError as exception:
-        _LOGGER.warning(f"_do_request() cause of ClientConnectorError: {exception}")
+        _LOGGER.info(f"_do_request() cause of ClientConnectorError: {exception}")
+    except asyncio.TimeoutError as timeout_err:
+        _LOGGER.info(f"_do_request() Timeout!!!: {type(timeout_err).__name__} - {timeout_err}", stack_info=True)
     except Exception as other:
-        _LOGGER.warning(f"_do_request() unexpected: {type(other).__name__} - {other}")
-
+        _LOGGER.warning(f"_do_request() unexpected: {type(other).__name__} - {other}", stack_info=True)
 
 @staticmethod
 def calculate_session_sums(sessions_resp, json_resp: dict):
