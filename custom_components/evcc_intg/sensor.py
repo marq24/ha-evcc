@@ -546,9 +546,10 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         if a_title is not None:
                             return {"title": a_title}
                     elif self.tag == Tag.BATTERY_AS_OBJ:
-                        if self.entity_description.json_idx[1] == BATTERY_CONTENT.POWER.value:
+                        if self.entity_description.json_idx[1] == BATTERY_CONTENT.SOC.value:
                             suggestion_obj = value[array_idx].get("suggestion", None)
-                            return {"suggestion", suggestion_obj}
+                            if suggestion_obj is not None:
+                                return {"suggestion", suggestion_obj}
 
                 except (IndexError, ValueError, TypeError, KeyError) as ex:
                     _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")

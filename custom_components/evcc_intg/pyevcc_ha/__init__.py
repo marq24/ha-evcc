@@ -442,7 +442,7 @@ class EvccApiBridge:
                         pass
 
             except asyncio.CancelledError:
-                #_LOGGER.debug("_ws_update_data_debounced:task(): task was cancelled (normal during reconnect)")
+                #_LOGGER.debug("_ws_update_data_debounced:task(): task was canceled (normal during reconnect)")
                 pass
             except Exception as e:
                 _LOGGER.info(f"_ws_update_data_debounced:task(): ERROR: {type(e).__name__}: {e}", exc_info=True)
