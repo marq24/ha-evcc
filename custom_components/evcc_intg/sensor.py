@@ -24,7 +24,8 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_TOTAL,
     EVCCCONF_KEY_CONFIG,
     EVCCCONF_DEVICE_TYPES,
-    EVCCCONF_KEY_DATA
+    EVCCCONF_KEY_DATA,
+    BATTERY_CONTENT
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, camel_to_snake
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
@@ -533,16 +534,22 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                         # return the original object
                         return a_object
 
-        elif self.tag == Tag.PV:
+        elif self.tag in [Tag.PV, Tag.BATTERY_AS_OBJ]:
             # we check if there is a 'title' (at the given index)
             value = self.coordinator.read_tag(self.tag, self.lp_idx)
             if value is not None and hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
                 try:
                     # we just need the first entry of the 'json_idx'
                     array_idx = self.entity_description.json_idx[0]
-                    a_title = value[array_idx].get("title", None)
-                    if a_title is not None:
-                        return {"title": a_title}
+                    if self.tag == Tag.PV:
+                        a_title = value[array_idx].get("title", None)
+                        if a_title is not None:
+                            return {"title": a_title}
+                    elif self.tag == Tag.BATTERY_AS_OBJ:
+                        if self.entity_description.json_idx[1] == BATTERY_CONTENT.POWER.value:
+                            suggestion_obj = value[array_idx].get("suggestion", None)
+                            return {"suggestion", suggestion_obj}
+
                 except (IndexError, ValueError, TypeError, KeyError) as ex:
                     _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
 
