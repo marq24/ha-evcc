@@ -1,6 +1,8 @@
 from enum import Enum
 from typing import Final
 
+MAX_WS_NEW_DATA_NOTIFICATION_DELAY: Final = 2
+
 JSONKEY_PLANS_DEPRECATED: Final = "plans"
 JSONKEY_PLAN: Final = "plan"
 JSONKEY_PLAN_SOC: Final = "soc"
