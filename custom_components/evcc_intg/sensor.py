@@ -14,7 +14,6 @@ from homeassistant.helpers.restore_state import RestoreEntity
 
 from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGED_TOTAL,
-    JSONKEY_EVOPT_RES_BATTERIES_AINDEX_CHARGING_POWER,
     JSONKEY_EVOPT_RES_BATTERIES_AINDEX_DISCHARGING_POWER,
     JSONKEY_EVOPT_DETAILS_BATTERYDETAILS,
     JSONKEY_EVOPT_DETAILS_TIMESTAMP,
@@ -379,53 +378,88 @@ def compress_general(data, time_key:str, value_key:str):
                 "deltas_in_minutes": [],
                 "values": []}
 
-    start_value = data[0][time_key]
-    parse_from_RFC3339 = None
-    if isinstance(start_value, (int, float, Number)):
-        parse_from_RFC3339 = False
-    elif isinstance(start_value, str):
-        parse_from_RFC3339 = True
-    else:
-        _LOGGER.debug(f"Unsupported time format: for '{start_value}' {type(start_value).__name__}")
+    if isinstance(data[0], dict) and time_key in data[0]:
+        start_value = data[0][time_key]
+        parse_from_RFC3339 = None
+        if isinstance(start_value, (int, float, Number)):
+            parse_from_RFC3339 = False
+        elif isinstance(start_value, str):
+            parse_from_RFC3339 = True
+        else:
+            _LOGGER.debug(f"Unsupported DICT time format: for '{start_value}' {type(start_value).__name__}")
+            return {"start_utc": None,
+                    "deltas_in_minutes": [],
+                    "values": []}
 
-    if parse_from_RFC3339 is not None:
-        # Convert the timestamps to UTC and prepare the output
-        dt_obj = datetime.fromisoformat(start_value).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(start_value, tz=timezone.utc)
-        start_timestamp_utc = dt_obj.isoformat()
-        values = [round(entry[value_key], 4) if not float(entry[value_key]).is_integer() else entry[value_key] for entry in data]
-        deltas = []
-        for i in range(1, len(data)):
-            # Calculate time difference in minutes
-            ts_current = datetime.fromisoformat(data[i][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i][time_key]
-            ts_previous = datetime.fromisoformat(data[i - 1][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i - 1][time_key]
-            delta = int((ts_current - ts_previous).total_seconds() // 60.0)
-            deltas.append(delta)
+        if parse_from_RFC3339 is not None:
+            # Convert the timestamps to UTC and prepare the output
+            dt_obj = datetime.fromisoformat(start_value).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(start_value, tz=timezone.utc)
+            start_timestamp_utc = dt_obj.isoformat()
+            values = [round(entry[value_key], 4) if not float(entry[value_key]).is_integer() else entry[value_key] for entry in data]
+            deltas = []
+            for i in range(1, len(data)):
+                # Calculate time difference in minutes
+                ts_current = datetime.fromisoformat(data[i][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i][time_key]
+                ts_previous = datetime.fromisoformat(data[i - 1][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i - 1][time_key]
+                delta = int((ts_current - ts_previous).total_seconds() // 60.0)
+                deltas.append(delta)
 
-    # {%set json_data=state_attr('sensor.evcc_forecast_grid', 'rates')%}
-    # {% set total_minutes_since_start = (( now() - strptime(json_data['start_utc'], '%Y-%m-%dT%H:%M:%S%z')).total_seconds() // 60)|int %}
-    # {% set tmp = namespace(total=0, index=0) %}
-    # {% for delta in json_data['deltas_in_minutes'] %}
-    #     {% if tmp.total < total_minutes_since_start %}
-    #         {% set tmp.total = tmp.total + delta %}
-    #         {% set tmp.index = tmp.index + 1 %}
-    #     {% else %}
-    #         {% break %}
-    #     {% endif %}
-    # {% endfor %}
-    # {% set relevant_values = json_data['values'][tmp.index:] %}
-    # {% set average_value = (relevant_values|sum) / relevant_values|length if relevant_values|length > 0 else 0 %}
-    # {{ average_value }}
+            # {%set json_data=state_attr('sensor.evcc_forecast_grid', 'rates')%}
+            # {% set total_minutes_since_start = (( now() - strptime(json_data['start_utc'], '%Y-%m-%dT%H:%M:%S%z')).total_seconds() // 60)|int %}
+            # {% set tmp = namespace(total=0, index=0) %}
+            # {% for delta in json_data['deltas_in_minutes'] %}
+            #     {% if tmp.total < total_minutes_since_start %}
+            #         {% set tmp.total = tmp.total + delta %}
+            #         {% set tmp.index = tmp.index + 1 %}
+            #     {% else %}
+            #         {% break %}
+            #     {% endif %}
+            # {% endfor %}
+            # {% set relevant_values = json_data['values'][tmp.index:] %}
+            # {% set average_value = (relevant_values|sum) / relevant_values|length if relevant_values|length > 0 else 0 %}
+            # {{ average_value }}
 
-    # VALUE NOW:
-    # {{json_data['values'][tmp.index]}}
+            # VALUE NOW:
+            # {{json_data['values'][tmp.index]}}
 
-    # SIMPLE AVG value
-    # {%set json_data=state_attr('sensor.evcc_forecast_solar', 'timeseries')%}
-    # {{json_data['values']|sum / json_data['values']|length}}
+            # SIMPLE AVG value
+            # {%set json_data=state_attr('sensor.evcc_forecast_solar', 'timeseries')%}
+            # {{json_data['values']|sum / json_data['values']|length}}
 
-    return {"start_utc":start_timestamp_utc,
-            "deltas_in_minutes": deltas,
-            "values": values}
+            return {"start_utc":start_timestamp_utc,
+                    "deltas_in_minutes": deltas,
+                    "values": values}
+
+    elif isinstance(data[0], list):
+        value_idx = None
+        time_idx = 0
+        array_length = len(data[0])
+        if time_key == "ts" and array_length == 2:
+            value_idx = 1
+        elif time_key == "start" and array_length == 3:
+            value_idx = 2
+        else:
+            _LOGGER.debug(f"Unsupported LIST time format: for '{data[0]}' {type(data[0]).__name__}")
+            return {"start_utc": None,
+                    "deltas_in_minutes": [],
+                    "values": []}
+
+        if value_idx is not None and value_idx in [1, 2]:
+            dt_obj = datetime.fromtimestamp(data[0][time_idx], tz=timezone.utc)
+            start_timestamp_utc = dt_obj.isoformat()
+
+            values = [round(entry[value_idx], 4) if not float(entry[value_idx]).is_integer() else entry[value_idx] for entry in data]
+            deltas = []
+            for i in range(1, len(data)):
+                # Calculate time difference in minutes
+                ts_current = data[i][time_idx]
+                ts_previous = data[i - 1][time_idx]
+                delta = int((ts_current - ts_previous).total_seconds() // 60.0)
+                deltas.append(delta)
+
+            return {"start_utc":start_timestamp_utc,
+                    "deltas_in_minutes": deltas,
+                    "values": values}
 
 
 class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):

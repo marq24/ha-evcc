@@ -1,6 +1,7 @@
 from enum import Enum
 from typing import Final
 
+# pause between notification for new data at least 2 seconds
 MAX_WS_NEW_DATA_NOTIFICATION_DELAY: Final = 2
 
 JSONKEY_PLANS_DEPRECATED: Final = "plans"
