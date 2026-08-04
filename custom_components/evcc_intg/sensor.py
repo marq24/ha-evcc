@@ -702,7 +702,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                             value = value[key]
                         elif key in value:
                             value = value[key]
-                    else:
+                    elif value is not None:
                         try:
                             value = value[key]
                         except (IndexError, KeyError, TypeError):

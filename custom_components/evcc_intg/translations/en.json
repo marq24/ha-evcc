@@ -501,6 +501,7 @@
 
       "configmeter_power": {"name": "Power"},
       "configmeter_energy": {"name": "Energy"},
+      "configmeter_return_energy": {"name": "Feedin"},
       "configmeter_soc": {"name": "Charge"},
       "configmeter_temp": {"name": "Temperature"},
       "configmeter_phasecurrents_0": {"name": "Current P1"},

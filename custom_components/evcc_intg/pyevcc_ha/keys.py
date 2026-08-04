@@ -515,6 +515,7 @@ class Tag(ApiKey, Enum):
     # https://github.com/evcc-io/evcc/blob/master/server/http_config_helper.go -> func testInstance(instance any) map[string]testResult
     EVCCCONF_METERPOWER         = ApiKey(entity_key="configmeter_power", json_key="power", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
     EVCCCONF_METERENERGY        = ApiKey(entity_key="configmeter_energy", json_key="energy", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
+    EVCCCONF_METERRETURNENERGY  = ApiKey(entity_key="configmeter_return_energy", json_key="returnEnergy", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
     EVCCCONF_METERSOC           = ApiKey(entity_key="configmeter_soc", json_key="soc", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
     EVCCCONF_METERTEMP          = ApiKey(entity_key="configmeter_temp", json_key="temp", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
     EVCCCONF_METERPHASECURRENTS = ApiKey(entity_key="configmeter_phasecurrents", json_key="phaseCurrents", type=EP_TYPE.EVCCCONF, subtype=EVCCCONF_DEVICE_TYPES.METER.value)
