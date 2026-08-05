@@ -38,54 +38,74 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
         lp_is_switch_device = load_point_config["is_switch_device"]
+        lp_is_always_charge_present = load_point_config["is_always_charge_present"]
         lp_is_single_phase_only = load_point_config["only_single_phase"]
 
         for a_stub in SELECT_ENTITIES_PER_LOADPOINT:
-            if (not lp_is_single_phase_only or a_stub.tag != Tag.PHASES) and (not lp_is_integrated or a_stub.integrated_supported):
-                the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
-                description = ExtSelectEntityDescription(
-                    tag=a_stub.tag,
-                    lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{the_key}",
-                    translation_key=the_key,
-                    name_addon=lp_name_addon if multi_loadpoint_config else None,
-                    icon=a_stub.icon,
-                    device_class=a_stub.device_class,
-                    unit_of_measurement=a_stub.unit_of_measurement,
-                    entity_category=a_stub.entity_category,
-                    entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
-                    is_lp_integrated_device=lp_is_integrated,
+            # do not add PHASES selector, when the loadpoint is configured as single phase only (since 0.310)
+            if lp_is_single_phase_only and a_stub.tag == Tag.PHASES:
+                continue
 
-                    # the entity type specific values...
-                    options=["null"] + list(coordinator._vehicle.keys()) if a_stub.tag == Tag.LP_VEHICLENAME else a_stub.tag.options,
-                )
+            # get rid of all stub's that are not supported by integrated devices
+            if lp_is_integrated and not a_stub.integrated_supported:
+                continue
 
-                if lp_is_switch_device:
-                    # switch devices don't offer 'MIN+PV' any longer (since 0.310)
-                    if a_stub.tag == Tag.MODE:
-                        description = replace(
-                            description,
-                            options = [x for x in description.options if x != "minpv"]
-                        )
+            # take care that we will only use ONE Mode Selector for a loadpoint
+            # either the old 'MODE_RENAMED_IN_SUMMER_2026' or the new 'MODE'
+            if lp_is_always_charge_present:
+                # lp_is_always_charge_present means that the MODE_SMART must be used and
+                # we must add the ALWAYS_CHARGE switch
+                if a_stub.tag == Tag.MODE_PV_MINPV:
+                    continue
+            else:
+                if a_stub.tag in [Tag.MODE_SMART, Tag.ALWAYS_CHARGE]:
+                    continue
 
-                    # switch devices don't offer MAXCURRENT or PHASES selector any longer (since 0.310)
-                    if a_stub.tag in [Tag.MAXCURRENT, Tag.PHASES]:
-                        continue
+            the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
+            description = ExtSelectEntityDescription(
+                tag=a_stub.tag,
+                lp_idx=lp_api_index,
+                key=f"{lp_id_addon}_{the_key}",
+                translation_key=the_key,
+                name_addon=lp_name_addon if multi_loadpoint_config else None,
+                icon=a_stub.icon,
+                device_class=a_stub.device_class,
+                unit_of_measurement=a_stub.unit_of_measurement,
+                entity_category=a_stub.entity_category,
+                entity_registry_enabled_default=a_stub.entity_registry_enabled_default,
+                is_lp_integrated_device=lp_is_integrated,
 
-                # we might need to patch(remove) the 'auto-mode' from the phases selector
-                if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:
+                # the entity type specific values...
+                options=["null"] + list(coordinator._vehicle.keys()) if a_stub.tag == Tag.LP_VEHICLENAME else a_stub.tag.options,
+            )
+
+            if lp_is_switch_device:
+                # switch devices don't offer 'MIN+PV' any longer (since 0.310)
+                if a_stub.tag == Tag.MODE_PV_MINPV:
                     description = replace(
                         description,
-                        options = description.options[1:],
-                        translation_key = f"{description.translation_key}_fixed"
+                        options = [x for x in description.options if x != "minpv"]
                     )
 
-                entity = EvccSelect(coordinator, description)
+                # switch devices don't offer MAXCURRENT or PHASES selector any longer (since 0.310)
+                # and does not support the new 'alwayscharge' mode that will replace the min+pv
+                if a_stub.tag in [Tag.MAXCURRENT, Tag.PHASES, Tag.ALWAYS_CHARGE]:
+                    continue
 
-                if entity.tag == Tag.MINCURRENT or entity.tag == Tag.MAXCURRENT:
-                    coordinator.select_entities_dict[entity.tag] = entity
+            # we might need to patch(remove) the 'auto-mode' from the phases selector
+            if a_stub.tag == Tag.PHASES and not lp_has_phase_auto_option:
+                description = replace(
+                    description,
+                    options = description.options[1:],
+                    translation_key = f"{description.translation_key}_fixed"
+                )
 
-                entities.append(entity)
+            entity = EvccSelect(coordinator, description)
+
+            if entity.tag == Tag.MINCURRENT or entity.tag == Tag.MAXCURRENT:
+                coordinator.select_entities_dict[entity.tag] = entity
+
+            entities.append(entity)
 
     add_entity_cb(entities)
 
@@ -314,6 +334,18 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                 #    if option in self.coordinator._vehicle:
                 #        option = self.coordinator._vehicle[option][EVCC_JSON_VEH_NAME]
 
+                # check if somebody have hardcoded the old 'minpv' mode in their automations -> and if yes, we log
+                # a warning to the user, that this is no longer supported and will cause errors in EVCC if not updated.
+                # We also set the mode to 'smart' instead of 'minpv' to avoid errors in EVCC.
+                if Tag.MODE_SMART == self.tag and option is not None and isinstance(option, str):
+                    if option == "minpv":
+                        _LOGGER.warning(f"The option 'minpv' for the mode-select is no longer supported by EVCC - you must update your automation to make use of the additional select `Always Charge` to replace the old `minpv` mode. Please check your automations and update them accordingly.")
+                        # setting the hardcoded mode 'smart' instead of 'minpv' to avoid errors in EVCC
+                        option = "smart"
+                    elif option == "pv":
+                        _LOGGER.info(f"The option 'pv' for the mode-select is no longer supported by EVCC - you should update your automation replacing 'pv' with 'smart'")
+                        option = "smart"
+
                 await self.coordinator.async_write_tag(self.tag, option, self)
 
             #_LOGGER.info(f"{self.tag} CHANGED to '{option}'")
@@ -321,3 +353,13 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
         except ValueError:
             return "unavailable"
+
+    @property
+    def available(self) -> bool:
+        is_avail = super().available
+        if self.tag == Tag.ALWAYS_CHARGE:
+            # alwayscharge is only available when the mode is set to 'smart'...
+            # otherwise it will be hidden in the UI
+            mode_value = self.coordinator.read_tag(Tag.MODE_SMART, self.lp_idx)
+            is_avail = is_avail and (mode_value is not None and mode_value == "smart")
+        return is_avail

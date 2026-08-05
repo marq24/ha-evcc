@@ -366,10 +366,23 @@ class Tag(ApiKey, Enum):
     LP_VEHICLEWELCOMEACTIVE = ApiKey(json_key="vehicleWelcomeActive", type=EP_TYPE.LOADPOINTS)
 
     # "mode": "off", -> (off/pv/minpv/now)
-    MODE = ApiKey(
+    MODE_PV_MINPV = ApiKey(
         json_key="mode", type=EP_TYPE.LOADPOINTS,
         writeable=True, write_key="mode", options=["off", "pv", "minpv", "now"]
     )
+
+    # "mode": "off", -> (off/smart/now)
+    MODE_SMART = ApiKey(
+        json_key="mode", type=EP_TYPE.LOADPOINTS,
+        writeable=True, write_key="mode", options=["off", "smart", "now"]
+    )
+
+    # /api/loadpoints/{id}/alwayscharge/{off|on|once}
+    ALWAYS_CHARGE = ApiKey(
+        json_key="alwaysCharge", type=EP_TYPE.LOADPOINTS,
+        writeable=True, write_key="alwayscharge", options=["off", "on", "once"]
+    )
+
     # "limitSoc": 0, -> write 'limitsoc' in %
     LIMITSOC = ApiKey(json_key="limitSoc", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="limitsoc")
 

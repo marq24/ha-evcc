@@ -1,0 +1,20 @@
+# .github/workflows/ai-moderator.yml
+name: AI Moderator
+
+on:
+  issues:
+    types: [opened]
+
+jobs:
+  ai-scan:
+    runs-on: ubuntu-latest
+    permissions:
+      issues: write
+      models: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: github/ai-moderator@v1
+        with:
+          token: ${{ secrets.GITHUB_TOKEN }}
+          ai-label: 'ai-generated'
+          enable-ai-detection: true

@@ -542,7 +542,6 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         else:
             _LOGGER.debug(f"read_evcc_config_on_startup(): NO 'circuits' found [{JSONKEY_CIRCUITS}] in the evcc data: {initdata}")
 
-
         # init our vehicles data... [this is a JSON DICT]
         if JSONKEY_VEHICLES in initdata:
             for a_evcc_veh_name in initdata[JSONKEY_VEHICLES]:
@@ -588,10 +587,17 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 if "chargerFeatureIntegratedDevice" in a_loadpoint_object:
                     is_integrated = a_loadpoint_object["chargerFeatureIntegratedDevice"]
 
-                # sind 0.310.0 no MIN+PV mode + no MAX_CURRENT for 'SwitchDevice'
+                # since 0.310.0 no MIN+PV mode + no MAX_CURRENT for 'SwitchDevice'
                 is_switch_device = False
                 if "chargerFeatureSwitchDevice" in a_loadpoint_object:
                     is_switch_device = a_loadpoint_object["chargerFeatureSwitchDevice"]
+
+                # since https://github.com/evcc-io/evcc/pull/32490
+                # looks like we have different names for the modes - and also a new
+                # 'feature'...
+                is_always_charge_present = False
+                if "alwaysCharge" in a_loadpoint_object:
+                    is_always_charge_present = True
 
                 self._loadpoint[f"{api_index}"] = {
                     EVCC_JSON_KEY_NAME: f"{api_index}",
@@ -603,13 +609,13 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     "is_heating": is_heating,
                     "is_integrated": is_integrated,
                     "is_switch_device": is_switch_device,
+                    "is_always_charge_present": is_always_charge_present,
                     "vehicle_key": a_loadpoint_object["vehicleName"]
                 }
 
                 api_index += 1
         else:
             _LOGGER.warning(f"read_evcc_config_on_startup(): NO 'loadpoints' found [{JSONKEY_LOADPOINTS}] in the evcc data: {initdata}")
-
 
         if "smartCostType" in initdata:
             self._cost_type = initdata["smartCostType"]

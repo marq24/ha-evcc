@@ -241,9 +241,18 @@
         "name": "Modus",
         "state": {
           "off": "Aus",
+          "smart": "Smart",
+          "now": "Schnell",
           "pv": "PV",
-          "minpv": "Min+PV",
-          "now": "Schnell"
+          "minpv": "Min+PV"
+        }
+      },
+      "alwayscharge":{
+        "name": "Mit min. laden \u267e\ufe0f",
+        "state": {
+          "off": "Aus",
+          "on": "Ein",
+          "once": "Einmalig"
         }
       },
       "phasesconfigured": {

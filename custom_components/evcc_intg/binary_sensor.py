@@ -36,6 +36,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
+        lp_is_switch_device = load_point_config["is_switch_device"]
+        lp_is_always_charge_present = load_point_config["is_always_charge_present"]
+        lp_is_single_phase_only = load_point_config["only_single_phase"]
 
         for a_stub in BINARY_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:

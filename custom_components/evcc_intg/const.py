@@ -494,12 +494,29 @@ SELECT_ENTITIES = [
         entity_registry_enabled_default=False
     ),
 ]
+
 SELECT_ENTITIES_PER_LOADPOINT = [
+    # THE MODE NOW DEPENDS ON FROM the `is_always_charge_present` @ Loadpoint config
+    # we then enable the select entity for the loadpoint, if the loadpoint is NOT an
+    # always-charge-present device we use the 'MODE_BEFORE_RENAMING' else the
+    # 'MODE'
     ExtSelectEntityDescriptionStub(
-        tag=Tag.MODE,
+        tag=Tag.MODE_PV_MINPV,
         #entity_category=EntityCategory.CONFIG,
         icon="mdi:state-machine"
     ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.MODE_SMART,
+        #entity_category=EntityCategory.CONFIG,
+        icon="mdi:state-machine"
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.ALWAYS_CHARGE,
+        #entity_category=EntityCategory.CONFIG,
+        icon="mdi:sync"
+    ),
+
+
     ExtSelectEntityDescriptionStub(
         tag=Tag.PHASES,
         entity_category=EntityCategory.CONFIG,

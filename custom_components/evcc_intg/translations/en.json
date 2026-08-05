@@ -309,9 +309,18 @@
         "name": "Modus",
         "state": {
           "off": "Off",
+          "smart": "Smart",
+          "now": "Fast",
           "pv": "Solar",
-          "minpv": "Min+Solar",
-          "now": "Fast"
+          "minpv": "Min+Solar"
+        }
+      },
+      "alwayscharge":{
+        "name": "Always charge \u267e\ufe0f",
+        "state": {
+          "off": "Off",
+          "on": "On",
+          "once": "Once"
         }
       },
       "phasesconfigured": {

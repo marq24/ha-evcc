@@ -100,6 +100,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
+        lp_is_switch_device = load_point_config["is_switch_device"]
+        lp_is_always_charge_present = load_point_config["is_always_charge_present"]
+        lp_is_single_phase_only = load_point_config["only_single_phase"]
 
         for a_stub in SENSOR_ENTITIES_PER_LOADPOINT:
             if not lp_is_integrated or a_stub.integrated_supported:
@@ -260,7 +263,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         for a_meter_key in meter_data:
             # we MUST ensure that the meter_id_addon is a valid HA entity-id
             # (at least 'meter_id_addon' will become part of an entity-id)
-            meter_id_addon = camel_to_snake(a_meter_key).replace(".", "_").replace(":", "_")
+            meter_id_addon = camel_to_snake(a_meter_key).replace(".", "_").replace(":", "_").replace("-", "_")
+            while "__" in meter_id_addon:
+                meter_id_addon = meter_id_addon.replace("__", "_")
             meter_name_addon = a_meter_key
 
             for a_stub in SENSOR_ENTITIES_PER_METER:

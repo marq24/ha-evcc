@@ -44,30 +44,35 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_has_phase_auto_option = load_point_config["has_phase_auto_option"]
         lp_is_heating = load_point_config["is_heating"]
         lp_is_integrated = load_point_config["is_integrated"]
+        lp_is_switch_device = load_point_config["is_switch_device"]
+        lp_is_always_charge_present = load_point_config["is_always_charge_present"]
+        lp_is_single_phase_only = load_point_config["only_single_phase"]
 
         for a_stub in BUTTONS_ENTITIES_PER_LOADPOINT:
-            if not lp_is_integrated or a_stub.integrated_supported:
-                force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
-                the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
-                description = ExtButtonEntityDescription(
-                    tag=a_stub.tag,
-                    lp_idx=lp_api_index,
-                    key=f"{lp_id_addon}_{the_key}",
-                    translation_key=the_key,
-                    name_addon=lp_name_addon if multi_loadpoint_config else None,
-                    icon=a_stub.icon,
-                    device_class=a_stub.device_class,
-                    unit_of_measurement=a_stub.unit_of_measurement,
-                    entity_category=a_stub.entity_category,
-                    entity_registry_enabled_default=True if force_enable_by_default else a_stub.entity_registry_enabled_default,
-                    is_lp_integrated_device=lp_is_integrated,
+            # get rid of all stub's that are not supported by integrated devices
+            if lp_is_integrated and not a_stub.integrated_supported:
+                continue
+            force_enable_by_default = configuration_data_available and a_stub.tag.type == EP_TYPE.EVCCCONF
+            the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
+            description = ExtButtonEntityDescription(
+                tag=a_stub.tag,
+                lp_idx=lp_api_index,
+                key=f"{lp_id_addon}_{the_key}",
+                translation_key=the_key,
+                name_addon=lp_name_addon if multi_loadpoint_config else None,
+                icon=a_stub.icon,
+                device_class=a_stub.device_class,
+                unit_of_measurement=a_stub.unit_of_measurement,
+                entity_category=a_stub.entity_category,
+                entity_registry_enabled_default=True if force_enable_by_default else a_stub.entity_registry_enabled_default,
+                is_lp_integrated_device=lp_is_integrated,
 
-                    # the entity type specific values...
-                    payload=a_stub.payload
-                )
+                # the entity type specific values...
+                payload=a_stub.payload
+            )
 
-                entity = EvccButton(coordinator, description)
-                entities.append(entity)
+            entity = EvccButton(coordinator, description)
+            entities.append(entity)
 
     add_entity_cb(entities)
 
