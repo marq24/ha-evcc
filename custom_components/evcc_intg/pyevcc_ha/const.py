@@ -171,6 +171,8 @@ TRANSLATIONS: Final = {
         "device_name_meter_ext": "Zusatzzähler",
         "device_name_meter_pv": "PV-Anlage",
         "device_name_meter_battery": "Speicherbatterie",
+        "device_name_meter_consumer": "Hausverbrauch",
+        "device_name_meter_aux": "Hilfszähler",
         "ws_connected": "WebSocket Verbindung:",
     },
     "en": {
@@ -199,6 +201,8 @@ TRANSLATIONS: Final = {
         "device_name_meter_ext": "Additional Meter",
         "device_name_meter_pv": "Photovoltaic",
         "device_name_meter_battery": "Home Battery",
+        "device_name_meter_consumer": "Consumer",
+        "device_name_meter_aux": "Auxiliary Meter",
         "ws_connected": "WebSocket connection:",
     }
 }
