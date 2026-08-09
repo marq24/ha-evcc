@@ -17,8 +17,14 @@ body:
     id: checklist
     attributes:
       label: Checklist
-      description: Please go though this short checklist - TIA
+      description: Please go though this short checklist - read each point carefully - TIA
       options:
+        - label: This issue will be created by a human being **without any support* of AI tools like claude. I understand that issues created by AI tools will be instantly closed without any further support.
+          required: true
+        - label: I am aware, that marq24 is a grumpy old guy, so __it can happen__ that my issue will be closed instantly when essential information is missing (e.g. no debug logs provided, no issue description, no steps to reproduce the issue, etc...).
+          required: true
+        - label: I know, that any attachment send via eMail reply to a github issue notifications will be __ignored and deleted__ by github automatically. With other words __this will not work__!
+          required: true
         - label: I confirm that I have [read & understand the main Integration 'check-list'](https://github.com/marq24/ha-evcc/discussions/166)
           required: true
         - label: I confirm, that I my evcc instance is configured, is up & running and that **I can access the default evcc webinterface**
@@ -43,5 +49,5 @@ body:
     id: logs
     attributes:
       label: Add your DEBUG log output
-      placeholder: "Please copy and paste any relevant log output. This will be automatically formatted into code, so no need for backticks."
+      placeholder: "Please copy and paste any relevant **DEBUG LOG** output. This will be automatically formatted into code, so no need for backticks."
       render: shell
