@@ -1,6 +1,5 @@
 name: Problem Report
 description: please report any technical issue with this home assistant integration - please note this is not a official evcc repository or service
-labels: bug
 body:
   - type: markdown
     attributes:
@@ -19,7 +18,7 @@ body:
       label: Checklist
       description: Please go though this short checklist - read each point carefully - TIA
       options:
-        - label: This issue will be created by a human being **without any support* of AI tools like claude. I understand that issues created by AI tools will be instantly closed without any further support.
+        - label: This issue will be created by a human being **without any support** of AI tools like claude or chatgpt. I understand that issues created by AI tools will be instantly closed without any further support.
           required: true
         - label: I am aware, that marq24 is a grumpy old guy, so __it can happen__ that my issue will be closed instantly when essential information is missing (e.g. no debug logs provided, no issue description, no steps to reproduce the issue, etc...).
           required: true
