@@ -407,7 +407,10 @@ def compress_general(data, time_key:str, value_key:str):
                 # Calculate time difference in minutes
                 ts_current = datetime.fromisoformat(data[i][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i][time_key]
                 ts_previous = datetime.fromisoformat(data[i - 1][time_key]).astimezone(timezone.utc) if parse_from_RFC3339 else data[i - 1][time_key]
-                delta = int((ts_current - ts_previous).total_seconds() // 60.0)
+                if parse_from_RFC3339:
+                    delta = int((ts_current - ts_previous).total_seconds() // 60.0)
+                else:
+                    delta = int((ts_current - ts_previous) // 60.0)
                 deltas.append(delta)
 
             # {%set json_data=state_attr('sensor.evcc_forecast_grid', 'rates')%}
@@ -460,7 +463,7 @@ def compress_general(data, time_key:str, value_key:str):
                 # Calculate time difference in minutes
                 ts_current = data[i][time_idx]
                 ts_previous = data[i - 1][time_idx]
-                delta = int((ts_current - ts_previous).total_seconds() // 60.0)
+                delta = int((ts_current - ts_previous) // 60.0)
                 deltas.append(delta)
 
             return {"start_utc":start_timestamp_utc,
