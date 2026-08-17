@@ -439,6 +439,7 @@ def compress_general(data, time_key:str, value_key:str):
                     "deltas_in_minutes": deltas,
                     "values": values}
 
+    # since evcc 0.314.1
     elif isinstance(data[0], list):
         value_idx = None
         time_idx = 0
@@ -567,7 +568,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                     if a_object is not None and "timeseries" in a_object:
                         a_copy_object = a_object.copy()
                         a_array = a_copy_object["timeseries"]
-                        if a_array is not None and "ts" in a_array[0]:
+                        if a_array is not None and ("ts" in a_array[0] or isinstance(a_array[0], list)):
                             a_copy_object["timeseries"] = compress_timeseries(a_array)
                         else:
                             a_copy_object["timeseries"] = a_array
@@ -606,56 +607,75 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
             if a_key != self._last_calculated_key:
                 self._last_calculated_key = a_key
                 for a_entry in data_list:
-                    if "start" in a_entry and "end" in a_entry:
-                        start_entry = a_entry["start"]
-                        end_entry = a_entry["end"]
+                    if isinstance(a_entry, dict):
+                        if "start" in a_entry and "end" in a_entry:
+                            start_entry = a_entry["start"]
+                            end_entry = a_entry["end"]
 
-                        parse_from_RFC3339 = None
-                        if isinstance(start_entry, (int, float, Number)):
-                            parse_from_RFC3339 = False
-                        elif isinstance(start_entry, str):
-                            parse_from_RFC3339 = True
-                        else:
-                            _LOGGER.error(f"Invalid start_entry type {ts_entry} {type(ts_entry).__name__}")
+                            parse_from_RFC3339 = None
+                            if isinstance(start_entry, (int, float, Number)):
+                                parse_from_RFC3339 = False
+                            elif isinstance(start_entry, str):
+                                parse_from_RFC3339 = True
+                            else:
+                                _LOGGER.error(f"Invalid start_entry type {ts_entry} {type(ts_entry).__name__}")
 
-                        if parse_from_RFC3339 is not None:
-                            start_dt = datetime.fromisoformat(start_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(start_entry, tz=timezone.utc)
-                            end_dt = datetime.fromisoformat(end_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(end_entry, tz=timezone.utc)
-                            if start_dt < current_time < end_dt:
-                                if "val" in a_entry:
-                                    self._last_calculated_value = a_entry["val"]
-                                    break
-                                elif "value" in a_entry:
-                                    self._last_calculated_value = a_entry["value"]
-                                    break
-                                elif "price" in a_entry:
-                                    self._last_calculated_value = a_entry["price"]
-                                    break
+                            if parse_from_RFC3339 is not None:
+                                start_dt = datetime.fromisoformat(start_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(start_entry, tz=timezone.utc)
+                                end_dt = datetime.fromisoformat(end_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(end_entry, tz=timezone.utc)
+                                if start_dt < current_time < end_dt:
+                                    if "val" in a_entry:
+                                        self._last_calculated_value = a_entry["val"]
+                                        break
+                                    elif "value" in a_entry:
+                                        self._last_calculated_value = a_entry["value"]
+                                        break
+                                    elif "price" in a_entry:
+                                        self._last_calculated_value = a_entry["price"]
+                                        break
 
-                    elif "ts" in a_entry:
-                        ts_entry = a_entry["ts"]
-                        parse_from_RFC3339 = None
-                        if isinstance(ts_entry, (int, float, Number)):
-                            parse_from_RFC3339 = False
-                        elif isinstance(ts_entry, str):
-                            parse_from_RFC3339 = True
-                        else:
-                            _LOGGER.error(f"Invalid ts_entry type {ts_entry} {type(ts_entry).__name__}")
+                        elif "ts" in a_entry:
+                            ts_entry = a_entry["ts"]
+                            parse_from_RFC3339 = None
+                            if isinstance(ts_entry, (int, float, Number)):
+                                parse_from_RFC3339 = False
+                            elif isinstance(ts_entry, str):
+                                parse_from_RFC3339 = True
+                            else:
+                                _LOGGER.error(f"Invalid ts_entry type {ts_entry} {type(ts_entry).__name__}")
 
-                        if parse_from_RFC3339 is not None:
-                            timestamp_dt = datetime.fromisoformat(ts_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(ts_entry, tz=timezone.utc)
-                            if (timestamp_dt.day == current_time.day and
-                                    timestamp_dt.hour == current_time.hour and
-                                    int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
-                            ):
-                                if "val" in a_entry:
-                                    self._last_calculated_value = a_entry["val"]
-                                    break
-                                elif "value" in a_entry:
-                                    self._last_calculated_value = a_entry["value"]
-                                    break
-                                elif "price" in a_entry:
-                                    self._last_calculated_value = a_entry["price"]
+                            if parse_from_RFC3339 is not None:
+                                timestamp_dt = datetime.fromisoformat(ts_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(ts_entry, tz=timezone.utc)
+                                if (timestamp_dt.day == current_time.day and
+                                        timestamp_dt.hour == current_time.hour and
+                                        int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
+                                ):
+                                    if "val" in a_entry:
+                                        self._last_calculated_value = a_entry["val"]
+                                        break
+                                    elif "value" in a_entry:
+                                        self._last_calculated_value = a_entry["value"]
+                                        break
+                                    elif "price" in a_entry:
+                                        self._last_calculated_value = a_entry["price"]
+                                        break
+
+                    # since evcc 0.314.1
+                    elif isinstance(a_entry, list):
+                        # ok the new structure is implemented here...
+                        # the timeseries is no longer a dict, it's just a list...
+                        # *sigh* thanks for this last minute u-turn... My day was not alreday long enough...
+                        value_index = 2
+                        if len(a_entry) == 2:
+                            value_index = 1
+
+                        timestamp_dt = datetime.fromtimestamp(a_entry[0], tz=timezone.utc)
+                        if (timestamp_dt.day == current_time.day and
+                                timestamp_dt.hour == current_time.hour and
+                                int(timestamp_dt.minute // 15) == int(current_time.minute // 15)
+                        ):
+                            self._last_calculated_value = a_entry[value_index]
+                            break
 
             return self._last_calculated_value
         return None
