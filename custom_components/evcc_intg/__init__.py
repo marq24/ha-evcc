@@ -1203,7 +1203,7 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
     _attr_name_addon = None
 
     def __init__(self, entity_type:str, coordinator: EvccDataUpdateCoordinator, description: EntityDescription) -> None:
-        super().__init__(coordinator, description)
+        super().__init__(coordinator)
         self.tag = description.tag if hasattr(description, "tag") else None
         self.lp_idx = description.lp_idx if hasattr(description, "lp_idx") else None
         self.evcc_internal_id = description.evcc_internal_id if hasattr(description, "evcc_internal_id") else None
@@ -1280,11 +1280,6 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
     def unique_id(self):
         """Return a unique ID to use for this entity."""
         return f"{DOMAIN}.{self.entity_id.split('.')[1]}".lower()
-
-    async def async_added_to_hass(self):
-        """Connect to dispatcher listening for entity data notifications."""
-        self.async_on_remove(self.coordinator.async_add_listener(self.async_write_ha_state))
-        await super().async_added_to_hass()
 
     def _friendly_name_internal(self) -> str | None:
         """Return the friendly name.

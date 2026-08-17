@@ -12,10 +12,6 @@ _LOGGER = logging.getLogger(__name__)
 
 class CustomFriendlyNameEntity(CoordinatorEntity):
 
-    def __init__(self, *args, **kwargs):
-        """Initialize and check if method exists."""
-        super().__init__(*args, **kwargs)
-
     # This is a SYNCHRONOUS method that returns a tuple, not async!
     def _Entity__async_calculate_state(self):
         """Calculate state and override ATTR_FRIENDLY_NAME."""
