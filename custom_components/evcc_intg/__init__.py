@@ -566,6 +566,12 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         api_index = 1
         if JSONKEY_LOADPOINTS in initdata:
             for a_loadpoint_object in initdata[JSONKEY_LOADPOINTS]:
+
+                # introduced with 0.314.1 Loadpoints can be disabled now!
+                is_disabled = False
+                if "disabled" in a_loadpoint_object:
+                    is_disabled = a_loadpoint_object["disabled"]
+
                 single_phase_only = False
                 if "chargerSinglePhase" in a_loadpoint_object:
                     single_phase_only = a_loadpoint_object["chargerSinglePhase"]
@@ -602,15 +608,16 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 self._loadpoint[f"{api_index}"] = {
                     EVCC_JSON_KEY_NAME: f"{api_index}",
                     EVCC_JSON_ORIGIN_OBJECT: a_loadpoint_object,
-                    "name": a_loadpoint_object["title"],
-                    "id": slugify(a_loadpoint_object["title"]),
+                    "name": a_loadpoint_object.get("title", f"unknown-{api_index}"),
+                    "id": slugify(a_loadpoint_object.get("title", f"unknown-{api_index}")),
+                    "is_disabled": is_disabled,
                     "has_phase_auto_option": phase_switching_supported,
                     "only_single_phase": single_phase_only,
                     "is_heating": is_heating,
                     "is_integrated": is_integrated,
                     "is_switch_device": is_switch_device,
                     "is_always_charge_present": is_always_charge_present,
-                    "vehicle_key": a_loadpoint_object["vehicleName"]
+                    "vehicle_key": a_loadpoint_object.get("vehicleName", None)
                 }
 
                 api_index += 1
@@ -1132,13 +1139,13 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
     def device_info_dict(self) -> dict:
         return self._device_info_dict
 
-    def device_info_dict_for_loadpoint(self, addon: str) -> dict:
+    def device_info_dict_for_loadpoint(self, addon: str, is_lp_disabled: bool | None= False) -> dict:
         # check also 'read_evcc_config_on_startup' where we create the default device_info_dict
         unique_device_id = slugify(f"did_{self._config_entry.data.get(CONF_HOST)}_{addon}")
         a_device_info_dict = {
             "identifiers": {(DOMAIN, unique_device_id)},
             "manufacturer": MANUFACTURER,
-            "name": f"{NAME_SHORT} - {self.lang_map["device_name_loadpoint"]} {addon} [{self._system_id}]",
+            "name": f"{NAME_SHORT} - {self.lang_map["device_name_loadpoint"]} {addon} [{self._system_id}]{self.lang_map["disabled_loadpoint"] if is_lp_disabled else ""}",
             "model": f"{self.lang_map["device_name_loadpoint"]} {addon} [{self._system_id}]",
             "sw_version": f"{self._version}"
         }
@@ -1237,6 +1244,10 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
 
     @property
     def device_info(self) -> dict:
+        is_lp_disabled = None
+        if self.lp_idx is not None and str(self.lp_idx) in self.coordinator._loadpoint:
+            is_lp_disabled = self.coordinator._loadpoint[str(self.lp_idx)]["is_disabled"]
+
         if self._attr_name_addon is not None:
             if self.tag.type == EP_TYPE.EVCCCONF:
                 if self.tag.subtype == EVCCCONF_DEVICE_TYPES.VEHICLE.value:
@@ -1251,7 +1262,7 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
 
             if self.tag.type == EP_TYPE.SESSIONS and self.tag.subtype is not None:
                 if self.tag.subtype == SESSIONS_KEY_LOADPOINTS:
-                    return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
+                    return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon, is_lp_disabled=is_lp_disabled)
 
                 elif self.tag.subtype == SESSIONS_KEY_VEHICLES:
                     return self.coordinator.device_info_dict_for_vehicle(self._attr_name_addon)
@@ -1264,7 +1275,7 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
 
             # all other sensors with a _attr_name_addon (except CIRCUITS) must be loadpoint data...
             if self.tag.type is not EP_TYPE.CIRCUITS:
-                return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon)
+                return self.coordinator.device_info_dict_for_loadpoint(self._attr_name_addon, is_lp_disabled=is_lp_disabled)
 
         # only the main/site device information should show the connection status of a
         # possible existing websocket connection

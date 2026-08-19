@@ -30,6 +30,12 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     multi_loadpoint_config = len(coordinator._loadpoint) > 1
     for a_lp_key in coordinator._loadpoint:
         load_point_config = coordinator._loadpoint[a_lp_key]
+        if load_point_config["is_disabled"]:
+            _LOGGER.debug(f"BINARY_SENSOR skipping loadpoint {a_lp_key} since it is disabled")
+            # for BINARY_ENTITIES we have the situation that not all entities should be disabled...
+            # in fact the Tag.DISABLED is shown - but the rest is gone...
+            #continue
+
         lp_api_index = int(a_lp_key)
         lp_id_addon = load_point_config["id"]
         lp_name_addon = load_point_config["name"]
@@ -41,6 +47,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
         lp_is_single_phase_only = load_point_config["only_single_phase"]
 
         for a_stub in BINARY_ENTITIES_PER_LOADPOINT:
+            if load_point_config["is_disabled"]:
+                if a_stub.tag != Tag.DISABLEDINEVCCCONFIG:
+                    continue
+
             if not lp_is_integrated or a_stub.integrated_supported:
                 the_key = a_stub.tag.entity_key if a_stub.tag.entity_key is not None else a_stub.tag.json_key
                 description = ExtBinarySensorEntityDescription(

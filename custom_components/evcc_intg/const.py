@@ -213,6 +213,13 @@ BINARY_ENTITIES_PER_CIRCUIT = [
     ),
 ]
 BINARY_ENTITIES_PER_LOADPOINT = [
+    # loadpoint disabled in evccConfiguration...
+    ExtBinarySensorEntityDescriptionStub(
+        tag=Tag.DISABLEDINEVCCCONFIG,
+        entity_category=EntityCategory.DIAGNOSTIC,
+        icon="mdi:minus-circle",
+        icon_off="mdi:check-circle"
+    ),
     ExtBinarySensorEntityDescriptionStub(
         tag=Tag.CHARGING,
         icon=None,

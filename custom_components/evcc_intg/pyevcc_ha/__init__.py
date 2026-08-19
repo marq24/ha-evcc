@@ -636,6 +636,15 @@ class EvccApiBridge:
                 for a_device_id in value_list:
                     if a_device_type not in json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA]:
                         json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type] = {}
+
+                    # me must check for disabled devices
+                    if (isinstance(value_list, dict)):
+                        a_obj = value_list.get(a_device_id, {})
+                        if isinstance(a_obj, dict) and len(a_obj) > 0 and (a_obj.get("disable", False) or a_obj.get("disabled", False)):
+                            _LOGGER.debug(f"skipping disabled {a_device_type} '{a_device_id}' -> {a_obj}")
+                            json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA][a_device_type][a_device_id.lower()] = a_obj
+                            continue
+
                     req = f"{self.host}/api/config/devices/{a_device_type}/{a_device_id}/status"
                     if log_requests:
                         _LOGGER.debug(f"GET request: {req}")

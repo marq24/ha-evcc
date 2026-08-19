@@ -176,6 +176,7 @@ TRANSLATIONS: Final = {
         "device_name_meter_consumer": "Hausverbrauch",
         "device_name_meter_aux": "Hilfszähler",
         "ws_connected": "WebSocket Verbindung:",
+        "disabled_loadpoint": " (⛔ derzeit in der evcc Konfiguration deaktiviert)",
     },
     "en": {
         "batterymode": {
@@ -206,5 +207,6 @@ TRANSLATIONS: Final = {
         "device_name_meter_consumer": "Consumer",
         "device_name_meter_aux": "Auxiliary Meter",
         "ws_connected": "WebSocket connection:",
+        "disabled_loadpoint": " (⛔ currently disabled in evcc the configuration)",
     }
 }

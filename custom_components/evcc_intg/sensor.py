@@ -94,6 +94,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     multi_loadpoint_config = len(coordinator._loadpoint) > 1
     for a_lp_key in coordinator._loadpoint:
         load_point_config = coordinator._loadpoint[a_lp_key]
+        if load_point_config["is_disabled"]:
+            _LOGGER.debug(f"SENSOR skipping loadpoint {a_lp_key} since it is disabled")
+            continue
         lp_api_index = int(a_lp_key)
         lp_id_addon = load_point_config["id"]
         lp_name_addon = load_point_config["name"]

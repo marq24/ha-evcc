@@ -76,6 +76,11 @@
       "charging": {"name": "Lädt"},
       "connected": {"name": "Verbunden"},
       "enabled": {"name": "Aktiviert"},
+      "disabled_in_config": {"name": "Deaktiviert in evcc Konfiguration",
+        "state": {
+          "on": "Ja",
+          "off": "Nein"
+        }},
       "smartcostactive": {"name": "Smartes Netzladen"},
       "smartfeedinpriorityactive": {"name": "Smarte Einspeisegrenze"},
       "vehicledetectionactive": {"name": "Fahrzeugerkennung"},

@@ -78,6 +78,12 @@
       "charging": {"name": "Charging"},
       "connected": {"name": "Connected"},
       "enabled": {"name": "Enabled"},
+      "disabled_in_config": {"name": "Disabled in evcc configuration",
+        "state": {
+          "on": "Yes",
+          "off": "No"
+        }
+      },
       "smartcostactive": {"name": "Smart Grid Charging"},
       "smartfeedinpriorityactive": {"name": "Smart Feedin limit"},
       "vehicledetectionactive": {"name": "Vehicle detection"},

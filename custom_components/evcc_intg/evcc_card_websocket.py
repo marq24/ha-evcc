@@ -115,6 +115,7 @@ def extension_capabilities(hass: HomeAssistant, connection, msg):
                 "id": a_lp_cfg.get("id"),
                 "name": a_lp_cfg.get("name"),
                 "heating": a_lp_cfg.get("is_heating", False),
+                "disabled": a_lp_cfg.get("is_disabled", False),
             }
             for a_lp_key, a_lp_cfg in coordinator._loadpoint.items()
         ]

@@ -275,6 +275,9 @@ class Tag(ApiKey, Enum):
     # "planProjectedStart": "2025-02-20T13:00:00+01:00",
     PLANPROJECTEDSTART = ApiKey(json_key="planProjectedStart", type=EP_TYPE.LOADPOINTS)
 
+    # "disabled": false,
+    DISABLEDINEVCCCONFIG = ApiKey(entity_key="disabled_in_config", json_key="disabled", type=EP_TYPE.LOADPOINTS)
+
     # "enabled": false,
     ENABLED = ApiKey(json_key="enabled", type=EP_TYPE.LOADPOINTS)
 
