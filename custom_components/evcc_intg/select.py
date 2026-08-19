@@ -8,7 +8,7 @@ from homeassistant.const import Platform
 from homeassistant.core import HomeAssistant
 from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MAX_CURRENT_LIST, BATTERY_LIST
+from custom_components.evcc_intg.pyevcc_ha.const import MIN_CURRENT_LIST, MIN_CURRENT_EXTENDED_LIST, MAX_CURRENT_LIST, BATTERY_LIST
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag
 from . import EvccDataUpdateCoordinator, EvccBaseEntity
 from .const import DOMAIN, SELECT_ENTITIES, SELECT_ENTITIES_PER_LOADPOINT, ExtSelectEntityDescription
@@ -103,7 +103,9 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
             entity = EvccSelect(coordinator, description)
 
             if entity.tag == Tag.MINCURRENT or entity.tag == Tag.MAXCURRENT:
-                coordinator.select_entities_dict[entity.tag] = entity
+                # since we have multiple loadpoints, we need to store the min/max selectors in a dict
+                # with the loadpoint index as key!!!
+                coordinator.select_entities_dict[f"{entity.tag}@@@{lp_api_index}"] = entity
 
             entities.append(entity)
 
@@ -184,9 +186,11 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     def _check_tags(self, value: str):
         if value != self._last_tag_check_value:
+            _LOGGER.info(f"_check_tags(): SELECT value changed for '{self.tag}' from '{self._last_tag_check_value}' to '{value}'")
             if self._last_tag_check_value is not None:
                 _LOGGER.debug(f"_check_tags(): SELECT value changed for '{self.tag}' from '{self._last_tag_check_value}' to '{value}'")
-            if self.tag == Tag.MAXCURRENT:
+
+            elif self.tag == Tag.MAXCURRENT:
                 self._check_min_options(value)
             elif self.tag == Tag.MINCURRENT:
                 self._check_max_options(value)
@@ -196,26 +200,24 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
     def _check_min_options(self, new_max_option: str):
         try:
-            min_key = Tag.MINCURRENT
-            #_LOGGER.warning(f"CHECK_MIN {min_key} {MIN_CURRENT_LIST} {self.coordinator.entities_min_max_dict[min_key]}")
+            min_key = f"{Tag.MINCURRENT}@@@{self.lp_idx}" if self.lp_idx is not None else f"{Tag.MINCURRENT}"
+            #_LOGGER.warning(f"CHECK_MIN {min_key} {min_key in self.coordinator.select_entities_dict}")
             if min_key in self.coordinator.select_entities_dict:
-                if new_max_option in MIN_CURRENT_LIST:
-                    self.coordinator.select_entities_dict[min_key].options = MIN_CURRENT_LIST[:MIN_CURRENT_LIST.index(new_max_option) + 1]
-                else:
-                    self.coordinator.select_entities_dict[min_key].options = MIN_CURRENT_LIST
+                new_options = MIN_CURRENT_EXTENDED_LIST[:MIN_CURRENT_EXTENDED_LIST.index(new_max_option) + 1] if new_max_option in MIN_CURRENT_EXTENDED_LIST else MIN_CURRENT_LIST
+                #_LOGGER.warning(f"CHECK_MIN {min_key} {new_options}")
+                self.coordinator.select_entities_dict[min_key].options = new_options
 
         except BaseException as err:
             _LOGGER.debug(f"SELECT Error _check_min_options for '{new_max_option}' {self.entity_id} {self.tag} {err}")
 
     def _check_max_options(self, new_min_option: str):
         try:
-            max_key = Tag.MAXCURRENT
-            #_LOGGER.warning(f"CHECK_MAX {max_key} {MAX_CURRENT_LIST} {self.coordinator.entities_min_max_dict[max_key]}")
+            max_key = f"{Tag.MAXCURRENT}@@@{self.lp_idx}" if self.lp_idx is not None else f"{Tag.MAXCURRENT}"
+            #_LOGGER.warning(f"CHECK_MAX {max_key} {max_key in self.coordinator.select_entities_dict}")
             if max_key in self.coordinator.select_entities_dict:
-                if new_min_option in MAX_CURRENT_LIST:
-                    self.coordinator.select_entities_dict[max_key].options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(new_min_option):]
-                else:
-                    self.coordinator.select_entities_dict[max_key].options = MAX_CURRENT_LIST
+                new_options = MAX_CURRENT_LIST[MAX_CURRENT_LIST.index(new_min_option):] if new_min_option in MAX_CURRENT_LIST else MAX_CURRENT_LIST
+                #_LOGGER.warning(f"CHECK_MAX {max_key} {new_options}")
+                self.coordinator.select_entities_dict[max_key].options = new_options
 
         except BaseException as err:
             _LOGGER.debug(f"SELECT Error _check_max_options for '{new_min_option}' {self.entity_id} {self.tag} {err}")
@@ -302,6 +304,16 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
                     value = "null"
                 else:
                     value = 'unknown'
+            elif self.tag in [Tag.MAXCURRENT, Tag.MINCURRENT]:
+                try:
+                    # we must convert the float to an integer, since the select.options are all simple number strings
+                    # like "4", "5", "6" "64"... (but for min current we have also "0.125", "0.25", "0.5")
+                    a_float_val = float(value)
+                    if a_float_val > 0.5 and not a_float_val.is_integer():
+                        value = int(round(a_float_val))
+                        #_LOGGER.info(f"SELECT {self.tag} '{self.lp_idx}' converted float {a_float_val} to int: {value}")
+                except ValueError:
+                    _LOGGER.debug(f"SELECT ValueError: '{self.tag}' '{self.lp_idx}' {value}")
 
             if isinstance(value, (int, float)):
                 value = str(value)
