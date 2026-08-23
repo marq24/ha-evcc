@@ -513,6 +513,7 @@ class Tag(ApiKey, Enum):
     ###################################
     # a SHUTDOWN Button for the evcc Server (that requires admin password)
     EVCC_SHUTDOWN = ApiKey(entity_key="evcc_shutdown", json_key=f"{INTERNAL_ONLY}_shutdown", type=EP_TYPE.EVCCCONF, write_key ="system/shutdown", expected_http_status_response=204)
+    EVCCCONF_LOAPOINT_STATE = ApiKey(entity_key="configloadpoint_state", json_key=f"{INTERNAL_ONLY}_loadpoint_state", type=EP_TYPE.EVCCCONF, write_key ="config/loadpoints/{lp_id}")
 
     # request: http://{host}/api/config/devices/vehicle/ford_mach_e/status
     # response: {'capacity': {'value': 91.4, 'error': ''}, 'chargeStatus': {'value': 'A', 'error': ''}, 'icon': {'value': 'ford-mustang-mach-e', 'error': ''}, 'odometer': {'value': 19017, 'error': ''}, 'range': {'value': 516, 'error': ''}, 'soc': {'value': 100, 'error': ''}, 'vehicleLimitSoc': {'value': 100, 'error': ''}}

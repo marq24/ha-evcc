@@ -70,8 +70,21 @@
       "fields": {
         "vehicle": {"name": "Vehicle name/ID", "description": "Enter the vehicle name from your evcc configuration (e.g.: vehicle_1 or db:7)"}
       }
+    },
+    "activate_loadpoint": {
+      "name": "Enable evcc loadpoint",
+      "description": "Activate a previously deactivated loadpoint in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.",
+      "fields": {
+        "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"}
+      }
+    },
+    "deactivate_loadpoint": {
+      "name": "Disable evcc loadpoint",
+      "description": "The selected loadpoint will be disabled in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.",
+      "fields": {
+        "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"}
+      }
     }
-
   },
   "entity": {
     "binary_sensor": {

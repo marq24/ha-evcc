@@ -43,6 +43,57 @@ static_30sec_timeout: Final = ClientTimeout(total=30)
 RAW_CLIENT_RESPONSE_KEY = "aiohttp.ClientResponse"
 ADDITIONAL_ENDPOINTS_DATA_SESSIONS_RAW = f"{ADDITIONAL_ENDPOINTS_DATA_SESSIONS}@@@{SESSIONS_KEY_RAW}"
 
+import inspect
+from typing import Any
+
+def dump_object(obj: Any, max_depth: int = 3, _seen: set = None) -> Any:
+    """
+    Recursively dumps attributes, properties, and nested structures into a dict.
+
+    :param obj: The object to inspect.
+    :param max_depth: Maximum recursion depth to prevent giant outputs/hangs.
+    :param _seen: Set of visited object IDs to avoid circular loops.
+    """
+    if _seen is None:
+        _seen = set()
+
+    # Handle primitives, None, functions, and modules directly
+    if obj is None or isinstance(obj, (int, float, str, bool, bytes)):
+        return obj
+
+    # Handle circular references or maximum depth
+    obj_id = id(obj)
+    if obj_id in _seen or max_depth < 0:
+        return f"<... {type(obj).__name__} at {hex(obj_id)} ...>"
+    _seen.add(obj_id)
+
+    # Handle standard collections
+    if isinstance(obj, dict):
+        return {str(k): dump_object(v, max_depth - 1, _seen) for k, v in obj.items()}
+    if isinstance(obj, (list, tuple, set)):
+        return [dump_object(item, max_depth - 1, _seen) for item in obj]
+
+    # Inspect custom objects: extract non-callable attributes & @properties
+    result = {"__type__": type(obj).__name__}
+
+    for attr in dir(obj):
+        # Skip dunder/special attributes and standard private methods
+        if attr.startswith("__"):
+            continue
+
+        try:
+            val = getattr(obj, attr)
+            # Skip functions and methods
+            if callable(val):
+                continue
+            result[attr] = dump_object(val, max_depth - 1, _seen)
+        except Exception as e:
+            # Handle dynamic properties that raise exceptions on access
+            result[attr] = f"<Error evaluating attribute: {e}>"
+
+    return result
+
+
 async def _do_request(method: Callable, return_raw_client_response:bool=False) -> dict:
     try:
         async with method as res:
@@ -1072,6 +1123,8 @@ class EvccApiBridge:
                         return True
 
             except BaseException as ex:
+                if isinstance(ex, RuntimeError) and "session is closed" in str(ex).lower:
+                    _LOGGER.debug(f"{dump_object(self.web_session, max_depth=3)}")
                 _LOGGER.warning(f"ensure_session_is_authorized(): caused {type(ex).__name__} -> {ex}")
         else:
             return False
@@ -1370,6 +1423,52 @@ class EvccApiBridge:
                 _LOGGER.error(f"could not write vehicle plan for vehicle: {vehicle_id}, error: {err}")
                 return {"err": f"could not write vehicle plan: {err}"}
 
+    async def loadpoint_disable(self, new_state:bool, loadpoint_idx_as_int:int):
+        if self._admin_password is None:
+            return {"evcc_intg_error": "No admin password set",
+                    "evcc_intg_message": "Please update your integration setup"}
+
+        loadpoint_config_data = self._data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.CHARGER.value)
+        if loadpoint_config_data is None:
+            return {"evcc_intg_error": "No loadpoint config data found",
+                    "evcc_intg_message": "Please update your integration setup"}
+
+        loadpoint_list = self._data.get("loadpoints", [])
+        if len(loadpoint_list) <= loadpoint_idx_as_int:
+            return {"evcc_intg_error": "No loadpoint at specified index",
+                    "evcc_intg_message": "Please update your integration setup"}
+
+        a_loadpoint_name = loadpoint_list[loadpoint_idx_as_int].get("name", "@@@evc_integ")
+        if a_loadpoint_name == "@@@evc_integ":
+            return {"evcc_intg_error": "Loadpoint name is unknown",
+                    "evcc_intg_message": "Please update your integration setup"}
+
+        if not a_loadpoint_name.startswith("db:"):
+            return {"evcc_intg_error": "Loadpoint not supported",
+                    "evcc_intg_message": "Your loadpoint must be configured via evcc UI"}
+
+        the_loadpoint_obj_to_modify = None
+        for a_loadpoint_obj in loadpoint_config_data.values():
+            if a_loadpoint_name == a_loadpoint_obj.get("name"):
+                the_loadpoint_obj_to_modify = dict(a_loadpoint_obj)
+                break
+
+        if the_loadpoint_obj_to_modify is None:
+            return {"evcc_intg_error": "Loadpoint name is unknown (internal error)",
+                    "evcc_intg_message": "Please update your integration setup"}
+
+        # finally setting the new state...
+        the_loadpoint_obj_to_modify["disable"]= new_state
+
+        req_url = f"{self.host}/api/config/loadpoints/{the_loadpoint_obj_to_modify.get('id')}"
+        r_json = await _do_request(method=self.web_session.put(url=req_url, json=the_loadpoint_obj_to_modify, ssl=False, timeout=static_5sec_timeout))
+        # the request will return NO DATA!
+        if isinstance(r_json, dict) and len(r_json) == 0:
+            return {"result": "OK",
+                    "message": "Your evcc server will be restarted in 5 seconds, in another 20 seconds the integration will be reloaded"}
+
+        return {"evcc_intg_error": "unknown error while put request",
+               "evcc_intg_message": "Please check the debug log of the integration for details"}
 
     ##################################################################################
     # EVCC CARD ADDON
@@ -1447,7 +1546,6 @@ class EvccApiBridge:
                 except Exception as err:
                     _LOGGER.info(f"read_sessions_raw(): could not parse 'created' {created} -> {type(err).__name__}: {err}")
         return filtered
-
 
     async def evcc_card_read_loadpoint_plan_static_preview(self, lp_idx: str, kind: str, value: str, rfc_date: str) -> dict:
         # here we have no caching strategy... so we must 'hope' the evcc-card will not hammer

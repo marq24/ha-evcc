@@ -69,6 +69,20 @@
       "fields": {
         "vehicle": {"name": "Fahrzeugname/ID", "description": "Gib den Fahrzeugnamen aus Deiner evcc Konfiguration ein (z.B.: vehicle_1 oder db:7)"}
       }
+    },
+    "activate_loadpoint": {
+      "name": "Aktiviert einen Ladepunkt in Deiner evcc Konfiguration",
+      "description": "Aktiviert einen zuvor deaktivierten Ladepunkt in der evcc-Konfiguration. Dieser Service startet nach 5 Sekunden Deinen evcc-Server und nach weiteren 20 Sekunden diese HA-evcc Integration in HomeAssistant neu.",
+      "fields": {
+        "loadpoint": {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"}
+      }
+    },
+    "deactivate_loadpoint": {
+      "name": "Deaktiviert einen Ladepunkt in Deiner evcc Konfiguration",
+      "description": "Der ausgewählte Ladepunkt wird in Deiner evcc-Konfiguration deaktiviert. Dieser Service startet nach 5 Sekunden Deinen evcc-Server und nach weiteren 20 Sekunden diese HA-evcc Integration in HomeAssistant neu.",
+      "fields": {
+        "loadpoint": {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"}
+      }
     }
   },
   "entity": {

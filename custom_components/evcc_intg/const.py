@@ -68,6 +68,8 @@ SERVICE_SET_LOADPOINT_PLAN: Final = "set_loadpoint_plan"
 SERVICE_SET_VEHICLE_PLAN: Final = "set_vehicle_plan"
 SERVICE_DEL_LOADPOINT_PLAN: Final = "del_loadpoint_plan"
 SERVICE_DEL_VEHICLE_PLAN: Final = "del_vehicle_plan"
+SERVICE_ACTIVATE_LOADPOINT = "activate_loadpoint"
+SERVICE_DEACTIVATE_LOADPOINT = "deactivate_loadpoint"
 
 # Map tags to their content keys
 TAG_TO_CONTENT_KEY: Final = {

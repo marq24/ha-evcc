@@ -53,7 +53,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     JSONKEY_CIRCUITS,
     EP_TYPE
 )
-from custom_components.evcc_intg.pyevcc_ha.keys import Tag, camel_to_snake
+from custom_components.evcc_intg.pyevcc_ha.keys import Tag, camel_to_snake, IS_TRIGGER
 from .const import (
     NAME,
     NAME_SHORT,
@@ -65,6 +65,8 @@ from .const import (
     SERVICE_SET_VEHICLE_PLAN,
     SERVICE_DEL_LOADPOINT_PLAN,
     SERVICE_DEL_VEHICLE_PLAN,
+    SERVICE_ACTIVATE_LOADPOINT,
+    SERVICE_DEACTIVATE_LOADPOINT,
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
     CONF_EXTENDED_VEHICLE_DATA,
@@ -75,7 +77,7 @@ from .const import (
     CONFIG_VERSION,
     CONFIG_MINOR_VERSION,
     EVCC_JSON_KEY_NAME,
-    EVCC_JSON_ORIGIN_OBJECT
+    EVCC_JSON_ORIGIN_OBJECT,
 )
 from .entity import CustomFriendlyNameEntity
 from .service import EvccService
@@ -192,6 +194,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                                      supports_response=SupportsResponse.OPTIONAL)
         hass.services.async_register(DOMAIN, SERVICE_DEL_VEHICLE_PLAN, evcc_services.del_vehicle_plan,
                                      supports_response=SupportsResponse.OPTIONAL)
+        hass.services.async_register(DOMAIN, SERVICE_ACTIVATE_LOADPOINT, evcc_services.activate_loadpoint,
+                                     supports_response=SupportsResponse.OPTIONAL)
+        hass.services.async_register(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT, evcc_services.deactivate_loadpoint,
+                                     supports_response=SupportsResponse.OPTIONAL)
 
         # If Home Assistant is already in a running state, start the watchdog
         # immediately, else trigger it after Home Assistant has finished starting.
@@ -236,6 +242,8 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
         hass.services.async_remove(DOMAIN, SERVICE_SET_VEHICLE_PLAN)
         hass.services.async_remove(DOMAIN, SERVICE_DEL_LOADPOINT_PLAN)
         hass.services.async_remove(DOMAIN, SERVICE_DEL_VEHICLE_PLAN)
+        hass.services.async_remove(DOMAIN, SERVICE_ACTIVATE_LOADPOINT)
+        hass.services.async_remove(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT)
 
     return unload_ok
 
@@ -392,6 +400,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
         # just for internal usage...
         self._http_session = http_session
         self._cookie_path_on_fs = cookie_path
+
+        # for restart_tasks...
+        self._restart_evcc_and_integration_task = None
 
         # when we use the websocket we need to call the super constructor without update_interval...
         if self.use_ws:
@@ -998,6 +1009,42 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             return await self.bridge.write_vehicle_plan(vehicle_id=vehicle_name, soc=None, rfc_date=None, precondition=-1)
         else:
             return await self.bridge.write_loadpoint_plan(idx=loadpoint_idx, energy=None, rfc_date=None)
+
+    async def async_deactivate_loadpoint(self, new_state: bool, loadpoint_idx_as_int: int = -1):
+        # 1. we will set the new loadpoint state
+        # 2. we must trigger a evcc restart...
+        # 3. we must triffer a integration restart...
+        if loadpoint_idx_as_int > -1:
+            response_obj = await self.bridge.loadpoint_disable(new_state, loadpoint_idx_as_int)
+            if isinstance(response_obj, dict):
+                # are there any config errors?
+                if "evcc_intg_error" in response_obj or "evcc_intg_message" in response_obj:
+                    _LOGGER.debug(f"async_loadpoint_set_state(): not executed cause {response_obj}")
+                    return response_obj
+
+                # if not we can proceed with the restart...
+                async def _async_delayed_restart():
+                    # wait 5 sec with the evcc restart
+                    await asyncio.sleep(5)
+                    _LOGGER.info("async_loadpoint_set_state(): RESTART EVCC-SERVER NOW!")
+                    await self.bridge.press_tag(Tag.EVCC_SHUTDOWN, IS_TRIGGER, -1)
+
+                    # 2. then wait another 20 sec (total 25 sec) and restart the integration
+                    await asyncio.sleep(20)
+                    _LOGGER.info("async_loadpoint_set_state(): RESTART INTEGRATION NOW!")
+                    try:
+                        await self.hass.config_entries.async_reload(self._config_entry.entry_id)
+                    except Exception as exc:
+                        _LOGGER.error(f"async_loadpoint_set_state(): failed to reload config entry: {type(exc).__name__} - {exc}")
+
+                if self._restart_evcc_and_integration_task is not None and not self._restart_task.done():
+                    self._restart_evcc_and_integration_task.cancel()
+                self._restart_evcc_and_integration_task = self.hass.async_create_task(_async_delayed_restart())
+
+            return response_obj
+        else:
+            return {"evcc_intg_error": "No loadpoint index provided",
+                    "evcc_intg_message": "WFT?!"}
 
     async def async_press_tag(self, a_tag: Tag, value, idx: str = None, entity: Entity = None) -> dict:
         result = await self.bridge.press_tag(a_tag, value, idx)

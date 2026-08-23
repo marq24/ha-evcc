@@ -1,6 +1,10 @@
 {
   "services": {
-    "set_loadpoint_plan": "mdi:airplane-takeoff",
-    "set_vehicle_plan": "mdi:airplane-takeoff"
+    "set_loadpoint_plan": "mdi:calendar-plus",
+    "set_vehicle_plan": "mdi:calendar-plus",
+    "del_loadpoint_plan": "mdi:calendar-remove",
+    "del_vehicle_plan": "mdi:calendar-remove",
+    "activate_loadpoint": "mdi:check-circle",
+    "deactivate_loadpoint": "mdi:minus-circle"
   }
 }

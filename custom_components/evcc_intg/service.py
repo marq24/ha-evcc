@@ -147,3 +147,67 @@ class EvccService:
                     "error": "No date or false data provided",
                     "date": str(datetime.datetime.now().time())
                 }
+
+
+    async def activate_loadpoint(self, call: ServiceCall):
+        return await self.deactivate_loadpoint_internal(False, call)
+
+    async def deactivate_loadpoint(self, call: ServiceCall):
+        return await self.deactivate_loadpoint_internal(True, call)
+
+    async def deactivate_loadpoint_internal(self, new_state: bool, call: ServiceCall):
+        # loadpoint plan data
+        loadpoint = call.data.get("loadpoint", None)
+
+        # Validate input
+        if loadpoint is not None:
+            try:
+                # Loadpoint plan
+                if loadpoint is not None and isinstance(loadpoint, int):
+                    resp = await self._coordinator.async_deactivate_loadpoint(new_state, int(loadpoint) -1 )
+                else:
+                    resp = None
+
+                if resp is not None and len(resp) > 0:
+                    if call.return_response:
+                        if isinstance(resp, dict):
+                            a_return_msg = resp.get("evcc_intg_message")
+                            a_return_err = resp.get("evcc_intg_error")
+                            if a_return_err and a_return_msg:
+                                return {
+                                    "success": "false",
+                                    "date": str(datetime.datetime.now().time()),
+                                    "response": {"error": a_return_err,
+                                                 "message": a_return_msg}
+                                }
+                            elif a_return_msg:
+                                return {
+                                    "success": "true",
+                                    "date": str(datetime.datetime.now().time()),
+                                    "response": {"message": a_return_msg}
+                                }
+
+                        # our default "OK" response...
+                        return {
+                            "success": "true",
+                            "date": str(datetime.datetime.now().time()),
+                            "response": resp
+                        }
+                else:
+                    if call.return_response:
+                        return {
+                            "error": "NO or EMPTY response",
+                            "date": str(datetime.datetime.now().time())
+                        }
+            except ValueError as exc:
+                if call.return_response:
+                    return {
+                        "error": str(exc),
+                        "date": str(datetime.datetime.now().time())
+                    }
+        else:
+            if call.return_response:
+                return {
+                    "error": "No date or false data provided",
+                    "date": str(datetime.datetime.now().time())
+                }

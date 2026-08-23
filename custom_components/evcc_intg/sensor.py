@@ -370,7 +370,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): init is COMPLETED")
 
         except BaseException as err:
-            _LOGGER.warning(f"SENSOR _check_for_entities_to_enabled(): Error: {type(err).__name__} {err}")
+            _LOGGER.warning(f"SENSOR _check_for_entities_to_enabled(): Error: {type(err).__name__} -> {err}")
 
     asyncio.create_task(_check_for_entities_to_enabled())
 

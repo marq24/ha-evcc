@@ -103,3 +103,33 @@ del_loadpoint_plan:
           min: 1
           max: 10
           mode: box
+
+activate_loadpoint:
+  name: Enable evcc loadpoint
+  description: Activate a previously deactivated loadpoint in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.
+  fields:
+    loadpoint:
+      name: Loadpoint ID
+      description: A number starting from 1...n (where 1'st your first configured loadpoint)
+      required: true
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 10
+          mode: box
+
+deactivate_loadpoint:
+  name: Disable evcc loadpoint
+  description: The selected loadpoint will be disabled in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.
+  fields:
+    loadpoint:
+      name: Loadpoint ID
+      description: A number starting from 1...n (where 1'st your first configured loadpoint)
+      required: true
+      default: 1
+      selector:
+        number:
+          min: 1
+          max: 10
+          mode: box
