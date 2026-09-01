@@ -110,6 +110,9 @@ class Tag(ApiKey, Enum):
     BATTERYENERGY = ApiKey(json_key="batteryEnergy", type=EP_TYPE.SITE)
     BATTERYENERGY_AS_OBJ = ApiKey(entity_key="batteryEnergy", json_key="energy", subtype=BATTERY.json_key, type=EP_TYPE.SITE)
 
+    # returnEnergy only exist sind 0.31x
+    BATTERYRETURNENERGY_AS_OBJ = ApiKey(entity_key="batteryReturnEnergy", json_key="returnEnergy", subtype=BATTERY.json_key, type=EP_TYPE.SITE)
+
     # "pvPower": 8871.22,
     PVPOWER = ApiKey(json_key="pvPower", type=EP_TYPE.SITE)
 

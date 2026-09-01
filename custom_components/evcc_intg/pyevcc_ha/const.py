@@ -79,6 +79,8 @@ class EP_TYPE(Enum):
 class BATTERY_CONTENT(Enum):
     SOC     = "soc"
     POWER   = "power"
+    ENERGY  = "energy"
+    RETURNENERGY  = "returnEnergy"
 
 class GRID_CONTENT(Enum):
     CURRENTS= "currents"
