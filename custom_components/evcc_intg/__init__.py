@@ -15,7 +15,7 @@ from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
 from homeassistant.exceptions import ConfigEntryNotReady
 from homeassistant.helpers import entity_registry, config_validation as config_val, device_registry as device_reg
 from homeassistant.helpers.aiohttp_client import async_create_clientsession
-from homeassistant.helpers.device_registry import DeviceEntry
+from homeassistant.helpers.device_registry import DeviceEntry, async_entries_for_config_entry
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval, async_call_later
 from homeassistant.helpers.storage import STORAGE_DIR
@@ -294,25 +294,24 @@ async def check_device_registry(hass: HomeAssistant, purge_all: bool = False, co
             a_device_reg = device_reg.async_get(hass)
             if a_device_reg is not None:
                 devices_to_delete = []
-                for a_device_entry in list(a_device_reg.devices.values()):
-                    if hasattr(a_device_entry, "identifiers"):
-                        ident_value = a_device_entry.identifiers
+                all_domain_devices = []
+                for a_config_entry in hass.config_entries.async_entries(DOMAIN):
+                    all_domain_devices.extend(async_entries_for_config_entry(a_device_reg, a_config_entry.entry_id))
+                for a_device_entry in all_domain_devices:
 
-                        if f"{ident_value}".__contains__(DOMAIN):
+                    if purge_all and config_entry_id is not None:
+                        if config_entry_id in a_device_entry.config_entries:
+                            devices_to_delete.append(a_device_entry.id)
 
-                            if purge_all and config_entry_id is not None:
-                                if config_entry_id in a_device_entry.config_entries:
-                                    devices_to_delete.append(a_device_entry.id)
+                    elif hasattr(a_device_entry, "manufacturer"):
+                        manufacturer_value = a_device_entry.manufacturer
+                        if not f"{manufacturer_value}".__eq__(MANUFACTURER):
+                            _LOGGER.info(f"check_device_registry(): found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
+                            devices_to_delete.append(a_device_entry.id)
 
-                            elif hasattr(a_device_entry, "manufacturer"):
-                                manufacturer_value = a_device_entry.manufacturer
-                                if not f"{manufacturer_value}".__eq__(MANUFACTURER):
-                                    _LOGGER.info(f"check_device_registry(): found a OLD {DOMAIN} DeviceEntry: {a_device_entry}")
-                                    devices_to_delete.append(a_device_entry.id)
-
-                            #elif intg_version != "UNKNOWN":
-                            #    if not f"{ident_value}".__contains__(intg_version):
-                            #        devices_to_delete.append(a_device_entry.id)
+                    #elif intg_version != "UNKNOWN":
+                    #    if not f"{ident_value}".__contains__(intg_version):
+                    #        devices_to_delete.append(a_device_entry.id)
 
                 if len(devices_to_delete) > 0:
                     devices_to_delete = list(dict.fromkeys(devices_to_delete))
@@ -422,7 +421,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if self.hass is not None:
                 a_device_reg = device_reg.async_get(self.hass)
                 if a_device_reg is not None:
-                    device = a_device_reg.async_get_device(identifiers=self._device_info_dict["identifiers"])
+                    if hasattr(a_device_reg, "async_get_device_by_identifier"):
+                        device = a_device_reg.async_get_device_by_identifier(identifier=next(iter(self._device_info_dict["identifiers"])), config_entry_id=self.config_entry.entry_id)
+                    else:
+                        device = a_device_reg.async_get_device(identifiers=self._device_info_dict["identifiers"])
+
                     if device:
                         _LOGGER.info(f"call_later_update_device_registry(): device registry update triggered for device {device.name}")
                         if self.bridge.ws_connected and self.bridge.ws_check_last_update():
