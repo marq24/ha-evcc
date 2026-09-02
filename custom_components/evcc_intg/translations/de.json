@@ -377,6 +377,8 @@
       "gridcurrents_1": {"name": "Netzstrom P2"},
       "gridcurrents_2": {"name": "Netzstrom P3"},
       "gridpower": {"name": "Leistung Netz"},
+      "gridenergy": {"name": "Netzbezug"},
+      "gridreturnenergy": {"name": "Einspeisung"},
       "homepower": {"name": "Leistung Heim"},
       "pvpower": {"name": "Leistung PV"},
       "pv_0_power": {"name": "Leistung PV 1"},

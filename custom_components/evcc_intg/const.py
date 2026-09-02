@@ -669,6 +669,28 @@ SENSOR_ENTITIES_GRID_AS_OBJECT = [
         device_class=SensorDeviceClass.CURRENT,
         entity_registry_enabled_default=False
     ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRID,
+        key=Tag.GRIDENERGY.json_key,
+        json_idx=[GRID_CONTENT.ENERGY.value],
+        icon="mdi:transmission-tower-export",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_registry_enabled_default=False
+    ),
+    ExtSensorEntityDescription(
+        tag=Tag.GRID,
+        key=Tag.GRIDRETURNENERGY.json_key,
+        json_idx=[GRID_CONTENT.RETURNENERGY.value],
+        icon="mdi:transmission-tower-import",
+        state_class=SensorStateClass.TOTAL,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        suggested_display_precision=2,
+        device_class=SensorDeviceClass.ENERGY,
+        entity_registry_enabled_default=False
+    ),
 ]
 SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
     ExtSensorEntityDescription(

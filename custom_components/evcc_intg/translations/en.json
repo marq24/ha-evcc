@@ -449,6 +449,8 @@
       "gridcurrents_1": {"name": "Grid Current P2"},
       "gridcurrents_2": {"name": "Grid Current P3"},
       "gridpower": {"name": "Power Grid"},
+      "gridenergy": {"name": "Energy Grid"},
+      "gridreturnenergy": {"name": "Energy Feedin"},
       "homepower": {"name": "Power Home"},
       "pvpower": {"name": "Power Solar"},
       "pv_0_power": {"name": "Power Solar 1"},

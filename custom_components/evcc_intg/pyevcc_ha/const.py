@@ -85,6 +85,8 @@ class BATTERY_CONTENT(Enum):
 class GRID_CONTENT(Enum):
     CURRENTS= "currents"
     POWER   = "power"
+    ENERGY  = "energy"
+    RETURNENERGY  = "returnEnergy"
 
 class PV_CONTENT(Enum):
     ENERGY= "energy"
