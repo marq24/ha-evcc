@@ -1,4 +1,5 @@
 import datetime
+import zoneinfo
 import logging
 
 from homeassistant.core import ServiceCall
@@ -44,10 +45,15 @@ class EvccService:
         if input_date_str is not None:
             try:
                 # date is YYYY-MM-DD HH:MM.SSS -> need to convert it to a UTC based RFC3339
+                # 1. Parse naive string
                 start = datetime.datetime.strptime(input_date_str, "%Y-%m-%d %H:%M:%S")
                 start = start.replace(second=0)
-                start = start.astimezone(datetime.timezone.utc)
-                rfc_date = start.isoformat(timespec="milliseconds").replace("+00:00", "Z")
+
+                # 2. Get HA's configured local timezone (e.g., "Europe/Paris" or "America/New_York")
+                # 3. Mark as HA local time, then convert to UTC
+                start_local = start.replace(tzinfo=zoneinfo.ZoneInfo(self._hass.config.time_zone))
+                start_utc = start_local.astimezone(datetime.timezone.utc)
+                rfc_date = start_utc.isoformat(timespec="milliseconds").replace("+00:00", "Z")
 
                 # Vehicle plan
                 if vehicle_name is not None and vehicle_name in available_vehicles and isinstance(soc, int) and soc > 0:
