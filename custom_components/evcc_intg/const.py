@@ -748,7 +748,7 @@ SENSOR_ENTITIES_BATTERY_AS_PREFIX = [
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
-        device_class=None,
+        device_class=SensorDeviceClass.BATTERY,
         suggested_display_precision=0
     ),
     ExtSensorEntityDescription(
@@ -862,7 +862,7 @@ SENSOR_ENTITIES_BATTERY_AS_OBJECT = [
         icon="mdi:home-battery-outline",
         state_class=SensorStateClass.MEASUREMENT,
         native_unit_of_measurement=PERCENTAGE,
-        device_class=None,
+        device_class=SensorDeviceClass.BATTERY,
         suggested_display_precision=0
     ),
     ExtSensorEntityDescription(

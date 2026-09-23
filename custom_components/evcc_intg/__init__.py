@@ -1105,9 +1105,9 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                     elif a_tag == Tag.VEHICLEREPEATINGPLAN008 and post_data_len > 6:
                         post_data[6][Tag.VEHICLEREPEATINGPLAN008.json_key] = new_state
                     elif a_tag == Tag.VEHICLEREPEATINGPLAN009 and post_data_len > 7:
-                        post_data[6][Tag.VEHICLEREPEATINGPLAN009.json_key] = new_state
+                        post_data[7][Tag.VEHICLEREPEATINGPLAN009.json_key] = new_state
                     elif a_tag == Tag.VEHICLEREPEATINGPLAN010 and post_data_len > 8:
-                        post_data[6][Tag.VEHICLEREPEATINGPLAN010.json_key] = new_state
+                        post_data[8][Tag.VEHICLEREPEATINGPLAN010.json_key] = new_state
                     else:
                         post_data = value
 
