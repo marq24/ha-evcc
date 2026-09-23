@@ -184,20 +184,22 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         hass.data[DOMAIN][config_entry.entry_id] = coordinator
         await hass.config_entries.async_forward_entry_setups(config_entry, PLATFORMS)
 
-        # initialize our service...
-        evcc_services = EvccService(hass, config_entry, coordinator)
-        hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, evcc_services.set_loadpoint_plan,
-                                     supports_response=SupportsResponse.OPTIONAL)
-        hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, evcc_services.set_vehicle_plan,
-                                     supports_response=SupportsResponse.OPTIONAL)
-        hass.services.async_register(DOMAIN, SERVICE_DEL_LOADPOINT_PLAN, evcc_services.del_loadpoint_plan,
-                                     supports_response=SupportsResponse.OPTIONAL)
-        hass.services.async_register(DOMAIN, SERVICE_DEL_VEHICLE_PLAN, evcc_services.del_vehicle_plan,
-                                     supports_response=SupportsResponse.OPTIONAL)
-        hass.services.async_register(DOMAIN, SERVICE_ACTIVATE_LOADPOINT, evcc_services.activate_loadpoint,
-                                     supports_response=SupportsResponse.OPTIONAL)
-        hass.services.async_register(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT, evcc_services.deactivate_loadpoint,
-                                     supports_response=SupportsResponse.OPTIONAL)
+        # initialize our services - once for the domain, a call selects its evcc
+        # instance via 'config_entry_id' (see EvccService)
+        if not hass.services.has_service(DOMAIN, SERVICE_SET_LOADPOINT_PLAN):
+            evcc_services = EvccService(hass)
+            hass.services.async_register(DOMAIN, SERVICE_SET_LOADPOINT_PLAN, evcc_services.set_loadpoint_plan,
+                                         supports_response=SupportsResponse.OPTIONAL)
+            hass.services.async_register(DOMAIN, SERVICE_SET_VEHICLE_PLAN, evcc_services.set_vehicle_plan,
+                                         supports_response=SupportsResponse.OPTIONAL)
+            hass.services.async_register(DOMAIN, SERVICE_DEL_LOADPOINT_PLAN, evcc_services.del_loadpoint_plan,
+                                         supports_response=SupportsResponse.OPTIONAL)
+            hass.services.async_register(DOMAIN, SERVICE_DEL_VEHICLE_PLAN, evcc_services.del_vehicle_plan,
+                                         supports_response=SupportsResponse.OPTIONAL)
+            hass.services.async_register(DOMAIN, SERVICE_ACTIVATE_LOADPOINT, evcc_services.activate_loadpoint,
+                                         supports_response=SupportsResponse.OPTIONAL)
+            hass.services.async_register(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT, evcc_services.deactivate_loadpoint,
+                                         supports_response=SupportsResponse.OPTIONAL)
 
         # If Home Assistant is already in a running state, start the watchdog
         # immediately, else trigger it after Home Assistant has finished starting.
@@ -238,12 +240,14 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
                 pass
             hass.data[DOMAIN].pop(config_entry.entry_id)
 
-        hass.services.async_remove(DOMAIN, SERVICE_SET_LOADPOINT_PLAN)
-        hass.services.async_remove(DOMAIN, SERVICE_SET_VEHICLE_PLAN)
-        hass.services.async_remove(DOMAIN, SERVICE_DEL_LOADPOINT_PLAN)
-        hass.services.async_remove(DOMAIN, SERVICE_DEL_VEHICLE_PLAN)
-        hass.services.async_remove(DOMAIN, SERVICE_ACTIVATE_LOADPOINT)
-        hass.services.async_remove(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT)
+        # the services serve all evcc instances - remove them only with the last one
+        if not any(key != "manifest_version" for key in hass.data.get(DOMAIN, {})):
+            hass.services.async_remove(DOMAIN, SERVICE_SET_LOADPOINT_PLAN)
+            hass.services.async_remove(DOMAIN, SERVICE_SET_VEHICLE_PLAN)
+            hass.services.async_remove(DOMAIN, SERVICE_DEL_LOADPOINT_PLAN)
+            hass.services.async_remove(DOMAIN, SERVICE_DEL_VEHICLE_PLAN)
+            hass.services.async_remove(DOMAIN, SERVICE_ACTIVATE_LOADPOINT)
+            hass.services.async_remove(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT)
 
     return unload_ok
 

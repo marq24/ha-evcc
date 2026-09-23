@@ -3,6 +3,13 @@ set_vehicle_plan:
   description: Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.
   fields:
     # Key of the field
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg
     startdate:
       name: Departure
       description: Please select a date in the future (seconds will be ignored)
@@ -47,6 +54,13 @@ set_loadpoint_plan:
   description: Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.
   fields:
     # Key of the field
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg
     startdate:
       name: Departure
       description: Please select a date in the future (seconds will be ignored)
@@ -81,6 +95,13 @@ del_vehicle_plan:
   name: Delete a departure plan for a vehicle [SOC (%)]
   description: Delete a existing Charging plan for a Vehicle
   fields:
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg
     vehicle:
       name: Vehicle Name/ID
       description: Select or enter vehicle name from your evcc configuration (vehicle_1 or db:7)
@@ -93,6 +114,13 @@ del_loadpoint_plan:
   name: Delete a departure plan for a loadpoint [Energy (kWh)]
   description: Delete a existing Charging plan for a Loadpoint
   fields:
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg
     loadpoint:
       name: Loadpoint ID
       description: A number starting from 1...n (where 1'st your first configured loadpoint)
@@ -108,6 +136,13 @@ activate_loadpoint:
   name: Enable evcc loadpoint
   description: Activate a previously deactivated loadpoint in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.
   fields:
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg
     loadpoint:
       name: Loadpoint ID
       description: A number starting from 1...n (where 1'st your first configured loadpoint)
@@ -123,6 +158,13 @@ deactivate_loadpoint:
   name: Disable evcc loadpoint
   description: The selected loadpoint will be disabled in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.
   fields:
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg
     loadpoint:
       name: Loadpoint ID
       description: A number starting from 1...n (where 1'st your first configured loadpoint)

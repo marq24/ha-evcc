@@ -4,15 +4,43 @@ import logging
 
 from homeassistant.core import ServiceCall
 
+from .const import DOMAIN
+
 _LOGGER: logging.Logger = logging.getLogger(__package__)
+
+ATTR_CONFIG_ENTRY_ID = "config_entry_id"
 
 
 class EvccService:
-    def __init__(self, hass, config, coordinator):  # pylint: disable=unused-argument
-        """Initialize the sensor."""
+    """The services are registered once for the domain. With more than one evcc
+    instance configured, a call picks its instance through 'config_entry_id'."""
+
+    def __init__(self, hass):
         self._hass = hass
-        self._config = config
-        self._coordinator = coordinator
+
+    def _coordinator(self, call: ServiceCall):
+        # hass.data[DOMAIN] maps 'entry_id -> coordinator' (+ a 'manifest_version' string entry)
+        coordinators = {key: value for key, value in self._hass.data.get(DOMAIN, {}).items() if key != "manifest_version"}
+        entry_id = call.data.get(ATTR_CONFIG_ENTRY_ID, None)
+        if entry_id is not None:
+            coordinator = coordinators.get(entry_id, None)
+            if coordinator is None:
+                _LOGGER.warning(f"{call.service}: unknown or not loaded config_entry_id '{entry_id}'")
+            return coordinator
+
+        if len(coordinators) > 1:
+            # keep the previous behavior (the instance set up last) for existing automations
+            _LOGGER.warning(f"{call.service}: {len(coordinators)} evcc instances are configured, but no 'config_entry_id' was provided - using the instance that was set up last")
+        return list(coordinators.values())[-1] if len(coordinators) > 0 else None
+
+    @staticmethod
+    def _no_instance(call: ServiceCall):
+        if call.return_response:
+            return {
+                "error": f"No evcc instance found for config_entry_id '{call.data.get(ATTR_CONFIG_ENTRY_ID, None)}'",
+                "date": str(datetime.datetime.now().time())
+            }
+        return None
 
     async def set_loadpoint_plan(self, call: ServiceCall):
         return await self.set_plan(call)
@@ -22,6 +50,10 @@ class EvccService:
         return await self.set_plan(call)
 
     async def set_plan(self, call: ServiceCall):
+        coordinator = self._coordinator(call)
+        if coordinator is None:
+            return self._no_instance(call)
+
         # common for both...
         input_date_str = call.data.get("startdate", None)
 
@@ -36,7 +68,7 @@ class EvccService:
 
         if vehicle_name:
             # Get available vehicles...
-            available_vehicles = list(self._coordinator._vehicle.keys())
+            available_vehicles = list(coordinator._vehicle.keys())
             _LOGGER.debug(f"Available vehicles: {available_vehicles}")
         else:
             available_vehicles = []
@@ -57,11 +89,11 @@ class EvccService:
 
                 # Vehicle plan
                 if vehicle_name is not None and vehicle_name in available_vehicles and isinstance(soc, int) and soc > 0:
-                    resp = await self._coordinator.async_write_plan(vehicle_name, None, str(int(soc)), rfc_date, precondition)
+                    resp = await coordinator.async_write_plan(vehicle_name, None, str(int(soc)), rfc_date, precondition)
 
                 # Loadpoint plan
                 elif loadpoint is not None and isinstance(loadpoint, int) and isinstance(energy, int) and energy > 0:
-                    resp = await self._coordinator.async_write_plan(None, str(int(loadpoint)), str(int(energy)), rfc_date, None)
+                    resp = await coordinator.async_write_plan(None, str(int(loadpoint)), str(int(energy)), rfc_date, None)
 
                 else:
                     resp = None
@@ -100,6 +132,10 @@ class EvccService:
         return await self.del_plan(call)
 
     async def del_plan(self, call: ServiceCall):
+        coordinator = self._coordinator(call)
+        if coordinator is None:
+            return self._no_instance(call)
+
         # vehicle plan data
         vehicle_name = call.data.get("vehicle", None)
 
@@ -108,7 +144,7 @@ class EvccService:
 
         if vehicle_name:
             # Get available vehicles...
-            available_vehicles = list(self._coordinator._vehicle.keys())
+            available_vehicles = list(coordinator._vehicle.keys())
             _LOGGER.debug(f"Available vehicles: {available_vehicles}")
         else:
             available_vehicles = []
@@ -119,11 +155,11 @@ class EvccService:
 
                 # Vehicle plan
                 if vehicle_name is not None and vehicle_name in available_vehicles:
-                    resp = await self._coordinator.async_delete_plan(vehicle_name, None)
+                    resp = await coordinator.async_delete_plan(vehicle_name, None)
 
                 # Loadpoint plan
                 elif loadpoint is not None and isinstance(loadpoint, int):
-                    resp = await self._coordinator.async_delete_plan(None, str(int(loadpoint)))
+                    resp = await coordinator.async_delete_plan(None, str(int(loadpoint)))
 
                 else:
                     resp = None
@@ -162,6 +198,10 @@ class EvccService:
         return await self.deactivate_loadpoint_internal(True, call)
 
     async def deactivate_loadpoint_internal(self, new_state: bool, call: ServiceCall):
+        coordinator = self._coordinator(call)
+        if coordinator is None:
+            return self._no_instance(call)
+
         # loadpoint plan data
         loadpoint = call.data.get("loadpoint", None)
 
@@ -170,7 +210,7 @@ class EvccService:
             try:
                 # Loadpoint plan
                 if loadpoint is not None and isinstance(loadpoint, int):
-                    resp = await self._coordinator.async_deactivate_loadpoint(new_state, int(loadpoint) -1 )
+                    resp = await coordinator.async_deactivate_loadpoint(new_state, int(loadpoint) -1 )
                 else:
                     resp = None
 
