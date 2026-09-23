@@ -42,6 +42,7 @@
       "name": "Set a departure plan for a loadpoint [Energy (kWh)]",
       "description": "Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.",
       "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
         "startdate": {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
         "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"},
         "energy": {"name": "Charging goal", "description": "Target energy"}
@@ -51,6 +52,7 @@
       "name": "Set a departure plan for a vehicle [SOC (%)]",
       "description": "Charging plan only works in solar mode. The configured CO₂ limit of NaN g will be ignored during this period.",
       "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
         "startdate": {"name": "Departure", "description": "Please specify the date and time you want to depart (seconds will be ignored)"},
         "vehicle": {"name": "Vehicle name/ID", "description": "Enter the vehicle name from your evcc configuration (e.g.: vehicle_1 or db:7)"},
         "soc": {"name": "Charging goal", "description": "Target state of charge"},
@@ -61,6 +63,7 @@
       "name": "Delete a departure plan for a loadpoint [Energy (kWh)]",
       "description": "Delete a existing Charging plan for a Loadpoint",
       "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
         "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"}
       }
     },
@@ -68,6 +71,7 @@
       "name": "Delete a departure plan for a vehicle [SOC (%)]",
       "description": "Delete a existing Charging plan for a Vehicle",
       "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
         "vehicle": {"name": "Vehicle name/ID", "description": "Enter the vehicle name from your evcc configuration (e.g.: vehicle_1 or db:7)"}
       }
     },
@@ -75,6 +79,7 @@
       "name": "Enable evcc loadpoint",
       "description": "Activate a previously deactivated loadpoint in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.",
       "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
         "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"}
       }
     },
@@ -82,6 +87,7 @@
       "name": "Disable evcc loadpoint",
       "description": "The selected loadpoint will be disabled in your evcc configuration. This service restarts your evcc server after 5 seconds and then restarts this HA-evcc integration in Home Assistant after another 20 seconds.",
       "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
         "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"}
       }
     }
