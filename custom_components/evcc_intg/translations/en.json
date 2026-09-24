@@ -18,7 +18,7 @@
           "extended_vehicle_data_interval": "Extended Vehicle Data Polling Interval in seconds [check Warning]",
           "extended_meter_data": "Collect Meter data from evcc configuration",
           "extended_meter_data_interval": "Meter Data Polling Interval in seconds",
-          "purge_all_devices": "Remove an recreate all Devices"
+          "purge_all_devices": "Remove and recreate all Devices"
         },
         "data_description": {
           "use_websocket": "The WebSocket connection ensures that the sensor data will be updated more or less instantly as soon as it's changing in evcc. When enabled the polling interval (below) will be ignored.",
