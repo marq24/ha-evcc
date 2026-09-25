@@ -524,8 +524,6 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         #entity_category=EntityCategory.CONFIG,
         icon="mdi:sync"
     ),
-
-
     ExtSelectEntityDescriptionStub(
         tag=Tag.PHASES,
         entity_category=EntityCategory.CONFIG,
@@ -583,6 +581,13 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         entity_category=EntityCategory.CONFIG,
         icon="mdi:car-clock",
         options=Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION.options,
+        integrated_supported=False
+    ),
+    ExtSelectEntityDescriptionStub(
+        tag=Tag.SOLARSHARE,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:sun-angle",
+        options=Tag.SOLARSHARE.options,
         integrated_supported=False
     ),
 ]

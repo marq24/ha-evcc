@@ -150,6 +150,8 @@ MIN_CURRENT_EXTENDED_LIST: Final = ["0.125", "0.25", "0.5"] + MAX_CURRENT_LIST
 BATTERY_LIST: Final = ["0", "5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75",
                        "80", "85", "90", "95", "100"]
 
+SOLARSHARE_LIST: Final = ["0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1"]
+
 TRANSLATIONS: Final = {
     "de": {
         "batterymode": {

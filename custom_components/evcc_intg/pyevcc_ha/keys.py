@@ -8,6 +8,7 @@ from typing import (
 from custom_components.evcc_intg.pyevcc_ha.const import (
     MIN_CURRENT_LIST,
     MAX_CURRENT_LIST,
+    SOLARSHARE_LIST,
     JSONKEY_EVOPT_REQ,
     JSONKEY_EVOPT_RES,
     JSONKEY_EVOPT_DETAILS,
@@ -22,7 +23,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     SESSIONS_KEY_VEHICLES,
     SESSIONS_KEY_LOADPOINTS,
     EVCCCONF_DEVICE_TYPES,
-    EP_TYPE,
+    EP_TYPE
 )
 
 # from aenum import Enum, extend_enum
@@ -313,6 +314,8 @@ class Tag(ApiKey, Enum):
     # "disableDelay": 180,
     DISABLEDELAY = ApiKey(json_key="disableDelay", write_key="disable/delay", type=EP_TYPE.LOADPOINTS)
 
+
+
     # "sessionCo2PerKWh": null,
     SESSIONCO2PERKWH = ApiKey(json_key="sessionCo2PerKWh", type=EP_TYPE.LOADPOINTS)
     # "sessionEnergy": 0,
@@ -408,6 +411,9 @@ class Tag(ApiKey, Enum):
 
     # enable/disable BatteryBoost (per Loadpoint)
     BATTERYBOOST = ApiKey(json_key="batteryBoost", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="batteryboost")
+
+    # solarShare 0 -> 1 in 0.1 steps
+    SOLARSHARE = ApiKey(json_key="solarShare", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="solarshare", options=SOLARSHARE_LIST)
 
     # enable/disable BatteryBoost (per Loadpoint)
     BATTERYBOOSTLIMIT = ApiKey(json_key="batteryBoostLimit", type=EP_TYPE.LOADPOINTS, writeable=True, write_key="batteryboostlimit", options=BATTERY_LIST)
