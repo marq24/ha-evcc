@@ -133,7 +133,8 @@
       "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"},
       "enabledelay": {"name": "Verzögerung Aktivierung"},
       "disabledelay": {"name": "Verzögerung Deaktivierung"},
-      "priority": {"name": "Priorität"}
+      "priority": {"name": "Priorität"},
+      "solarshare": {"name": "Sonnenanteil (Solarüberschuss)"}
     },
     "select": {
       "batterymode": {
@@ -306,22 +307,6 @@
           "3600": "1 Stunde",
           "7200": "2 Stunden",
           "604800": "Alles"
-        }
-      },
-      "solarshare": {
-        "name": "Sonnenanteil (Solarüberschuss)",
-        "state": {
-          "0": "Laden startet, sobald etwas Überschuss verfügbar ist.",
-          "0.1": "Mindestens 10 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.2": "Mindestens 20 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.3": "Mindestens 30 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.4": "Mindestens 40 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.5": "Mindestens 50 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.6": "Mindestens 60 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.7": "Mindestens 70 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.8": "Mindestens 80 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "0.9": "Mindestens 90 % der minimalen Ladeleistung muss aus Solarstrom stammen.",
-          "1": "Laden startet, sobald der Überschuss die minimale Ladeleistung deckt."
         }
       }
     },

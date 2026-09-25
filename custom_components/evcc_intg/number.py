@@ -117,6 +117,9 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
             else:
                 if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
                     value = round(float(value), 3)
+                # fucking HA translation keys!
+                elif self.tag == Tag.SOLARSHARE:
+                    value = int(value * 100)
                 else:
                     value = int(value)
 
@@ -137,6 +140,9 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
         try:
             if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
                 await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self)
+            elif self.tag == Tag.SOLARSHARE:
+                # fucking HA translation keys!
+                await self.coordinator.async_write_tag(self.tag, int(value)/100 if int(value) > 0 else 0, self)
             else:
                 await self.coordinator.async_write_tag(self.tag, int(value), self)
 

@@ -461,6 +461,19 @@ NUMBER_ENTITIES_PER_LOADPOINT = [
         native_step=1,
         device_class=None
     ),
+    # FUCK YOU HA translations!!!
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.SOLARSHARE,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:sun-angle",
+        mode = NumberMode.SLIDER,
+        native_max_value=100,
+        native_min_value=0,
+        native_step=10,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        integrated_supported=False
+    )
 ]
 
 SELECT_ENTITIES = [
@@ -583,13 +596,14 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         options=Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION.options,
         integrated_supported=False
     ),
-    ExtSelectEntityDescriptionStub(
-        tag=Tag.SOLARSHARE,
-        entity_category=EntityCategory.CONFIG,
-        icon="mdi:sun-angle",
-        options=Tag.SOLARSHARE.options,
-        integrated_supported=False
-    ),
+    # # FUCK YOU HA translations!!!
+    # ExtSelectEntityDescriptionStub(
+    #     tag=Tag.SOLARSHARE,
+    #     entity_category=EntityCategory.CONFIG,
+    #     icon="mdi:sun-angle",
+    #     options=Tag.SOLARSHARE.options,
+    #     integrated_supported=False
+    # ),
 ]
 
 SENSOR_ENTITIES_GRID_AS_PREFIX = [
