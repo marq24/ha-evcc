@@ -689,11 +689,15 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 "soc"       in batt_obj or
                 "devices"   in batt_obj):
                 self._battery_data_as_object = True
-        elif _version_info is not None and len(_version_info) > 0:
+
+        # when the integration starts while evcc itself is still starting up, the
+        # 'battery' object might be missing/empty - then the flag would stay 'False'
+        # till the next reload (and all battery sensors would be 'unknown'). Since
+        # evcc 0.301.0 'batterySoc' & co. are not published anymore - there is only
+        # the 'battery' object left - so we can fall back to the version here.
+        if not self._battery_data_as_object and _version_info is not None and len(_version_info) > 0:
             try:
-                # TODO LATER: we don't know in which release the battery object will be
-                # refactored... [so we keep this open right now]
-                if Version(_version_info) >= Version("999.209.8"):
+                if Version(_version_info) >= Version("0.301.0"):
                     self._battery_data_as_object = True
 
             except BaseException as exc:
