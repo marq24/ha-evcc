@@ -652,17 +652,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
             if self._currency == "EUR":
                 self._currency = "€"
 
-        _version_info = None
-        _version_info_raw = None
-        if Tag.VERSION.json_key in initdata:
-            _version_info_raw = initdata[Tag.VERSION.json_key]
-            # we need to check for possible NightlyBuild tags in the Version key
-            if " (" in _version_info_raw:
-                _version_info = _version_info_raw.split(" (")[0].strip()
-            elif "-" in _version_info_raw:
-                _version_info = _version_info_raw[:_version_info_raw.index('-')]
-            else:
-                _version_info = _version_info_raw
+        # need to read the initial evcc version information (and truncate possible nightly build tags)
+        _version_info, _version_info_raw = EvccApiBridge.read_version(initdata)
 
         # here we have an issue, when there is no grid data
         # available (or is no object) at system start....
@@ -691,9 +682,8 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
                 self._battery_data_as_object = True
         elif _version_info is not None and len(_version_info) > 0:
             try:
-                # TODO LATER: we don't know in which release the battery object will be
-                # refactored... [so we keep this open right now]
-                if Version(_version_info) >= Version("999.209.8"):
+                # since evcc 0.301 the battery data is an object...
+                if Version(_version_info) >= Version("0.301.0"):
                     self._battery_data_as_object = True
 
             except BaseException as exc:
