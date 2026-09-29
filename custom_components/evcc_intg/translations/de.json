@@ -321,7 +321,7 @@
       "chargeduration": {"name": "Ladedauer"},
       "chargeremainingduration": {"name": "Laderestzeit"},
       "chargepower": {"name": "Ladeleistung"},
-      "chargetotalimport": {"name": "Netzbezug"},
+      "chargetotalimport": {"name": "Geladen (Gesamt)"},
       "chargedenergy": {"name": "Ladeenergie"},
       "chargeremainingenergy": {"name": "Ladeenergie verbleibend"},
 

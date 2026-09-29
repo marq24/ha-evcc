@@ -130,7 +130,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     lp_idx=lp_api_index,
                     key=f"{lp_id_addon}_{the_key}" if not patch_keys else f"{lp_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                     translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
-                    name_addon=lp_name_addon if multi_loadpoint_config else None,
+                    name_addon=lp_name_addon,
                     icon=a_stub.icon,
                     device_class=SensorDeviceClass.TEMPERATURE if force_celsius else a_stub.device_class,
                     unit_of_measurement=UnitOfTemperature.CELSIUS if force_celsius else a_stub.unit_of_measurement,
@@ -163,7 +163,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                             description,
                             key = f"cstotal_{description.key}",
                             translation_key = a_stub.tag.entity_key,
-                            name_addon = lp_name_addon if multi_loadpoint_config else None,
+                            name_addon = lp_name_addon,
                         )
 
                 entity = EvccSensor(coordinator, description)
@@ -191,7 +191,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 key=f"{veh_id_addon}_{the_key}" if not patch_keys else f"{veh_id_addon}_{the_key}_{a_stub.json_idx[0]}",
                 translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                 evcc_internal_id=a_vehicle_key,
-                name_addon=veh_name_addon if multi_vehicle_config else None,
+                name_addon=veh_name_addon,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
                 unit_of_measurement=a_stub.unit_of_measurement,
