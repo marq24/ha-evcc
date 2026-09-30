@@ -62,7 +62,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 lp_idx=lp_api_index,
                 key=f"{lp_id_addon}_{the_key}",
                 translation_key=the_key,
-                name_addon=lp_name_addon,
+                name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
                 unit_of_measurement=a_stub.unit_of_measurement,
