@@ -393,7 +393,7 @@
       "chargeduration": {"name": "Charge duration"},
       "chargeremainingduration": {"name": "Charge remaining time"},
       "chargepower": {"name": "Charge power"},
-      "chargetotalimport": {"name": "Grid imported"},
+      "chargetotalimport": {"name": "Charged (Total)"},
       "chargedenergy": {"name": "Charge energy"},
       "chargeremainingenergy": {"name": "Charge energy remaining"},
 
