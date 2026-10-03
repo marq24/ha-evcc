@@ -19,9 +19,22 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
     for description in NUMBER_ENTITIES:
-        # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
         if description.tag == Tag.BATTERYGRIDCHARGELIMIT:
-            if coordinator._currency != "€":
+            # evcc checks the battery grid charge limit against the planner tariff (same as the
+            # loadpoint smartCostLimit) - so when the planner is a co2 tariff, the limit is in g/kWh
+            if coordinator._cost_type == "co2":
+                description = replace(
+                    description,
+                    translation_key = f"{description.tag.json_key}_co2",
+                    icon = "mdi:molecule-co2",
+                    native_max_value=500,
+                    native_min_value=0,
+                    native_step=5,
+                    native_unit_of_measurement="g/kWh"
+                )
+
+            # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
+            elif coordinator._currency != "€":
                 description = replace(
                     description,
                     native_max_value = description.native_max_value * 10,
@@ -78,8 +91,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 step=a_stub.step,
             )
 
-            if a_stub.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
-                if coordinator._cost_type == "co2":
+            if a_stub.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT]:
+                # the smartFeedInPriorityLimit is checked against the feed-in tariff (and that is
+                # always a price) - so only the smartCostLimit can be a co2 limit
+                if a_stub.tag == Tag.SMARTCOSTLIMIT and coordinator._cost_type == "co2":
                     description = replace(
                         description,
                         translation_key = f"{a_stub.tag.json_key}_co2",
