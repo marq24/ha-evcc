@@ -107,6 +107,7 @@
       "smartfeedinpriorityactive": {"name": "Smart Feedin limit"},
       "vehicledetectionactive": {"name": "Vehicle detection"},
       "batterygridchargeactive": {"name": "Home-Battery: grid charging"},
+      "batterygriddischargeactive": {"name": "Home-Battery: grid discharging"},
       "vehicleclimateractive": {"name": "Vehicle Air Conditioning"},
       "vehiclewelcomeactive": {"name": "Vehicle Welcome function"},
       "planactive": {"name": "Plan activated"},
@@ -120,7 +121,9 @@
       "plandelete": {"name": "Charging plan: Delete Departure (Loadpoint/Energy)"},
       "detectvehicle": {"name": "Start vehicle detection"},
       "smartcostlimit": {"name": "@@@ Limit remove"},
-      "smartfeedinprioritylimit": {"name": "@@@ Feedin limit remove"}
+      "smartfeedinprioritylimit": {"name": "@@@ Feedin limit remove"},
+      "batterygridchargelimit": {"name": "Home-Battery: grid charging limit remove"},
+      "batterygriddischargelimit": {"name": "Home-Battery: grid discharging limit remove"}
     },
     "number": {
       "limitsoc": {"name": "Default Charging limit (SOC)"},
@@ -133,6 +136,7 @@
       "smartfeedinprioritylimit": {"name": "@@@ Feedin limit ≤"},
       "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"},
       "batterygridchargelimit_co2": {"name": "Home-Battery: grid charging CO₂ limit ≤"},
+      "batterygriddischargelimit": {"name": "Home-Battery: grid discharging @@@ limit ≥"},
       "enabledelay": {"name": "Delay Enable"},
       "disabledelay": {"name": "Delay Disable"},
       "priority": {"name": "Priority"},
@@ -562,6 +566,7 @@
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},
+      "batterygriddischarge": {"name": "Home-Battery: allow grid discharging"},
       "batteryboost": {"name": "Boost from Home-Battery"},
       "planstrategycontinuous": {"name": "Charging plan: Optimization",
         "state": {

@@ -41,6 +41,15 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     native_min_value = description.native_min_value * 10
                 )
 
+        elif description.tag == Tag.BATTERYGRIDDISCHARGELIMIT:
+            # evcc checks the grid discharge limit against the feed-in tariff - so it's always a price
+            if coordinator._currency != "€":
+                description = replace(
+                    description,
+                    native_max_value = description.native_max_value * 10,
+                    native_min_value = description.native_min_value * 10
+                )
+
         entity = EvccNumber(coordinator, description)
         entities.append(entity)
 
@@ -130,7 +139,7 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
             if value is None or value == "":
                 return "unknown"
             else:
-                if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
+                if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT, Tag.BATTERYGRIDDISCHARGELIMIT]:
                     value = round(float(value), 3)
                 # fucking HA translation keys!
                 elif self.tag == Tag.SOLARSHARE:
@@ -153,7 +162,7 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
 
     async def async_set_native_value(self, value) -> None:
         try:
-            if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
+            if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT, Tag.BATTERYGRIDDISCHARGELIMIT]:
                 await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self)
             elif self.tag == Tag.SOLARSHARE:
                 # fucking HA translation keys!

@@ -1180,6 +1180,10 @@ class EvccApiBridge:
         elif final_type == EP_TYPE.LOADPOINTS and idx is not None:
             ret[a_tag.json_key] = await self.press_loadpoint_key(idx, a_tag.write_key, value)
 
+        elif final_type == EP_TYPE.SITE:
+            # a site button without payload removes the value (DELETE), e.g. the battery grid charge limit
+            ret[a_tag.json_key] = await self.write_site_key(a_tag.write_key, value)
+
         elif final_type == EP_TYPE.VEHICLES:
             # before we can write something to the vehicle endpoints, we must know the vehicle_id!
             # -> so we have to grab from the loadpoint the current vehicle!
