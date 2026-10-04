@@ -105,6 +105,7 @@
       "smartfeedinpriorityactive": {"name": "Smarte Einspeisegrenze"},
       "vehicledetectionactive": {"name": "Fahrzeugerkennung"},
       "batterygridchargeactive": {"name": "Hausbatterie: Netzladen"},
+      "batterygriddischargeactive": {"name": "Hausbatterie: Netzentladen"},
       "vehicleclimateractive": {"name": "Fahrzeug Klimatisierung"},
       "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"},
       "planactive": {"name": "Plan aktiviert"},
@@ -118,7 +119,9 @@
       "plandelete": {"name": "Ladeplanung: Abfahrt löschen (Ladepunkt/Energie)"},
       "detectvehicle": {"name": "Fahrzeugerkennung starten"},
       "smartcostlimit": {"name": "@@@ Limit entfernen"},
-      "smartfeedinprioritylimit": {"name": "@@@ Einspeisegrenze entfernen"}
+      "smartfeedinprioritylimit": {"name": "@@@ Einspeisegrenze entfernen"},
+      "batterygridchargelimit": {"name": "Hausbatterie: Netzladen Limit entfernen"},
+      "batterygriddischargelimit": {"name": "Hausbatterie: Netzentladen Limit entfernen"}
     },
     "number": {
       "limitsoc": {"name": "Standard Ladelimit (SOC)"},
@@ -131,6 +134,7 @@
       "smartfeedinprioritylimit": {"name": "@@@ Einspeisegrenze ≤"},
       "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"},
       "batterygridchargelimit_co2": {"name": "Hausbatterie: Netzladen CO₂ Limit ≤"},
+      "batterygriddischargelimit": {"name": "Hausbatterie: Netzentladen @@@ Limit ≥"},
       "enabledelay": {"name": "Verzögerung Aktivierung"},
       "disabledelay": {"name": "Verzögerung Deaktivierung"},
       "priority": {"name": "Priorität"},
@@ -476,6 +480,7 @@
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},
+      "batterygriddischarge": {"name": "Hausbatterie: Entladen ins Netz zulassen"},
       "batteryboost": {"name": "Schnell aus Hausbatterie laden."},
       "planstrategycontinuous": {"name": "Ladeplanung: Optimierung",
         "state": {

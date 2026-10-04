@@ -202,6 +202,13 @@ class Tag(ApiKey, Enum):
     # batteryGridChargeLimit: ??
     BATTERYGRIDCHARGELIMIT = ApiKey(json_key="batteryGridChargeLimit", type=EP_TYPE.SITE, write_key="batterygridchargelimit")
 
+    # POST /api/batterygriddischarge/<status>: allow the home battery to discharge into the grid (experimental)
+    BATTERYGRIDDISCHARGE = ApiKey(json_key="batteryGridDischarge", type=EP_TYPE.SITE, writeable=True, write_key="batterygriddischarge")
+    BATTERYGRIDDISCHARGEACTIVE = ApiKey(json_key="batteryGridDischargeActive", type=EP_TYPE.SITE)
+    # POST|DELETE /api/batterygriddischargelimit/<value>: feed-in price at or above which the battery
+    # discharges into the grid - evcc accepts it only while batteryGridDischarge is enabled
+    BATTERYGRIDDISCHARGELIMIT = ApiKey(json_key="batteryGridDischargeLimit", type=EP_TYPE.SITE, write_key="batterygriddischargelimit")
+
     FORECAST_GRID = ApiKey(entity_key="forecast_grid", json_key="forecast", type=EP_TYPE.SITE)
     FORECAST_SOLAR = ApiKey(entity_key="forecast_solar", json_key="forecast", type=EP_TYPE.SITE)
     FORECAST_FEEDIN = ApiKey(entity_key="forecast_feedin", json_key="forecast", type=EP_TYPE.SITE)
