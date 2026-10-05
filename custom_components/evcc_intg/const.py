@@ -323,6 +323,14 @@ BUTTONS_ENTITIES = [
         entity_category=EntityCategory.CONFIG,
         icon="mdi:cash-off",
         entity_registry_enabled_default=False,
+    ),
+    # POST /api/optimize - evcc ignores it while the (experimental) optimizer is off
+    ExtButtonEntityDescription(
+        tag=Tag.OPTIMIZE,
+        key=Tag.OPTIMIZE.entity_key,
+        payload=IS_TRIGGER,
+        icon="mdi:refresh",
+        entity_registry_enabled_default=False,
     )
 ]
 BUTTONS_ENTITIES_PER_LOADPOINT = [
