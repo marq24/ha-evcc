@@ -525,6 +525,8 @@ class Tag(ApiKey, Enum):
     EVOPT_REQUEST_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_REQ, type=EP_TYPE.EVOPT)
     EVOPT_RESULT_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_RES, type=EP_TYPE.EVOPT)
     EVOPT_DETAILS_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_DETAILS, type=EP_TYPE.EVOPT)
+    # starts an optimizer run right away, as the button on evcc's optimizer page does
+    OPTIMIZE = ApiKey(entity_key="optimize", json_key=f"{INTERNAL_ONLY}_optimize", type=EP_TYPE.EVOPT, write_key="optimize", expected_http_status_response=200)
 
     ###################################
     # CONFIGURATION

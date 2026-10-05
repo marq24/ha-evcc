@@ -121,7 +121,8 @@
       "smartcostlimit": {"name": "@@@ Limit entfernen"},
       "smartfeedinprioritylimit": {"name": "@@@ Einspeisegrenze entfernen"},
       "batterygridchargelimit": {"name": "Hausbatterie: Netzladen Limit entfernen"},
-      "batterygriddischargelimit": {"name": "Hausbatterie: Netzentladen Limit entfernen"}
+      "batterygriddischargelimit": {"name": "Hausbatterie: Netzentladen Limit entfernen"},
+      "optimize": {"name": "Optimizer: neu berechnen"}
     },
     "number": {
       "limitsoc": {"name": "Standard Ladelimit (SOC)"},

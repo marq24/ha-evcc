@@ -123,7 +123,8 @@
       "smartcostlimit": {"name": "@@@ Limit remove"},
       "smartfeedinprioritylimit": {"name": "@@@ Feedin limit remove"},
       "batterygridchargelimit": {"name": "Home-Battery: grid charging limit remove"},
-      "batterygriddischargelimit": {"name": "Home-Battery: grid discharging limit remove"}
+      "batterygriddischargelimit": {"name": "Home-Battery: grid discharging limit remove"},
+      "optimize": {"name": "Optimizer: recalculate"}
     },
     "number": {
       "limitsoc": {"name": "Default Charging limit (SOC)"},
