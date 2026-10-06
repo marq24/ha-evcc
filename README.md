@@ -115,32 +115,42 @@ Please note that some of the available sensors are __not__ enabled by default.
 
 ---
 
-## Understanding the different parts of evcc, HA and other components
+## Understanding the different parts of evcc, Home Assistant and other additional components
 
-It's quite easy to mix up the things when it comes to issues with evcc and Home Assistant, and it can be kind of tricky to understand which component does what and where you should open an issue or start a discussion. 
+It's quite easy to mix up the things when it comes to issues with evcc and Home Assistant. It can be kind of tricky to understand which different components exist and what is the purpose of each of them. And **where you should open an issue** or start a discussion in case of a problem or which **developer you want to support**. 
 
 ### The _evcc (Server)_ component
-The evcc main component, a server (implemented in go), serving an own GUI. evcc can read data directly from a running Home Assistance instance, in this case HA is the source for some data required by evcc. The simplest way to run _evcc_ is via docker (IMHO) - but you can of course also install and run it alternatively.
+The evcc main component, a server (implemented in go), serving an own GUI that have implemented interfaces to wallboxes, batteries, meters, vehicles and probably many other devices that exist in your home. Evcc is completely independent of anything that is happening in Home Assistant.
 
-#### Maintainer https://github.com/evcc-io/evcc
+Have that said, evcc can also read data from your Home Assistance instance, in this case HA is the source for some data used by evcc. So in this case HA can be considered just like any other interface implemented in evcc as data source.
+
+The simplest way to run _evcc_ is via docker (IMHO) - but you can of course also install and run it alternatively.
+
+#### Maintainer: evcc-community - https://github.com/evcc-io/evcc
 
 ### The _evcc HA (hassio) AddOn/App_ component
-When you are using the HA hassio, then you have the possibility to install/run additional conatiners as Apps (also named addons in the past). The _evcc AddOn/App__ allow you to install & run an instance of the evcc server directly as addon/app in your HA hassio. So there is no need, that you install a separate instance of evcc (e.g. in a docker container).
+When you are using the Home Assistant hassio (OS), then you have the possibility to install/run additional conatiners as Apps (named _Addons_ in the past). The _evcc AddOn/App__ allow you to install & run an instance of the evcc server directly as addon/app in your HA hassio. So there is no need, that you install a separate instance of evcc (e.g. in a docker container).
 
-#### Maintainer https://github.com/evcc-io/hassio-addon
+Running the App/Addon will typically add an entry to the left navigation of your running HA and will show the default user interface of evcc (GUI) in a frame of your Home Assistant.
+
+#### Maintainer: evcc-community - https://github.com/evcc-io/hassio-addon
 
 > [!IMPORTANT]
-> So _evcc Server_ or _evcc HA (hassio) AddOn/App_ are the components that you must install in order to have an evcc instance up and running. A running evcc server can access HA entities and read values from different sensors. How all this can be done is part of the evcc.io documentation.  
+> So _evcc Server_ or _evcc HA (hassio) AddOn/App_ are the components that you must install in order to have an evcc instance up and running. A running evcc server can access HA entities and read values from different HA entities (as data source for evcc). How all this can be done is part of the [evcc.io documentation](https://docs.evcc.io/en/).  
 
 ### The _HA integration_ (this repository)
-When you run your evcc Server (or Addon/App) there is no possibility to interact e.g. via automations with your evcc. This gap will be filled by this _evcc HA integration_. Most (if not all) of the existing controls that exists in the evcc GUI will be provided as HA Entities (selects, switches, buttons or sensors). So the HA integration can be considered as some sort of _remote control_ of your evcc server. To be able to use this HA integration you must have previously installed an _evcc Server_ or the _Addon/App_. 
+When you run your evcc Server (or Addon/App) there **is no possibility to systematically interact** e.g. via automations **from HA with your evcc server**. 
 
-#### Maintainer https://github.com/marq24/ha-evcc
+This gap will be filled by this _evcc HA integration_. Most (if not all) of the controls that exists in the evcc GUI will be provided as HA entities (selects, switches, buttons or sensors). This allows you to control any evcc option/setting via HA automations or other types of scripting.
+
+The HA integration can be considered as some sort of _remote control_ of your evcc server inside the ecosystem of Home Assistant. I hope it's obviously to be able to use this HA integration you must have previously installed an _evcc Server_ or the _Addon/App_. 
+
+#### Maintainer: marq24 - https://github.com/marq24/ha-evcc
 
 ### The _evcc custom HA card_ component
-A custom Lovelace card for Home Assistant that provides a comprehensive dashboard for evcc - using the _evcc HA  integration_. Since the default HA controls have certain limitations, the custom card bring you the feel of the evcc GUI into HA.
+A custom Lovelace card for Home Assistant that provides a comprehensive Home Assistant dashboard for evcc - using the _evcc HA  integration_. Since the default HA controls have certain limitations, the custom card brings you the (look &) feel from the evcc GUI into your HA.
 
-#### Maintainer https://github.com/mkshb/hass-evcc-card
+#### Maintainer: mkshb - https://github.com/mkshb/hass-evcc-card
 
 ---
 
