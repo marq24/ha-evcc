@@ -684,7 +684,7 @@ class EvccApiBridge:
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG] = await self._read_config_setup(log_requests)
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA] = {}
 
-            # ok the configuration data MUST exis now... so we can finally fetch the states
+            # ok the configuration data MUST exist now... so we can finally fetch the states
             a_config = json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG]
 
             for a_device_type, value_list in a_config.items():
@@ -748,6 +748,14 @@ class EvccApiBridge:
             if len(EVCCCONF_OBJECT_HIERARCHY[a_object_type]) > 0:
                 the_configuration[a_object_type] = {}
                 for a_sub_type in EVCCCONF_OBJECT_HIERARCHY[a_object_type]:
+                    # for whatever reason the objects returned by /api/config/devices/circuit does not
+                    # provide a /api/config/devices/circuit/{name}/status endpoint - so we ignore
+                    # this configuration right now...
+                    if a_object_type == EVCCCONF_DEVICES and a_sub_type == EVCCCONF_DEVICE_TYPES.CIRCUIT.value:
+                        _LOGGER.info(f"SKIPPING configuration for sub-object type '{a_object_type}/{a_sub_type}', creating empty entry")
+                        the_configuration[a_object_type][a_sub_type] = {}
+                        continue
+
                     req = f"{self.host}/api/config/{a_object_type}/{a_sub_type}"
                     if log_requests:
                         _LOGGER.debug(f"GET request: {req}")
