@@ -35,6 +35,7 @@ from custom_components.evcc_intg.pyevcc_ha.const import (
     EP_TYPE,
 )
 from custom_components.evcc_intg.pyevcc_ha.keys import Tag, IS_TRIGGER
+from packaging.version import Version
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -302,22 +303,48 @@ class EvccApiBridge:
         self.request_tariff_endpoints = False
         self.request_tariff_keys = []
 
+    @staticmethod
+    def read_version(data):
+        if Tag.VERSION.json_key in data:
+            version_info_raw = data[Tag.VERSION.json_key]
+            # we need to check for possible NightlyBuild tags in the Version key
+            if " (" in version_info_raw:
+                version_info = version_info_raw.split(" (")[0].strip()
+            elif "-" in version_info_raw:
+                version_info = version_info_raw[:version_info_raw.index('-')]
+            else:
+                version_info = version_info_raw
+            return version_info, version_info_raw,
+
+        return None, None
+
     async def is_evcc_available(self):
         _LOGGER.debug(f"is_evcc_available(): '{self.host}' CHECKING...")
+        data = None
         req = f"{self.host}/api/state"
         try:
             async with self.web_session.get(url=req, ssl=False) as res:
                 res.raise_for_status()
                 if res.status in [200, 201, 202, 204, 205]:
                     data = await res.json()
-                    if data is not None and len(data) == 0:
+                    if data is None or len(data) == 0:
+                        _LOGGER.info(f"HA host @ {self.host} is NOT available - data is None or len = 0 - {data}")
                         raise BaseException("NO DATA")
+                    else:
+                        a_version, raw_version = EvccApiBridge.read_version(data)
+                        # since API v0.211.0 evcc supports the 'startupCompleted' flag
+                        if Version(a_version) >= Version("0.211.0"):
+                            if not data.get("startupCompleted"):
+                                _LOGGER.info(f"HA host @ {self.host} has data, but `startupComplete` is FALSE - '{data.get("startupCompleted")}'")
+                                raise BaseException("NOT READY YET")
+                        else:
+                            _LOGGER.info(f"looks like evcc version {a_version} is too old to support 'startupCompleted' status")
 
         except BaseException as exc:
             _LOGGER.debug(f"is_evcc_available(): check caused: {type(exc).__name__} - {exc} - Integration is not ready to be started.")
             raise exc
 
-        _LOGGER.debug(f"is_evcc_available(): '{self.host}' is AVAILABLE")
+        _LOGGER.debug(f"is_evcc_available(): '{self.host}' is AVAILABLE - evcc startupStatus: {data.get("startupCompleted") if data is not None else "???"}")
 
     def enable_tariff_endpoints(self, keys: list):
         self._TARIFF_LAST_UPDATE_QUARTER_HOUR = -1
@@ -657,7 +684,7 @@ class EvccApiBridge:
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG] = await self._read_config_setup(log_requests)
                 json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_DATA] = {}
 
-            # ok the configuration data MUST exis now... so we can finally fetch the states
+            # ok the configuration data MUST exist now... so we can finally fetch the states
             a_config = json_resp[ADDITIONAL_ENDPOINTS_DATA_EVCCCONF][EVCCCONF_KEY_CONFIG]
 
             for a_device_type, value_list in a_config.items():
@@ -721,6 +748,14 @@ class EvccApiBridge:
             if len(EVCCCONF_OBJECT_HIERARCHY[a_object_type]) > 0:
                 the_configuration[a_object_type] = {}
                 for a_sub_type in EVCCCONF_OBJECT_HIERARCHY[a_object_type]:
+                    # for whatever reason the objects returned by /api/config/devices/circuit does not
+                    # provide a /api/config/devices/circuit/{name}/status endpoint - so we ignore
+                    # this configuration right now...
+                    if a_object_type == EVCCCONF_DEVICES and a_sub_type == EVCCCONF_DEVICE_TYPES.CIRCUIT.value:
+                        _LOGGER.info(f"SKIPPING configuration for sub-object type '{a_object_type}/{a_sub_type}', creating empty entry")
+                        the_configuration[a_object_type][a_sub_type] = {}
+                        continue
+
                     req = f"{self.host}/api/config/{a_object_type}/{a_sub_type}"
                     if log_requests:
                         _LOGGER.debug(f"GET request: {req}")
@@ -1152,6 +1187,10 @@ class EvccApiBridge:
 
         elif final_type == EP_TYPE.LOADPOINTS and idx is not None:
             ret[a_tag.json_key] = await self.press_loadpoint_key(idx, a_tag.write_key, value)
+
+        elif final_type == EP_TYPE.SITE:
+            # a site button without payload removes the value (DELETE), e.g. the battery grid charge limit
+            ret[a_tag.json_key] = await self.write_site_key(a_tag.write_key, value)
 
         elif final_type == EP_TYPE.VEHICLES:
             # before we can write something to the vehicle endpoints, we must know the vehicle_id!

@@ -18,7 +18,7 @@
           "extended_vehicle_data_interval": "Extended Vehicle Data Polling Interval in seconds [check Warning]",
           "extended_meter_data": "Collect Meter data from evcc configuration",
           "extended_meter_data_interval": "Meter Data Polling Interval in seconds",
-          "purge_all_devices": "Remove an recreate all Devices"
+          "purge_all_devices": "Remove and recreate all Devices"
         },
         "data_description": {
           "use_websocket": "The WebSocket connection ensures that the sensor data will be updated more or less instantly as soon as it's changing in evcc. When enabled the polling interval (below) will be ignored.",
@@ -107,6 +107,7 @@
       "smartfeedinpriorityactive": {"name": "Smart Feedin limit"},
       "vehicledetectionactive": {"name": "Vehicle detection"},
       "batterygridchargeactive": {"name": "Home-Battery: grid charging"},
+      "batterygriddischargeactive": {"name": "Home-Battery: grid discharging"},
       "vehicleclimateractive": {"name": "Vehicle Air Conditioning"},
       "vehiclewelcomeactive": {"name": "Vehicle Welcome function"},
       "planactive": {"name": "Plan activated"},
@@ -120,7 +121,10 @@
       "plandelete": {"name": "Charging plan: Delete Departure (Loadpoint/Energy)"},
       "detectvehicle": {"name": "Start vehicle detection"},
       "smartcostlimit": {"name": "@@@ Limit remove"},
-      "smartfeedinprioritylimit": {"name": "@@@ Feedin limit remove"}
+      "smartfeedinprioritylimit": {"name": "@@@ Feedin limit remove"},
+      "batterygridchargelimit": {"name": "Home-Battery: grid charging limit remove"},
+      "batterygriddischargelimit": {"name": "Home-Battery: grid discharging limit remove"},
+      "optimize": {"name": "Optimizer: recalculate"}
     },
     "number": {
       "limitsoc": {"name": "Default Charging limit (SOC)"},
@@ -130,12 +134,14 @@
       "residualpower": {"name": "Residual power"},
       "smartcostlimit_co2": {"name": "CO₂ limit ≤"},
       "smartcostlimit": {"name": "@@@ limit ≤"},
-      "smartfeedinprioritylimit_co2": {"name": "CO₂ Feedin limit ≤"},
       "smartfeedinprioritylimit": {"name": "@@@ Feedin limit ≤"},
       "batterygridchargelimit": {"name": "Home-Battery: grid charging @@@ limit ≤"},
+      "batterygridchargelimit_co2": {"name": "Home-Battery: grid charging CO₂ limit ≤"},
+      "batterygriddischargelimit": {"name": "Home-Battery: grid discharging @@@ limit ≥"},
       "enabledelay": {"name": "Delay Enable"},
       "disabledelay": {"name": "Delay Disable"},
-      "priority": {"name": "Priority"}
+      "priority": {"name": "Priority"},
+      "solarshare": {"name": "Solar share"}
     },
     "select": {
       "batterymode": {
@@ -392,7 +398,7 @@
       "chargeduration": {"name": "Charge duration"},
       "chargeremainingduration": {"name": "Charge remaining time"},
       "chargepower": {"name": "Charge power"},
-      "chargetotalimport": {"name": "Grid imported"},
+      "chargetotalimport": {"name": "Charged (Total)"},
       "chargedenergy": {"name": "Charge energy"},
       "chargeremainingenergy": {"name": "Charge energy remaining"},
 
@@ -429,16 +435,16 @@
 
       "auxpower": {"name": "Power AUX"},
       "batterycapacity": {"name": "Battery capacity"},
-      "batteryenergy": {"name": "Battery charge-energy"},
-      "battery_0_energy": {"name": "Battery 1 charge-energy"},
-      "battery_1_energy": {"name": "Battery 2 charge-energy"},
-      "battery_2_energy": {"name": "Battery 3 charge-energy"},
-      "battery_3_energy": {"name": "Battery 4 charge-energy"},
-      "batteryreturnenergy": {"name": "Battery return energy"},
-      "battery_0_returnenergy": {"name": "Battery 1 return energy"},
-      "battery_1_returnenergy": {"name": "Battery 2 return energy"},
-      "battery_2_returnenergy": {"name": "Battery 3 return energy"},
-      "battery_3_returnenergy": {"name": "Battery 4 return energy"},
+      "batteryenergy": {"name": "Battery discharge-energy"},
+      "battery_0_energy": {"name": "Battery 1 discharge-energy"},
+      "battery_1_energy": {"name": "Battery 2 discharge-energy"},
+      "battery_2_energy": {"name": "Battery 3 discharge-energy"},
+      "battery_3_energy": {"name": "Battery 4 discharge-energy"},
+      "batteryreturnenergy": {"name": "Battery charge-energy"},
+      "battery_0_returnenergy": {"name": "Battery 1 charge-energy"},
+      "battery_1_returnenergy": {"name": "Battery 2 charge-energy"},
+      "battery_2_returnenergy": {"name": "Battery 3 charge-energy"},
+      "battery_3_returnenergy": {"name": "Battery 4 charge-energy"},
       "batterymode": {"name": "Battery mode [CODE]"},
       "batterymode_value": {"name": "Battery mode"},
       "batterypower": {"name": "Power battery"},
@@ -561,6 +567,7 @@
     },
     "switch": {
       "batterydischargecontrol": {"name": "Home-Battery: discharge lock"},
+      "batterygriddischarge": {"name": "Home-Battery: allow grid discharging"},
       "batteryboost": {"name": "Boost from Home-Battery"},
       "planstrategycontinuous": {"name": "Charging plan: Optimization",
         "state": {

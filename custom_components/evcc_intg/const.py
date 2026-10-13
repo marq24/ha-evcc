@@ -198,6 +198,14 @@ BINARY_ENTITIES = [
         entity_category=EntityCategory.DIAGNOSTIC,
         device_class=None
     ),
+    ExtBinarySensorEntityDescription(
+        tag=Tag.BATTERYGRIDDISCHARGEACTIVE,
+        key=Tag.BATTERYGRIDDISCHARGEACTIVE.json_key,
+        icon="mdi:transmission-tower-import",
+        entity_category=EntityCategory.DIAGNOSTIC,
+        device_class=None,
+        entity_registry_enabled_default=False
+    ),
 ]
 BINARY_ENTITIES_PER_CIRCUIT = [
     ExtBinarySensorEntityDescriptionStub(
@@ -300,6 +308,29 @@ BUTTONS_ENTITIES = [
         entity_category=EntityCategory.CONFIG,
         icon="mdi:server-off",
         entity_registry_enabled_default=False,
+    ),
+    # no payload: removes the limit (DELETE), as the loadpoint limit buttons do
+    ExtButtonEntityDescription(
+        tag=Tag.BATTERYGRIDCHARGELIMIT,
+        key=Tag.BATTERYGRIDCHARGELIMIT.json_key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:cash-off",
+        entity_registry_enabled_default=False,
+    ),
+    ExtButtonEntityDescription(
+        tag=Tag.BATTERYGRIDDISCHARGELIMIT,
+        key=Tag.BATTERYGRIDDISCHARGELIMIT.json_key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:cash-off",
+        entity_registry_enabled_default=False,
+    ),
+    # POST /api/optimize - evcc ignores it while the (experimental) optimizer is off
+    ExtButtonEntityDescription(
+        tag=Tag.OPTIMIZE,
+        key=Tag.OPTIMIZE.entity_key,
+        payload=IS_TRIGGER,
+        icon="mdi:refresh",
+        entity_registry_enabled_default=False,
     )
 ]
 BUTTONS_ENTITIES_PER_LOADPOINT = [
@@ -363,6 +394,19 @@ NUMBER_ENTITIES = [
         native_min_value=-0.50,
         native_step=0.005,
         native_unit_of_measurement="@@@/kWh"
+    ),
+    # compared with the feed-in tariff, so always a price (never co2)
+    ExtNumberEntityDescription(
+        tag=Tag.BATTERYGRIDDISCHARGELIMIT,
+        key=Tag.BATTERYGRIDDISCHARGELIMIT.json_key,
+        entity_category=EntityCategory.CONFIG,
+        icon = "mdi:cash-multiple",
+        mode = NumberMode.BOX,
+        native_max_value=2.50,
+        native_min_value=-0.50,
+        native_step=0.005,
+        native_unit_of_measurement="@@@/kWh",
+        entity_registry_enabled_default=False
     ),
 ]
 NUMBER_ENTITIES_PER_LOADPOINT = [
@@ -461,6 +505,19 @@ NUMBER_ENTITIES_PER_LOADPOINT = [
         native_step=1,
         device_class=None
     ),
+    # FUCK YOU HA translations!!!
+    ExtNumberEntityDescriptionStub(
+        tag=Tag.SOLARSHARE,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:sun-angle",
+        mode = NumberMode.SLIDER,
+        native_max_value=100,
+        native_min_value=0,
+        native_step=10,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        integrated_supported=False
+    )
 ]
 
 SELECT_ENTITIES = [
@@ -524,8 +581,6 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         #entity_category=EntityCategory.CONFIG,
         icon="mdi:sync"
     ),
-
-
     ExtSelectEntityDescriptionStub(
         tag=Tag.PHASES,
         entity_category=EntityCategory.CONFIG,
@@ -585,6 +640,14 @@ SELECT_ENTITIES_PER_LOADPOINT = [
         options=Tag.EFFECTIVEPLANSTRATEGY_PRECONDITION.options,
         integrated_supported=False
     ),
+    # # FUCK YOU HA translations!!!
+    # ExtSelectEntityDescriptionStub(
+    #     tag=Tag.SOLARSHARE,
+    #     entity_category=EntityCategory.CONFIG,
+    #     icon="mdi:sun-angle",
+    #     options=Tag.SOLARSHARE.options,
+    #     integrated_supported=False
+    # ),
 ]
 
 SENSOR_ENTITIES_GRID_AS_PREFIX = [
@@ -1768,7 +1831,7 @@ SENSOR_ENTITIES_PER_LOADPOINT = [
     ),
     ExtSensorEntityDescriptionStub(
         tag=Tag.CHARGETOTALIMPORT,
-        icon="mdi:transmission-tower-export",
+        icon="mdi:meter-electric-outline",
         state_class=SensorStateClass.TOTAL_INCREASING,
         native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
         device_class=SensorDeviceClass.ENERGY,
@@ -2286,6 +2349,14 @@ SWITCH_ENTITIES = [
         icon="mdi:battery-off-outline",
         entity_category=EntityCategory.CONFIG,
         device_class=None
+    ),
+    ExtSwitchEntityDescription(
+        tag=Tag.BATTERYGRIDDISCHARGE,
+        key=Tag.BATTERYGRIDDISCHARGE.json_key,
+        icon="mdi:transmission-tower-import",
+        entity_category=EntityCategory.CONFIG,
+        device_class=None,
+        entity_registry_enabled_default=False
     )
 ]
 SWITCH_ENTITIES_PER_LOADPOINT = [

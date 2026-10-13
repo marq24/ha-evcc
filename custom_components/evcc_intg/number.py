@@ -19,8 +19,30 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     coordinator = hass.data[DOMAIN][config_entry.entry_id]
     entities = []
     for description in NUMBER_ENTITIES:
-        # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
         if description.tag == Tag.BATTERYGRIDCHARGELIMIT:
+            # evcc checks the battery grid charge limit against the planner tariff (same as the
+            # loadpoint smartCostLimit) - so when the planner is a co2 tariff, the limit is in g/kWh
+            if coordinator._cost_type == "co2":
+                description = replace(
+                    description,
+                    translation_key = f"{description.tag.json_key}_co2",
+                    icon = "mdi:molecule-co2",
+                    native_max_value=500,
+                    native_min_value=0,
+                    native_step=5,
+                    native_unit_of_measurement="g/kWh"
+                )
+
+            # for SEK, NOK, DKK we need to patch the maxvalue (1€ ~ 10 Krone)
+            elif coordinator._currency != "€":
+                description = replace(
+                    description,
+                    native_max_value = description.native_max_value * 10,
+                    native_min_value = description.native_min_value * 10
+                )
+
+        elif description.tag == Tag.BATTERYGRIDDISCHARGELIMIT:
+            # evcc checks the grid discharge limit against the feed-in tariff - so it's always a price
             if coordinator._currency != "€":
                 description = replace(
                     description,
@@ -78,8 +100,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 step=a_stub.step,
             )
 
-            if a_stub.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
-                if coordinator._cost_type == "co2":
+            if a_stub.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT]:
+                # the smartFeedInPriorityLimit is checked against the feed-in tariff (and that is
+                # always a price) - so only the smartCostLimit can be a co2 limit
+                if a_stub.tag == Tag.SMARTCOSTLIMIT and coordinator._cost_type == "co2":
                     description = replace(
                         description,
                         translation_key = f"{a_stub.tag.json_key}_co2",
@@ -115,8 +139,11 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
             if value is None or value == "":
                 return "unknown"
             else:
-                if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
+                if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT, Tag.BATTERYGRIDDISCHARGELIMIT]:
                     value = round(float(value), 3)
+                # fucking HA translation keys!
+                elif self.tag == Tag.SOLARSHARE:
+                    value = int(value * 100)
                 else:
                     value = int(value)
 
@@ -135,8 +162,11 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
 
     async def async_set_native_value(self, value) -> None:
         try:
-            if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT]:
+            if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT, Tag.BATTERYGRIDDISCHARGELIMIT]:
                 await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self)
+            elif self.tag == Tag.SOLARSHARE:
+                # fucking HA translation keys!
+                await self.coordinator.async_write_tag(self.tag, int(value)/100 if int(value) > 0 else 0, self)
             else:
                 await self.coordinator.async_write_tag(self.tag, int(value), self)
 

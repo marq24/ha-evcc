@@ -5,8 +5,9 @@ import voluptuous as vol
 from homeassistant.components import websocket_api
 from homeassistant.core import HomeAssistant, callback
 
-from . import EvccDataUpdateCoordinator
+from . import EvccDataUpdateCoordinator, Tag
 from .const import DOMAIN
+from .pyevcc_ha.const import JSONKEY_EVOPT
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
@@ -19,7 +20,7 @@ _LOGGER: logging.Logger = logging.getLogger(__package__)
 # provided 'entry_id'.
 
 # advertised via the 'evcc_intg/capabilities' command - so a card can check what is supported
-SUPPORTED_COMMANDS: Final = ["forecast", "sessions", "plan_preview"]
+SUPPORTED_COMMANDS: Final = ["forecast", "sessions", "plan_preview", "optimizer"]
 TARIFF_KINDS: Final = ["grid", "feedin", "solar", "planner"]
 PLAN_PREVIEW_KINDS: Final = ["soc", "energy"]
 
@@ -93,6 +94,27 @@ async def extension_plan_preview(hass: HomeAssistant, connection, msg):
 
 
 @websocket_api.websocket_command({
+    vol.Required("type"): "evcc_intg/optimizer",
+    vol.Required("entry_id"): str,
+})
+@callback
+def extension_optimizer(hass: HomeAssistant, connection, msg):
+    coordinator = coordinator_for(hass, connection, msg)
+    if coordinator is None:
+        return
+
+    # the (experimental) evcc optimizer result and the battery soc forecast evcc derives from it - both
+    # are pushed by evcc via its websocket and already part of the coordinator data, so no request to
+    # evcc is needed. Passed through as received; both are 'None' while the optimizer is not active
+    data = coordinator.data or {}
+    battery = data.get(Tag.BATTERY.json_key)
+    connection.send_result(msg["id"], {
+        "evopt": data.get(JSONKEY_EVOPT),
+        "batteryForecast": battery.get("forecast") if isinstance(battery, dict) else None,
+    })
+
+
+@websocket_api.websocket_command({
     vol.Required("type"): "evcc_intg/capabilities",
     vol.Optional("entry_id"): str,
 })
@@ -128,4 +150,5 @@ def async_register_evcc_card_websocket_commands(hass: HomeAssistant):
     websocket_api.async_register_command(hass, extension_forecast_data)
     websocket_api.async_register_command(hass, extension_session_data)
     websocket_api.async_register_command(hass, extension_plan_preview)
+    websocket_api.async_register_command(hass, extension_optimizer)
     websocket_api.async_register_command(hass, extension_capabilities)

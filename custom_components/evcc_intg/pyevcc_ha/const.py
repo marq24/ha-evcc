@@ -105,6 +105,8 @@ class EVCCCONF_DEVICE_TYPES(Enum):
     CIRCUIT     = "circuit"
     MESSENGER   = "messenger"
     TARIFF      = "tariff"
+    CURTAILER   = "curtailer"
+    HEMS        = "hems"
 
 ADDITIONAL_ENDPOINTS_DATA_EVCCCONF: Final = "@@@evccconf-data"
 EVCCCONF_KEY_CONFIG: Final = "@@@config"
@@ -113,6 +115,7 @@ EVCCCONF_DEVICES: Final = "devices"
 EVCCCONF_SITE: Final = "site"
 EVCCCONF_LOADPOINTS: Final = "loadpoints"
 EVCCCONF_TARIFF: Final = "tariff"
+
 EVCCCONF_OBJECT_HIERARCHY: Final = {
     EVCCCONF_DEVICES:[
         EVCCCONF_DEVICE_TYPES.VEHICLE.value,
@@ -120,7 +123,9 @@ EVCCCONF_OBJECT_HIERARCHY: Final = {
         EVCCCONF_DEVICE_TYPES.METER.value,
         EVCCCONF_DEVICE_TYPES.CIRCUIT.value,
         EVCCCONF_DEVICE_TYPES.MESSENGER.value,
-        EVCCCONF_DEVICE_TYPES.TARIFF.value],
+        EVCCCONF_DEVICE_TYPES.TARIFF.value,
+        EVCCCONF_DEVICE_TYPES.CURTAILER.value,
+        EVCCCONF_DEVICE_TYPES.HEMS.value],
     EVCCCONF_SITE: [],
     EVCCCONF_LOADPOINTS: [],
     EVCCCONF_TARIFF: []
@@ -149,6 +154,8 @@ MIN_CURRENT_EXTENDED_LIST: Final = ["0.125", "0.25", "0.5"] + MAX_CURRENT_LIST
 
 BATTERY_LIST: Final = ["0", "5", "10", "15", "20", "25", "30", "35", "40", "45", "50", "55", "60", "65", "70", "75",
                        "80", "85", "90", "95", "100"]
+
+SOLARSHARE_LIST: Final = ["0", "0.1", "0.2", "0.3", "0.4", "0.5", "0.6", "0.7", "0.8", "0.9", "1"]
 
 TRANSLATIONS: Final = {
     "de": {

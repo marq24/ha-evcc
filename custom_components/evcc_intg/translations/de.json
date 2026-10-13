@@ -105,6 +105,7 @@
       "smartfeedinpriorityactive": {"name": "Smarte Einspeisegrenze"},
       "vehicledetectionactive": {"name": "Fahrzeugerkennung"},
       "batterygridchargeactive": {"name": "Hausbatterie: Netzladen"},
+      "batterygriddischargeactive": {"name": "Hausbatterie: Netzentladen"},
       "vehicleclimateractive": {"name": "Fahrzeug Klimatisierung"},
       "vehiclewelcomeactive": {"name": "Fahrzeug Willkommensfunktion"},
       "planactive": {"name": "Plan aktiviert"},
@@ -118,7 +119,10 @@
       "plandelete": {"name": "Ladeplanung: Abfahrt löschen (Ladepunkt/Energie)"},
       "detectvehicle": {"name": "Fahrzeugerkennung starten"},
       "smartcostlimit": {"name": "@@@ Limit entfernen"},
-      "smartfeedinprioritylimit": {"name": "@@@ Einspeisegrenze entfernen"}
+      "smartfeedinprioritylimit": {"name": "@@@ Einspeisegrenze entfernen"},
+      "batterygridchargelimit": {"name": "Hausbatterie: Netzladen Limit entfernen"},
+      "batterygriddischargelimit": {"name": "Hausbatterie: Netzentladen Limit entfernen"},
+      "optimize": {"name": "Optimizer: neu berechnen"}
     },
     "number": {
       "limitsoc": {"name": "Standard Ladelimit (SOC)"},
@@ -128,12 +132,14 @@
       "residualpower": {"name": "Restleistung"},
       "smartcostlimit_co2": {"name": "CO₂ Limit ≤"},
       "smartcostlimit": {"name": "@@@ Limit ≤"},
-      "smartfeedinprioritylimit_co2": {"name": "CO₂ Einspeisegrenze ≤"},
       "smartfeedinprioritylimit": {"name": "@@@ Einspeisegrenze ≤"},
       "batterygridchargelimit": {"name": "Hausbatterie: Netzladen @@@ Limit ≤"},
+      "batterygridchargelimit_co2": {"name": "Hausbatterie: Netzladen CO₂ Limit ≤"},
+      "batterygriddischargelimit": {"name": "Hausbatterie: Netzentladen @@@ Limit ≥"},
       "enabledelay": {"name": "Verzögerung Aktivierung"},
       "disabledelay": {"name": "Verzögerung Deaktivierung"},
-      "priority": {"name": "Priorität"}
+      "priority": {"name": "Priorität"},
+      "solarshare": {"name": "Sonnenanteil (Solarüberschuss)"}
     },
     "select": {
       "batterymode": {
@@ -320,7 +326,7 @@
       "chargeduration": {"name": "Ladedauer"},
       "chargeremainingduration": {"name": "Laderestzeit"},
       "chargepower": {"name": "Ladeleistung"},
-      "chargetotalimport": {"name": "Netzbezug"},
+      "chargetotalimport": {"name": "Geladen (Gesamt)"},
       "chargedenergy": {"name": "Ladeenergie"},
       "chargeremainingenergy": {"name": "Ladeenergie verbleibend"},
 
@@ -362,11 +368,11 @@
       "battery_1_energy": {"name": "Batterie 2 Entlade-Energie"},
       "battery_2_energy": {"name": "Batterie 3 Entlade-Energie"},
       "battery_3_energy": {"name": "Batterie 4 Entlade-Energie"},
-      "batteryreturnenergy": {"name": "Batterie Energie (rückwärts)"},
-      "battery_0_returnenergy": {"name": "Batterie 1 Energie (rückwärts)"},
-      "battery_1_returnenergy": {"name": "Batterie 2 Energie (rückwärts)"},
-      "battery_2_returnenergy": {"name": "Batterie 3 Energie (rückwärts)"},
-      "battery_3_returnenergy": {"name": "Batterie 4 Energie (rückwärts)"},
+      "batteryreturnenergy": {"name": "Batterie Lade-Energie"},
+      "battery_0_returnenergy": {"name": "Batterie 1 Lade-Energie"},
+      "battery_1_returnenergy": {"name": "Batterie 2 Lade-Energie"},
+      "battery_2_returnenergy": {"name": "Batterie 3 Lade-Energie"},
+      "battery_3_returnenergy": {"name": "Batterie 4 Lade-Energie"},
       "batterymode": {"name": "Batterie Modus [CODE]"},
       "batterymode_value": {"name": "Batterie Modus"},
       "batterypower": {"name": "Leistung Batterie"},
@@ -475,6 +481,7 @@
     },
     "switch": {
       "batterydischargecontrol": {"name": "Hausbatterie: Entladesperre"},
+      "batterygriddischarge": {"name": "Hausbatterie: Entladen ins Netz zulassen"},
       "batteryboost": {"name": "Schnell aus Hausbatterie laden."},
       "planstrategycontinuous": {"name": "Ladeplanung: Optimierung",
         "state": {
