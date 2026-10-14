@@ -264,13 +264,6 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
     if configuration_data_available and coordinator._request_ext_meter_data:
         meter_data = coordinator.data.get(ADDITIONAL_ENDPOINTS_DATA_EVCCCONF, {}).get(EVCCCONF_KEY_CONFIG, {}).get(EVCCCONF_DEVICE_TYPES.METER.value, {})
         for a_meter_key in meter_data:
-            # we MUST ensure that the meter_id_addon is a valid HA entity-id
-            # (at least 'meter_id_addon' will become part of an entity-id)
-            meter_id_addon = camel_to_snake(a_meter_key).replace(".", "_").replace(":", "_").replace("-", "_")
-            while "__" in meter_id_addon:
-                meter_id_addon = meter_id_addon.replace("__", "_")
-            meter_name_addon = a_meter_key
-
             for a_stub in SENSOR_ENTITIES_PER_METER:
                 #value = coordinator.read_tag_configuration(a_stub.tag, a_meter_key)
                 #if value is not None:
@@ -280,10 +273,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
 
                 description = ExtSensorEntityDescription(
                     tag=a_stub.tag,
-                    key=f"{meter_id_addon}_{the_key}" if not patch_keys else f"{meter_id_addon}_{the_key}_{a_stub.json_idx[0]}",
+                    key=f"{a_meter_key}_{the_key}" if not patch_keys else f"{a_meter_key}_{the_key}_{a_stub.json_idx[0]}",
                     translation_key=the_key if not patch_keys else f"{the_key}_{a_stub.json_idx[0]}",
                     evcc_internal_id=a_meter_key,
-                    name_addon=meter_name_addon,
+                    name_addon=f"'{a_meter_key.upper()}'",
                     icon=a_stub.icon,
                     device_class=a_stub.device_class,
                     unit_of_measurement=a_stub.unit_of_measurement,
