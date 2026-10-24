@@ -1,7 +1,5 @@
 {
   "name": "evcc☀\uFE0F\uD83D\uDE98- Solar Charging",
-  "zip_release": true,
-  "filename": "evcc_intg.zip",
   "content_in_root": false,
   "homeassistant": "2023.8.0",
   "hacs": "1.18.0",
