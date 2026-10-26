@@ -1,4 +1,4 @@
-# <sub><img src="https://raw.githubusercontent.com/marq24/ha-evcc/main/custom_components/evcc_intg/brand/icon.png" style="align:bottom;height:42px;"></sub> Home Assistant Integration: __evcc☀️🚘- Solar Charging__ (unofficial)
+# <sub><img src="https://raw.githubusercontent.com/marq24/ha-evcc/main/custom_components/evcc_intg/brand/icon48.png" style="align:bottom;"></sub> Home Assistant Integration: __evcc☀️🚘- Solar Charging__ (unofficial)
 
 ![ha-logo](https://github.com/marq24/ha-evcc/raw/main/logo-ha.png)&nbsp;&nbsp;![evcc-logo](https://github.com/marq24/ha-evcc/raw/main/logo.png)
 
