@@ -39,7 +39,6 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
     """Config flow for evcc_intg."""
     VERSION = CONFIG_VERSION
     MINOR_VERSION = CONFIG_MINOR_VERSION
-    CONNECTION_CLASS = config_entries.CONN_CLASS_LOCAL_POLL
 
     def __init__(self):
         """Initialize."""
