@@ -222,7 +222,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
         # async_at_start(hass, delayed_startup_logic)
 
         # ok we are done...
-        _LOGGER.debug(f"async_setup_entry(): completed successfully for entry: {config_entry.entry_id}")
+        _LOGGER.info(f"async_setup_entry(): completed successfully for entry: {config_entry.entry_id}")
         return True
 
 async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> bool:
