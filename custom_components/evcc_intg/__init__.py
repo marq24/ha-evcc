@@ -85,7 +85,6 @@ from .service import EvccService
 _LOGGER: logging.Logger = logging.getLogger(__package__)
 
 WEBSOCKET_WATCHDOG_INTERVAL: Final = timedelta(minutes=5, seconds=1)
-CONFIG_SCHEMA = config_val.removed(DOMAIN, raise_if_present=False)
 DEVICE_REG_CLEANUP_RUNNING = False
 
 
