@@ -2146,6 +2146,33 @@ SENSOR_ENTITIES_PER_VEHICLE = [
         suggested_display_precision=1,
         entity_registry_enabled_default=True
     ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLECAPACTY,
+        icon="mdi:battery",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=UnitOfEnergy.KILO_WATT_HOUR,
+        device_class=None,
+        suggested_display_precision=1,
+        entity_registry_enabled_default=True
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLELIMITSOC,
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=True
+    ),
+    ExtSensorEntityDescriptionStub(
+        tag=Tag.VEHICLEMINSOC,
+        icon="mdi:battery-charging",
+        state_class=SensorStateClass.MEASUREMENT,
+        native_unit_of_measurement=PERCENTAGE,
+        device_class=None,
+        suggested_display_precision=0,
+        entity_registry_enabled_default=True
+    ),
 
     # the VEHICLE CONFIGURATION Sensors...
     ExtSensorEntityDescriptionStub(

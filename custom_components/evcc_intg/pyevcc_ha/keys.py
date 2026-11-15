@@ -457,6 +457,7 @@ class Tag(ApiKey, Enum):
     # even if we write to 'limitsoc' at the vehicle endpoint, the loadpoint[n]:vehicleLimitSoc values does not change ?!
     VEHICLELIMITSOC = ApiKey(json_key="limitSoc", type=EP_TYPE.VEHICLES, writeable=True, write_key="limitsoc", options=BATTERY_LIST)
     VEHICLEMINSOC = ApiKey(json_key="minSoc", type=EP_TYPE.VEHICLES, writeable=True, write_key="minsoc", options=BATTERY_LIST[:-1])
+    VEHICLECAPACTY = ApiKey(json_key="capacity", entity_key="vehicleCapacity", type=EP_TYPE.VEHICLES)
 
     # values can be written via SERVICE
     VEHICLEPLANSOC = ApiKey(json_key="vehiclePlansSoc", type=EP_TYPE.VEHICLES)

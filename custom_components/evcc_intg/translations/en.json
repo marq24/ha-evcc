@@ -407,6 +407,10 @@
       "effectivelimitsoc": {"name": "Effective Charging limit (SOC)"},
       "vehiclelimitsoc": {"name": "Vehicle Charging limit"},
 
+      "limitsoc": {"name": "Vehicle Charging limit"},
+      "minsoc": {"name": "Vehicle min Charging"},
+      "vehiclecapacity": {"name": "Vehicle Capacity"},
+
       "phaseaction": {"name": "Phases activity [CODE]"},
       "phaseaction_value": {"name": "Phases activity"},
       "phaseremaining": {"name": "Phases remaining"},
