@@ -70,6 +70,8 @@ SERVICE_DEL_LOADPOINT_PLAN: Final = "del_loadpoint_plan"
 SERVICE_DEL_VEHICLE_PLAN: Final = "del_vehicle_plan"
 SERVICE_ACTIVATE_LOADPOINT = "activate_loadpoint"
 SERVICE_DEACTIVATE_LOADPOINT = "deactivate_loadpoint"
+SERVICE_SET_OPTIMIZER_RISK_PROFILE = "set_optimizer_risk_profile"
+SERVICE_DEL_OPTIMIZER_RISK_PROFILE = "del_optimizer_risk_profile"
 
 # Map tags to their content keys
 TAG_TO_CONTENT_KEY: Final = {

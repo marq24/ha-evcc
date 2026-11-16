@@ -4,6 +4,7 @@ import logging
 
 from homeassistant.core import ServiceCall
 
+from . import Tag
 from .const import DOMAIN
 
 _LOGGER: logging.Logger = logging.getLogger(__package__)
@@ -257,3 +258,56 @@ class EvccService:
                     "error": "No date or false data provided",
                     "date": str(datetime.datetime.now().time())
                 }
+
+
+    async def set_optimizer_risk_profile(self, call: ServiceCall):
+        coordinator = self._coordinator(call)
+        if coordinator is None:
+            return self._no_instance(call)
+
+        post_data = {}
+        sol_val_raw = call.data.get("solar", None)
+        dem_val_raw = call.data.get("demand", None)
+        bud_val_raw = call.data.get("budget", None)
+
+        try:
+            if sol_val_raw:
+                sol_val_int = int(sol_val_raw)
+                if sol_val_int > 0:
+                    post_data["solar"] = int(sol_val_int)/100
+            if dem_val_raw:
+                dem_val_int = int(dem_val_raw)
+                if dem_val_int > 0:
+                    post_data["demand"] = int(dem_val_int)/100
+            if bud_val_raw:
+                post_data["budget"] = int(bud_val_raw)
+        except ValueError as exc:
+            _LOGGER.debug(f"set_optimizer_risk_profile(): {call.data} - {str(exc)}")
+            pass
+        except BaseException as exc:
+            _LOGGER.debug(f"set_optimizer_risk_profile(): {type(exc).__name__} - {str(exc)}")
+            pass
+
+        if len(post_data) == 3:
+            #data = {"solar": 0.3, "demand": 0.2, "budget": 8}
+            resp = await coordinator.bridge.write_tag(Tag.OPTIMIZERRISKPROFILE, value=post_data)
+            if call.return_response:
+                return {
+                    "success": "true",
+                    "date": str(datetime.datetime.now().time()),
+                    "response": resp
+                }
+
+        if call.return_response:
+            return {
+                "error": "Something went wrong",
+                "date": str(datetime.datetime.now().time())
+            }
+
+    async def del_optimizer_risk_profile(self, call: ServiceCall):
+        coordinator = self._coordinator(call)
+        if coordinator is None:
+            return self._no_instance(call)
+
+        await coordinator.bridge.write_tag(Tag.OPTIMIZERRISKPROFILE, value = None)
+

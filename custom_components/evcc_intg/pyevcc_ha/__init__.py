@@ -1308,8 +1308,11 @@ class EvccApiBridge:
         return ret
 
     async def write_site_key(self, write_key, value) -> dict:
+        post_data = None
         if isinstance(value, (bool, int, float)):
             value = str(value).lower()
+        elif isinstance(value, dict):
+            post_data = value
         elif value is not None:
             value = str(value)
 
@@ -1320,9 +1323,12 @@ class EvccApiBridge:
             _LOGGER.debug(f"DELETE request: {req}")
             r_json = await _do_request(method=self.web_session.delete(url=req, ssl=False, timeout=static_5sec_timeout))
         else:
-            req = f"{self.host}/api/{write_key}/{value}"
+            if post_data:
+                req = f"{self.host}/api/{write_key}"
+            else:
+                req = f"{self.host}/api/{write_key}/{value}"
             _LOGGER.debug(f"POST request: {req}")
-            r_json = await _do_request(method=self.web_session.post(url=req, ssl=False, timeout=static_5sec_timeout))
+            r_json = await _do_request(method=self.web_session.post(url=req, json=post_data, ssl=False, timeout=static_5sec_timeout))
 
         if r_json or (r_json is not None and isinstance(r_json, (dict, list))):
             return r_json

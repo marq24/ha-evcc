@@ -533,6 +533,8 @@ class Tag(ApiKey, Enum):
 
     OPTIMIZER = ApiKey(json_key="optimizer", type=EP_TYPE.SITE, writeable=True, write_key="config/optimizer")
     OPTIMIZERAUTOMATIC = ApiKey(json_key="optimizerAutomatic", type=EP_TYPE.SITE, writeable=True, write_key="config/optimizerautomatic", options=["off", "battery", "full"])
+    # see https://github.com/evcc-io/evcc/pull/35923 - this is a JSON object that we must send - so a SERVICE seams to be the way to go...
+    OPTIMIZERRISKPROFILE = ApiKey(json_key="optimizerRiskProfile", type=EP_TYPE.SITE, writeable=True, write_key="optimizerriskprofile")
 
     ###################################
     # CONFIGURATION

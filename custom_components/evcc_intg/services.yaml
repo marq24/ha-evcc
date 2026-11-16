@@ -175,3 +175,57 @@ deactivate_loadpoint:
           min: 1
           max: 10
           mode: box
+
+set_optimizer_risk_profile:
+  name: Set a Risk Profile for the Optimizer
+  description: Adds a risk profile that makes the optimizer hedge against forecast errors, using the uncertainty budget from evcc-io/optimizer#323
+  fields:
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg
+    solar:
+      name: Solar reduction
+      description: how much less sun than forecasted to expect. 0.3 means 30% less
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+    demand:
+      name: Demand rise
+      description: how much more consumption than forecasted to expect. 0.2 means 20% more
+      required: true
+      selector:
+        number:
+          min: 0
+          max: 100
+          unit_of_measurement: "%"
+          mode: slider
+    budget:
+      name: Budget duration
+      description: how many 15 minute slots per day may be that far off. The optimizer covers the worst ones. 8 is a short miss, 96 means the forecast is off all day
+      required: true
+      default: 16
+      selector:
+        number:
+          min: 1
+          max: 96
+          mode: box
+
+del_optimizer_risk_profile:
+  name: Delete Risk Profile for the Optimizer
+  description: Delete the current set risk profile that makes the optimizer hedge against forecast errors
+  fields:
+    config_entry_id:
+      name: evcc instance
+      description: Only needed when more than one evcc instance is configured
+      required: false
+      selector:
+        config_entry:
+          integration: evcc_intg

@@ -67,6 +67,8 @@ from .const import (
     SERVICE_DEL_VEHICLE_PLAN,
     SERVICE_ACTIVATE_LOADPOINT,
     SERVICE_DEACTIVATE_LOADPOINT,
+    SERVICE_SET_OPTIMIZER_RISK_PROFILE,
+    SERVICE_DEL_OPTIMIZER_RISK_PROFILE,
     CONF_INCLUDE_EVCC,
     CONF_USE_WS,
     CONF_EXTENDED_VEHICLE_DATA,
@@ -199,6 +201,10 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
                                          supports_response=SupportsResponse.OPTIONAL)
             hass.services.async_register(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT, evcc_services.deactivate_loadpoint,
                                          supports_response=SupportsResponse.OPTIONAL)
+            hass.services.async_register(DOMAIN, SERVICE_SET_OPTIMIZER_RISK_PROFILE, evcc_services.set_optimizer_risk_profile,
+                                         supports_response=SupportsResponse.OPTIONAL)
+            hass.services.async_register(DOMAIN, SERVICE_DEL_OPTIMIZER_RISK_PROFILE, evcc_services.del_optimizer_risk_profile,
+                                         supports_response=SupportsResponse.OPTIONAL)
 
         # If Home Assistant is already in a running state, start the watchdog
         # immediately, else trigger it after Home Assistant has finished starting.
@@ -247,6 +253,8 @@ async def async_unload_entry(hass: HomeAssistant, config_entry: ConfigEntry) -> 
             hass.services.async_remove(DOMAIN, SERVICE_DEL_VEHICLE_PLAN)
             hass.services.async_remove(DOMAIN, SERVICE_ACTIVATE_LOADPOINT)
             hass.services.async_remove(DOMAIN, SERVICE_DEACTIVATE_LOADPOINT)
+            hass.services.async_remove(DOMAIN, SERVICE_SET_OPTIMIZER_RISK_PROFILE)
+            hass.services.async_remove(DOMAIN, SERVICE_DEL_OPTIMIZER_RISK_PROFILE)
 
     return unload_ok
 

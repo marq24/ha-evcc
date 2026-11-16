@@ -5,6 +5,8 @@
     "del_loadpoint_plan": "mdi:calendar-remove",
     "del_vehicle_plan": "mdi:calendar-remove",
     "activate_loadpoint": "mdi:check-circle",
-    "deactivate_loadpoint": "mdi:minus-circle"
+    "deactivate_loadpoint": "mdi:minus-circle",
+    "set_optimizer_risk_profile": "mdi:calculator-variant-outline",
+    "del_optimizer_risk_profile": "mdi:calculator-variant"
   }
 }
