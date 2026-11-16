@@ -313,6 +313,14 @@
           "7200": "2 Stunden",
           "604800": "Alles"
         }
+      },
+      "optimizerautomatic": {
+        "name": "Optimizer Automatische Steuerung",
+        "state": {
+          "off": "AUS",
+          "battery": "Hausbatterie",
+          "full": "Hausbatterie & Ladepunkte"
+        }
       }
     },
     "sensor": {
@@ -501,7 +509,8 @@
       "repeating_plan_7": {"name": "Ladeplan 7 (wiederholend)"},
       "repeating_plan_8": {"name": "Ladeplan 8 (wiederholend)"},
       "repeating_plan_9": {"name": "Ladeplan 9 (wiederholend)"},
-      "repeating_plan_10": {"name": "Ladeplan 10 (wiederholend)"}
+      "repeating_plan_10": {"name": "Ladeplan 10 (wiederholend)"},
+      "optimizer": {"name": "Optimizer (Experimentell)"}
     }
   }
 }

@@ -326,8 +326,8 @@ BUTTONS_ENTITIES = [
     ),
     # POST /api/optimize - evcc ignores it while the (experimental) optimizer is off
     ExtButtonEntityDescription(
-        tag=Tag.OPTIMIZE,
-        key=Tag.OPTIMIZE.entity_key,
+        tag=Tag.OPTIMIZE_REFRESH,
+        key=Tag.OPTIMIZE_REFRESH.entity_key,
         payload=IS_TRIGGER,
         icon="mdi:refresh",
         entity_registry_enabled_default=False,
@@ -557,6 +557,14 @@ SELECT_ENTITIES = [
         entity_category=EntityCategory.CONFIG,
         icon="mdi:battery-sync-outline",
         options=Tag.BATTERYMODE.options,
+        entity_registry_enabled_default=False
+    ),
+    ExtSelectEntityDescription(
+        tag=Tag.OPTIMIZERAUTOMATIC,
+        key=Tag.OPTIMIZERAUTOMATIC.json_key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:auto-fix",
+        options=Tag.OPTIMIZERAUTOMATIC.options,
         entity_registry_enabled_default=False
     ),
 ]
@@ -2384,7 +2392,15 @@ SWITCH_ENTITIES = [
         entity_category=EntityCategory.CONFIG,
         device_class=None,
         entity_registry_enabled_default=False
-    )
+    ),
+    ExtSwitchEntityDescription(
+        tag=Tag.OPTIMIZER,
+        key=Tag.OPTIMIZER.json_key,
+        icon="mdi:calculator-variant-outline",
+        entity_category=EntityCategory.CONFIG,
+        device_class=None,
+        entity_registry_enabled_default=False
+    ),
 ]
 SWITCH_ENTITIES_PER_LOADPOINT = [
     ExtSwitchEntityDescriptionStub(

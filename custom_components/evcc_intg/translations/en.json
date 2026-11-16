@@ -385,6 +385,14 @@
           "7200": "2 hours",
           "604800": "All"
         }
+      },
+      "optimizerautomatic": {
+        "name": "Optimizer Automatic Control",
+        "state": {
+          "off": "OFF",
+          "battery": "Home-Battery",
+          "full": "Home-Battery & Loadpoints"
+        }
       }
     },
     "sensor": {
@@ -587,7 +595,8 @@
       "repeating_plan_7": {"name": "Charging plan 7 (repetitive)"},
       "repeating_plan_8": {"name": "Charging plan 8 (repetitive)"},
       "repeating_plan_9": {"name": "Charging plan 9 (repetitive)"},
-      "repeating_plan_10": {"name": "Charging plan 10 (repetitive)"}
+      "repeating_plan_10": {"name": "Charging plan 10 (repetitive)"},
+      "optimizer": {"name": "Optimizer (experimental)"}
     }
   }
 }
