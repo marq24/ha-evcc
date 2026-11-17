@@ -156,7 +156,8 @@
       "enabledelay": {"name": "Verzögerung Aktivierung"},
       "disabledelay": {"name": "Verzögerung Deaktivierung"},
       "priority": {"name": "Priorität"},
-      "solarshare": {"name": "Sonnenanteil (Solarüberschuss)"}
+      "solarshare": {"name": "Sonnenanteil (Solarüberschuss)"},
+      "profilepercentile": {"name": "Optimizer Profil-Perzentil"}
     },
     "select": {
       "batterymode": {

@@ -410,6 +410,18 @@ NUMBER_ENTITIES = [
         native_unit_of_measurement="@@@/kWh",
         entity_registry_enabled_default=False
     ),
+    ExtNumberEntityDescription(
+        tag=Tag.OPTIMIZERPROFILEPERCENTILE,
+        key=Tag.OPTIMIZERPROFILEPERCENTILE.json_key,
+        entity_category=EntityCategory.CONFIG,
+        icon="mdi:calculator-variant-outline",
+        mode=NumberMode.BOX,
+        native_max_value=100,
+        native_min_value=0,
+        native_step=1,
+        native_unit_of_measurement=PERCENTAGE,
+        entity_registry_enabled_default=False
+    )
 ]
 NUMBER_ENTITIES_PER_LOADPOINT = [
     ExtNumberEntityDescriptionStub(

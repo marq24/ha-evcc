@@ -137,12 +137,14 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
         try:
             value = self.coordinator.read_tag(self.tag, self.lp_idx)
             if value is None or value == "":
+                if self.tag == Tag.OPTIMIZERPROFILEPERCENTILE:
+                    return 0
                 return "unknown"
             else:
                 if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT, Tag.BATTERYGRIDDISCHARGELIMIT]:
                     value = round(float(value), 3)
                 # fucking HA translation keys!
-                elif self.tag == Tag.SOLARSHARE:
+                elif self.tag in [Tag.SOLARSHARE, Tag.OPTIMIZERPROFILEPERCENTILE]:
                     value = int(value * 100)
                 else:
                     value = int(value)
@@ -164,9 +166,11 @@ class EvccNumber(EvccBaseEntity, NumberEntity):
         try:
             if self.tag in [Tag.SMARTCOSTLIMIT, Tag.SMARTFEEDINPRIORITYLIMIT, Tag.BATTERYGRIDCHARGELIMIT, Tag.BATTERYGRIDDISCHARGELIMIT]:
                 await self.coordinator.async_write_tag(self.tag, round(float(value), 3), self)
-            elif self.tag == Tag.SOLARSHARE:
+            elif self.tag in [Tag.SOLARSHARE]:
                 # fucking HA translation keys!
                 await self.coordinator.async_write_tag(self.tag, int(value)/100 if int(value) > 0 else 0, self)
+            elif self.tag in [Tag.OPTIMIZERPROFILEPERCENTILE]:
+                await self.coordinator.async_write_tag(self.tag, int(value)/100 if int(value) > 0 else None, self)
             else:
                 await self.coordinator.async_write_tag(self.tag, int(value), self)
 

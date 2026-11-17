@@ -323,9 +323,13 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                     for a_meter_device_id, a_meter_object in meter_devices_data.items():
                         a_meter_device_has_error = False
                         for a_key, a_value in a_meter_object.items():
-                            if "error" in a_value and a_value["error"] is not None and len(a_value["error"]) > 0:
-                                a_meter_device_has_error = True
-                                break
+                            if isinstance(a_value, dict):
+                                error_val = a_value.get("error")
+                                if error_val is not None and len(error_val) > 0:
+                                    a_meter_device_has_error = True
+                                    break
+                            else:
+                                _LOGGER.debug(f"SENSOR _check_for_entities_to_enabled(): {a_meter_device_id} - {a_meter_object} VALUE IS NO DICT ?! key: {a_key} - value:{a_value}")
                         if not a_meter_device_has_error:
                             avail_data_count +=1
 
