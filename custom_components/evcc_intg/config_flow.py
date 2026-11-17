@@ -99,12 +99,13 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
                 user_input[CONF_EXTENDED_METER_DATA_INTERVAL]   = max(5, user_input[CONF_EXTENDED_METER_DATA_INTERVAL])
 
                 # make sure that we have either a stipped pwd (with len > 0) in our config or NONE
-                if user_input.get(CONF_PASSWORD, None) is not None:
-                    user_input[CONF_PASSWORD] = user_input.get(CONF_PASSWORD, "").strip()
-                    if len(user_input[CONF_PASSWORD]) == 0:
+                if CONF_PASSWORD in user_input:
+                    if user_input.get(CONF_PASSWORD, None) is not None:
+                        user_input[CONF_PASSWORD] = user_input.get(CONF_PASSWORD, "").strip()
+                        if len(user_input[CONF_PASSWORD]) == 0:
+                            user_input.pop(CONF_PASSWORD)
+                    else:
                         user_input.pop(CONF_PASSWORD)
-                else:
-                    user_input.pop(CONF_PASSWORD)
 
                 if self.source == SOURCE_RECONFIGURE:
                     if not user_input[CONF_PURGE_ALL]:
@@ -192,8 +193,8 @@ class EvccFlowHandler(config_entries.ConfigFlow, domain=DOMAIN):
             if adm_pwd is not None:
                 adm_pwd = adm_pwd.strip()
 
-            if len(adm_pwd) == 0:
-                adm_pwd = None
+                if len(adm_pwd) == 0:
+                    adm_pwd = None
 
             session = async_create_clientsession(self.hass, verify_ssl=False, cookie_jar=aiohttp.CookieJar(unsafe=True))
             client = EvccApiBridge(host=host, web_session=session, coordinator=None,
