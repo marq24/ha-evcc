@@ -89,6 +89,23 @@
         "config_entry_id": {"name": "evcc Instanz", "description": "Nur nötig, wenn mehr als eine evcc Instanz eingerichtet ist"},
         "loadpoint": {"name": "Ladepunkt ID", "description": "Eine Zahl beginnend mit 1...n (wobei 1 Dein erster konfigurierter Ladepunkt ist)"}
       }
+    },
+    "set_optimizer_risk_profile": {
+      "name": "Risikoprofil (Unsicherheit) für den Optimizer setzen",
+      "description": "Fügt ein Risikoprofil hinzu, das den Optimierer dazu veranlasst, sich unter Nutzung des Unsicherheitsbudgets gegen Prognosefehler abzusichern. Siehe evcc-io/optimizer#323",
+      "fields": {
+        "config_entry_id": {"name": "evcc Instanz", "description": "Nur nötig, wenn mehr als eine evcc Instanz eingerichtet ist"},
+        "solar": {"name": "Solar Minderung ", "description": "Wie viel weniger Sonne im Vergleich zur Vorhersage zu erwarten ist. Z. B. 30 % weniger (wird intern in „0,3“ umgewandelt)."},
+        "demand": {"name": "Verbrauch Steigerung", "description": "Wie viel höher der Verbrauch im Vergleich zur Prognose ausfallen dürfte. Z. B. 20 % mehr (wird intern in „0,2“ umgewandelt)."},
+        "budget": {"name": "Budget Dauer", "description": "Wie viele 15-Minuten-Zeitfenster pro Tag weichen möglicherweise so stark ab? Der Optimierer deckt die problematischsten Fälle ab. Eine Abweichung bei 8 Zeitfenstern ist gering, während 96 bedeuten, dass die Prognose für den gesamten Tag fehlerhaft ist."}
+      }
+    },
+    "del_optimizer_risk_profile": {
+      "name": "Risikoprofil für den Optimizer löschen",
+      "description": "Löscht ein zuvor gesetztes Risikoprofil",
+      "fields": {
+        "config_entry_id": {"name": "evcc Instanz", "description": "Nur nötig, wenn mehr als eine evcc Instanz eingerichtet ist"}
+      }
     }
   },
   "entity": {

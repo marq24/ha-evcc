@@ -90,6 +90,23 @@
         "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
         "loadpoint": {"name": "Loadpoint ID", "description": "A number starting from 1...n (where 1'st your first configured loadpoint)"}
       }
+    },
+    "set_optimizer_risk_profile": {
+      "name": "Set a Risk Profile for the Optimizer",
+      "description": "Adds a risk profile that makes the optimizer hedge against forecast errors, using the uncertainty budget from evcc-io/optimizer#323",
+      "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"},
+        "solar": {"name": "Solar reduction", "description": "how much less sun than forecasted to expect. E.g. 30% less (will be converted to '0.3' internally)"},
+        "demand": {"name": "Demand rise", "description": "how much more consumption than forecasted to expect. E.g. 20% more (will be converted to '0.2' internally)"},
+        "budget": {"name": "Budget duration", "description": "how many 15 minute slots per day may be that far off. The optimizer covers the worst ones. 8 is a short miss, 96 means the forecast is off all day"}
+      }
+    },
+    "del_optimizer_risk_profile": {
+      "name": "Delete Risk Profile for the Optimizer",
+      "description": "Delete the current set risk profile that makes the optimizer hedge against forecast errors",
+      "fields": {
+        "config_entry_id": {"name": "evcc instance", "description": "Only needed when more than one evcc instance is configured"}
+      }
     }
   },
   "entity": {
