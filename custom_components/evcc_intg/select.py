@@ -376,13 +376,3 @@ class EvccSelect(EvccBaseEntity, SelectEntity):
 
         except ValueError:
             return "unavailable"
-
-    @property
-    def available(self) -> bool:
-        is_avail = super().available
-        if self.tag == Tag.ALWAYS_CHARGE:
-            # alwayscharge is only available when the mode is set to 'smart'...
-            # otherwise it will be hidden in the UI
-            mode_value = self.coordinator.read_tag(Tag.MODE_SMART, self.lp_idx)
-            is_avail = is_avail and (mode_value is not None and mode_value == "smart")
-        return is_avail

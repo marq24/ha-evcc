@@ -1,5 +1,6 @@
 import logging
 import re
+from dataclasses import dataclass
 from enum import Enum
 from typing import (
     NamedTuple, Final
@@ -45,6 +46,11 @@ def camel_to_snake(a_key: str):
     a_key = re.sub(CC_P2, r'\1_\2', a_key).lower()
     return re.sub(r"_+", "_", a_key).strip("_")
 
+@dataclass(frozen=True)
+class AvailableRule():
+    tag: ApiKey
+    valid_values_uc: list[str]
+
 class ApiKey(NamedTuple):
     type: str
     json_key: str
@@ -60,6 +66,10 @@ class ApiKey(NamedTuple):
     # when we have the need to check for a specific http status code...
     # e.g. the shutdown endpoint returns status: 204
     expected_http_status_response: int = None
+
+    # when specified the entity should be only enabled
+    # if the rule defined in the dict is true
+    available_rule: AvailableRule = None
 
     @property
     def snake_case(self) -> str:
@@ -80,6 +90,26 @@ class Tag(ApiKey, Enum):
             return f"{self.json_key}.{self.entity_key}"
         else:
             return self.json_key
+
+    ###################################
+    # EV-OPTIMIZATION
+    ###################################
+    EVOPT_REQUEST_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_REQ, type=EP_TYPE.EVOPT)
+    EVOPT_RESULT_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_RES, type=EP_TYPE.EVOPT)
+    EVOPT_DETAILS_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_DETAILS, type=EP_TYPE.EVOPT)
+    # starts an optimizer run right away, as the button on evcc's optimizer page does
+    OPTIMIZE_REFRESH = ApiKey(entity_key="optimize", json_key=f"{INTERNAL_ONLY}_optimize", type=EP_TYPE.EVOPT, write_key="optimize", expected_http_status_response=200)
+
+    OPTIMIZER = ApiKey(json_key="optimizer", type=EP_TYPE.SITE, writeable=True, write_key="config/optimizer")
+    OPTIMIZERAUTOMATIC = ApiKey(json_key="optimizerAutomatic", type=EP_TYPE.SITE,
+                                writeable=True, write_key="config/optimizerautomatic", options=["off", "battery", "full"],
+                                available_rule = AvailableRule(tag=OPTIMIZER, valid_values_uc=["1", "ON", "TRUE"]))
+    # see https://github.com/evcc-io/evcc/pull/35923 - this is a JSON object that we must send - so a SERVICE seams to be the way to go...
+    OPTIMIZERRISKPROFILE = ApiKey(json_key="optimizerRiskProfile", type=EP_TYPE.SITE,
+                                  writeable=True, write_key="optimizerriskprofile")
+    OPTIMIZERPROFILEPERCENTILE = ApiKey(json_key="profilePercentile", type=EP_TYPE.SITE,
+                                        writeable=True, write_key="profilepercentile",
+                                        available_rule = AvailableRule(tag=OPTIMIZER, valid_values_uc=["1", "ON", "TRUE"]))
 
     ###################################
     # SITE STUFF
@@ -202,7 +232,8 @@ class Tag(ApiKey, Enum):
     BATTERYGRIDCHARGEACTIVE = ApiKey(json_key="batteryGridChargeActive", type=EP_TYPE.SITE, write_key="batterygridchargeactive")
 
     # batteryGridChargeLimit: ??
-    BATTERYGRIDCHARGELIMIT = ApiKey(json_key="batteryGridChargeLimit", type=EP_TYPE.SITE, write_key="batterygridchargelimit")
+    BATTERYGRIDCHARGELIMIT = ApiKey(json_key="batteryGridChargeLimit", type=EP_TYPE.SITE, write_key="batterygridchargelimit",
+                                    available_rule = AvailableRule(tag=OPTIMIZERAUTOMATIC, valid_values_uc=["0", "FALSE", "OFF"]))
 
     # POST /api/batterygriddischarge/<status>: allow the home battery to discharge into the grid (experimental)
     BATTERYGRIDDISCHARGE = ApiKey(json_key="batteryGridDischarge", type=EP_TYPE.SITE, writeable=True, write_key="batterygriddischarge")
@@ -400,7 +431,8 @@ class Tag(ApiKey, Enum):
     # /api/loadpoints/{id}/alwayscharge/{off|on|once}
     ALWAYS_CHARGE = ApiKey(
         json_key="alwaysCharge", type=EP_TYPE.LOADPOINTS,
-        writeable=True, write_key="alwayscharge", options=["off", "on", "once"]
+        writeable=True, write_key="alwayscharge", options=["off", "on", "once"],
+        available_rule = AvailableRule(tag=MODE_SMART, valid_values_uc=["SMART"])
     )
 
     # "limitSoc": 0, -> write 'limitsoc' in %
@@ -521,21 +553,6 @@ class Tag(ApiKey, Enum):
     CHARGING_SESSIONS_LOADPOINT_COST = ApiKey(entity_key="charging_sessions_loadpoint_cost", json_key="cost", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_ENERGY = ApiKey(entity_key="charging_sessions_loadpoint_chargedenergy", json_key="chargedEnergy", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
     CHARGING_SESSIONS_LOADPOINT_DURATION = ApiKey(entity_key="charging_sessions_loadpoint_chargeduration", json_key="chargeDuration", type=EP_TYPE.SESSIONS, subtype=SESSIONS_KEY_LOADPOINTS)
-
-    ###################################
-    # EV-OPTIMIZATION
-    ###################################
-    EVOPT_REQUEST_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_REQ, type=EP_TYPE.EVOPT)
-    EVOPT_RESULT_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_RES, type=EP_TYPE.EVOPT)
-    EVOPT_DETAILS_OBJECT = ApiKey(json_key=JSONKEY_EVOPT_DETAILS, type=EP_TYPE.EVOPT)
-    # starts an optimizer run right away, as the button on evcc's optimizer page does
-    OPTIMIZE_REFRESH = ApiKey(entity_key="optimize", json_key=f"{INTERNAL_ONLY}_optimize", type=EP_TYPE.EVOPT, write_key="optimize", expected_http_status_response=200)
-
-    OPTIMIZER = ApiKey(json_key="optimizer", type=EP_TYPE.SITE, writeable=True, write_key="config/optimizer")
-    OPTIMIZERAUTOMATIC = ApiKey(json_key="optimizerAutomatic", type=EP_TYPE.SITE, writeable=True, write_key="config/optimizerautomatic", options=["off", "battery", "full"])
-    # see https://github.com/evcc-io/evcc/pull/35923 - this is a JSON object that we must send - so a SERVICE seams to be the way to go...
-    OPTIMIZERRISKPROFILE = ApiKey(json_key="optimizerRiskProfile", type=EP_TYPE.SITE, writeable=True, write_key="optimizerriskprofile")
-    OPTIMIZERPROFILEPERCENTILE = ApiKey(json_key="profilePercentile", type=EP_TYPE.SITE, writeable=True, write_key="profilepercentile")
 
     ###################################
     # CONFIGURATION

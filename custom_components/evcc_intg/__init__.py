@@ -1336,7 +1336,15 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
     @property
     def available(self):
         """Return True if entity is available."""
-        return self.coordinator.last_update_success and self.coordinator.data is not None and len(self.coordinator.data) > 0
+        base_val = self.coordinator.last_update_success and self.coordinator.data is not None and len(self.coordinator.data) > 0
+        if base_val and self.tag.available_rule is not None:
+            a_rule = self.tag.available_rule
+            try:
+                return str(self.coordinator.read_tag(a_rule.tag, self.lp_idx)).upper() in a_rule.valid_values_uc
+            except BaseException as ex:
+                _LOGGER.debug(f"available(): {self.tag} caused: {type(ex).__name__} - {ex}")
+
+        return base_val
 
     @property
     def unique_id(self):
