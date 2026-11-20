@@ -178,8 +178,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry):
 
     else:
         # now we can attempt to initialize our coordinator with the data already read...
-        if not await coordinator.read_evcc_config_on_startup(hass):
-            _LOGGER.warning(f"async_setup_entry(): coordinator.read_evcc_config_on_startup() was not completed successfully - please enable debug-log option in order to find a posiible root cause.")
+        await coordinator.read_evcc_config_on_startup(hass)
 
         # then we can start the entity registrations...
         hass.data[DOMAIN][config_entry.entry_id] = coordinator
@@ -524,9 +523,11 @@ class EvccDataUpdateCoordinator(DataUpdateCoordinator):
 
         initdata = self.bridge._data
 
-        if initdata is None or len(initdata) == 0:
-            _LOGGER.warning("read_evcc_config_on_startup(): could not init evcc_intg - no data available from evcc!")
-            return False
+        # The state may have changed since the initial availability check.
+        try:
+            self.bridge.validate_startup_state(initdata)
+        except ValueError as err:
+            raise ConfigEntryNotReady(str(err)) from err
 
         if Tag.VERSION.json_key in initdata:
             self._version = initdata[Tag.VERSION.json_key]

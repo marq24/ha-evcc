@@ -318,6 +318,27 @@ class EvccApiBridge:
 
         return None, None
 
+    def validate_startup_state(self, data: dict | None) -> None:
+        """Require a usable site before discovering its devices and entities."""
+        if data is None or len(data) == 0:
+            raise ValueError("NO DATA")
+
+        # evcc can finish startup (and serve its API) even when site setup failed.
+        if data.get("fatal"):
+            raise ValueError("evcc reports a fatal startup error")
+        if data.get("setupRequired") is True:
+            raise ValueError("evcc setup is required")
+        if data.get("apiReady") is False:
+            raise ValueError("evcc API is not ready yet")
+
+        a_version, _ = EvccApiBridge.read_version(data)
+        # since API v0.211.0 evcc supports the 'startupCompleted' flag
+        if Version(a_version) >= Version("0.211.0"):
+            if not data.get("startupCompleted"):
+                raise ValueError("NOT READY YET")
+        else:
+            _LOGGER.info(f"looks like evcc version {a_version} is too old to support 'startupCompleted' status")
+
     async def is_evcc_available(self):
         _LOGGER.debug(f"is_evcc_available(): '{self.host}' CHECKING...")
         data = None
@@ -327,18 +348,7 @@ class EvccApiBridge:
                 res.raise_for_status()
                 if res.status in [200, 201, 202, 204, 205]:
                     data = await res.json()
-                    if data is None or len(data) == 0:
-                        _LOGGER.info(f"HA host @ {self.host} is NOT available - data is None or len = 0 - {data}")
-                        raise BaseException("NO DATA")
-                    else:
-                        a_version, raw_version = EvccApiBridge.read_version(data)
-                        # since API v0.211.0 evcc supports the 'startupCompleted' flag
-                        if Version(a_version) >= Version("0.211.0"):
-                            if not data.get("startupCompleted"):
-                                _LOGGER.info(f"HA host @ {self.host} has data, but `startupComplete` is FALSE - '{data.get("startupCompleted")}'")
-                                raise BaseException("NOT READY YET")
-                        else:
-                            _LOGGER.info(f"looks like evcc version {a_version} is too old to support 'startupCompleted' status")
+                    self.validate_startup_state(data)
 
         except BaseException as exc:
             _LOGGER.debug(f"is_evcc_available(): check caused: {type(exc).__name__} - {exc} - Integration is not ready to be started.")
