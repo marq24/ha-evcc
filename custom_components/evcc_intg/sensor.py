@@ -545,7 +545,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
 
                         return return_obj
             except (IndexError, ValueError, TypeError, KeyError) as ex:
-                _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
+                _LOGGER.info(f"extra_state_attributes(): Error reading tag {self.tag} ({self.lp_idx}): {ex}")
 
         elif self.tag in [Tag.FORECAST_GRID, Tag.FORECAST_SOLAR, Tag.FORECAST_FEEDIN, Tag.FORECAST_PLANNER]:
             data = self.coordinator.read_tag(self.tag)
@@ -596,7 +596,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                                 return {"suggestion": suggestion_obj}
 
                 except (IndexError, ValueError, TypeError, KeyError) as ex:
-                    _LOGGER.info(f"Error reading tag {self.tag} ({self.lp_idx}): {ex}")
+                    _LOGGER.info(f"extra_state_attributes(): Error reading tag {self.tag} ({self.lp_idx}): {ex}")
 
         return {}
 
@@ -724,6 +724,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 # can use the 'evcc_internal_id'
                 value = self.coordinator.read_tag(self.tag, self.lp_idx, self.evcc_internal_id)
 
+            org_value = value
             if hasattr(self.entity_description, "json_idx") and self.entity_description.json_idx is not None:
                 for idx, key in enumerate(self.entity_description.json_idx):
                     if isinstance(value, (list, dict)):
@@ -752,6 +753,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                 else:
                     # if the value is a list (or dict), but could not be extracted (cause of none matching indices) we need
                     # to purge the value to None!
+                    _LOGGER.debug(f"native_value(): {self.tag} {self.entity_id} COULD NOT extract value [json_idx: {self.entity_description.json_idx}] from {org_value}")
                     value = None
 
             if value is None or len(str(value)) == 0:

@@ -331,15 +331,6 @@ class EvccApiBridge:
                         _LOGGER.info(f"HA host @ {self.host} is NOT available - data is None or len = 0 - {data}")
                         raise BaseException("NO DATA")
                     else:
-                        a_version, _ = EvccApiBridge.read_version(data)
-                        # since API v0.211.0 evcc supports the 'startupCompleted' flag
-                        if Version(a_version) >= Version("0.211.0"):
-                            if not data.get("startupCompleted"):
-                                _LOGGER.info(f"HA host @ {self.host} has data, but `startupComplete` is FALSE - '{data.get("startupCompleted")}'")
-                                raise BaseException("NOT READY YET")
-                        else:
-                            _LOGGER.info(f"looks like evcc version {a_version} is too old to support 'startupCompleted' status")
-
                         if "fatal" in data:
                             fatal_list = data.get("fatal", "")
                             if fatal_list is not None and len(str(fatal_list).strip()) > 0:
@@ -355,6 +346,11 @@ class EvccApiBridge:
                             if not data.get("apiReady", True):
                                 _LOGGER.info(f"HA host @ {self.host} has data, but `apiReady` is FALSE - '{data.get("apiReady")}'")
                                 raise BaseException("API NOT READY")
+
+                        if "startupCompleted" in data:
+                            if not data.get("startupCompleted", True):
+                                _LOGGER.info(f"HA host @ {self.host} has data, but `startupComplete` is FALSE - '{data.get("startupCompleted")}'")
+                                raise BaseException("NOT READY YET")
 
         except BaseException as exc:
             _LOGGER.debug(f"is_evcc_available(): check caused: {type(exc).__name__} - {exc} - Integration is not ready to be started.")
