@@ -6,7 +6,7 @@ I was surprised that it looks like that there does not exist a simple Home Assis
 
 __Please note__, _that this Home Assistant integration is not official and not supported by the evcc developers. I am not affiliated with evcc in any way. This integration is based on the evcc API and the evcc API documentation._
 
-[![hacs_badge][hacsbadge]][hacs] [![hainstall][hainstallbadge]][hainstall] [![Wero][werobadge]][wero] [![wise][wisebadge]][wise] [![Revolut][revolutbadge]][revolut] [![PayPal][paypalbadge]][paypal] [![github][ghsbadge]][ghs] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee]
+[![hacs_badge][hacsbadge]][hacs] [![hainstall][hainstallbadge]][hainstall] [![github][ghsbadge]][ghs] [![Wero][werobadge]][wero] [![Revolut][revolutbadge]][revolut] [![ApplePay][applepaybadge]][applepay] [![BuyMeCoffee][buymecoffeebadge]][buymecoffee] [![wise][wisebadge]][wise] [![PayPal][paypalbadge]][paypal] 
 
 ## Disclaimer
 
@@ -332,6 +332,9 @@ Please consider [using my personal Tibber invitation link to join Tibber today](
 
 [revolut]: https://revolut.me/marq24
 [revolutbadge]: https://img.shields.io/badge/_revolut-me_-blue.svg?style=for-the-badge&logo=revolut&logoColor=ccc&link=https%3A%2F%2Frevolut.me%2Fmarq24
+
+[applepay]: https://revolut.me/marq24
+[applepaybadge]: https://img.shields.io/badge/_apple-pay_-blue.svg?style=for-the-badge&logo=applepay&logoColor=ccc&link=https%3A%2F%2Frevolut.me%2Fmarq24
 
 [wise]: https://wise.com/pay/me/matthiasm1046
 [wisebadge]: https://img.shields.io/badge/_wise-me_-blue.svg?style=for-the-badge&logo=wise&logoColor=ccc&link=https%3A%2F%2Fwise.com%2Fpay%2Fme%2Fmatthiasm1046
