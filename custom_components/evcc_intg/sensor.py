@@ -618,7 +618,7 @@ class EvccSensor(EvccBaseEntity, SensorEntity, RestoreEntity):
                             elif isinstance(start_entry, str):
                                 parse_from_RFC3339 = True
                             else:
-                                _LOGGER.error(f"Invalid start_entry type {ts_entry} {type(ts_entry).__name__}")
+                                _LOGGER.error(f"Invalid start_entry type {start_entry} {type(start_entry).__name__}")
 
                             if parse_from_RFC3339 is not None:
                                 start_dt = datetime.fromisoformat(start_entry).astimezone(timezone.utc) if parse_from_RFC3339 else datetime.fromtimestamp(start_entry, tz=timezone.utc)
