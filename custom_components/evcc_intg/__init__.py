@@ -9,6 +9,8 @@ from typing import Any, Final
 
 import aiohttp
 from aiohttp import ClientConnectionError
+from packaging.version import Version
+
 from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_SCAN_INTERVAL, EVENT_HOMEASSISTANT_STARTED, CONF_PASSWORD
 from homeassistant.core import HomeAssistant, Event, SupportsResponse, CoreState
@@ -19,11 +21,13 @@ from homeassistant.helpers.device_registry import DeviceEntry, async_entries_for
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval, async_call_later
 from homeassistant.helpers.storage import STORAGE_DIR
-from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.loader import async_get_integration
 from homeassistant.util import slugify
-from packaging.version import Version
+try:
+    from homeassistant.helpers.typing import Undefined as HA_UNDEFINED  # type: ignore[attr-defined]
+except ImportError:
+    from homeassistant.helpers.typing import UNDEFINED as HA_UNDEFINED
 
 from custom_components.evcc_intg.pyevcc_ha import EvccApiBridge
 from custom_components.evcc_intg.pyevcc_ha.const import (
@@ -1357,7 +1361,7 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
         If has_entity_name is True, this returns device.name + self.name
         """
         name = self.name
-        if name is UNDEFINED:
+        if name is HA_UNDEFINED:
             name = None
 
         if not self.has_entity_name or not (device_entry := self.device_entry):
