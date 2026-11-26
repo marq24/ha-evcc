@@ -19,7 +19,7 @@ from homeassistant.helpers.device_registry import DeviceEntry, async_entries_for
 from homeassistant.helpers.entity import Entity, EntityDescription
 from homeassistant.helpers.event import async_track_time_interval, async_call_later
 from homeassistant.helpers.storage import STORAGE_DIR
-from homeassistant.helpers.typing import UNDEFINED, UndefinedType
+from homeassistant.helpers.typing import UNDEFINED
 from homeassistant.helpers.update_coordinator import DataUpdateCoordinator, UpdateFailed
 from homeassistant.loader import async_get_integration
 from homeassistant.util import slugify
@@ -1284,7 +1284,7 @@ class EvccBaseEntity(CustomFriendlyNameEntity):
         self.coordinator = coordinator
         self.entity_id = f"{entity_type}.{self.coordinator.system_id}_{camel_to_snake(description.key)}".lower()
 
-    def _name_internal(self, device_class_name: str | None, platform_translations: dict[str, Any]) -> str | UndefinedType | None:
+    def _name_internal(self, device_class_name: str | None, platform_translations: dict[str, Any], ) -> str | None:
         tmp = super()._name_internal(device_class_name, platform_translations)
         if tmp is not None and "@@@" in tmp:
             tmp = tmp.replace("@@@", self.coordinator.currency)
