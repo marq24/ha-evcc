@@ -296,6 +296,16 @@
           "minpv": "Min+PV"
         }
       },
+      "mode_alt": {
+        "name": "Modus",
+        "state": {
+          "off": "Aus",
+          "smart": "Smart",
+          "now": "Ein",
+          "pv": "PV",
+          "minpv": "Min+PV"
+        }
+      },
       "alwayscharge":{
         "name": "Mit min. laden \u267e\ufe0f",
         "state": {

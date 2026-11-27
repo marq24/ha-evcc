@@ -364,6 +364,16 @@
           "minpv": "Min+Solar"
         }
       },
+      "mode_alt": {
+        "name": "Modus",
+        "state": {
+          "off": "Off",
+          "smart": "Smart",
+          "now": "On",
+          "pv": "Solar",
+          "minpv": "Min+Solar"
+        }
+      },
       "alwayscharge":{
         "name": "Always charge \u267e\ufe0f",
         "state": {

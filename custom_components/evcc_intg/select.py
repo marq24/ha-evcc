@@ -69,7 +69,7 @@ async def async_setup_entry(hass: HomeAssistant, config_entry: ConfigEntry, add_
                 tag=a_stub.tag,
                 lp_idx=lp_api_index,
                 key=f"{lp_id_addon}_{the_key}",
-                translation_key=the_key,
+                translation_key=f"{the_key}_alt" if (a_stub.tag == Tag.MODE_SMART and (lp_is_heating or lp_is_integrated)) else the_key,
                 name_addon=lp_name_addon if multi_loadpoint_config else None,
                 icon=a_stub.icon,
                 device_class=a_stub.device_class,
